@@ -1,0 +1,626 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Blueprint da Governança de TI: Capítulos 1 a 3</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Semi+Condensed:wght@500;600;700&family=Barlow:ital,wght@0,400;0,500;0,600;1,400&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#EAF1F6; --ink:#0C2340; --ink-soft:#3C5673; --line:rgba(12,35,64,.09); --line-strong:rgba(12,35,64,.18);
+  --cyan:#0E7C93; --cyan-bg:rgba(14,124,147,.10); --orange:#C45E12; --orange-bg:rgba(196,94,18,.10);
+  --red:#B42318; --panel:#FFFFFF; --panel-ink:#0C2340; --navy-block:#0C2340; --navy-ink:#F2F7FB;
+  box-sizing:border-box; padding-top:env(safe-area-inset-top,0px); padding-bottom:env(safe-area-inset-bottom,0px);
+  color-scheme:light;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --bg:#0A1C33; --ink:#E6F1F8; --ink-soft:#9DB6CC; --line:rgba(95,212,232,.07); --line-strong:rgba(95,212,232,.16);
+    --cyan:#5FD4E8; --cyan-bg:rgba(95,212,232,.10); --orange:#F5A04A; --orange-bg:rgba(245,160,74,.12);
+    --red:#FF7A6B; --panel:#10294A; --panel-ink:#E6F1F8; --navy-block:#163A63; --navy-ink:#F2F7FB; color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0A1C33; --ink:#E6F1F8; --ink-soft:#9DB6CC; --line:rgba(95,212,232,.07); --line-strong:rgba(95,212,232,.16);
+  --cyan:#5FD4E8; --cyan-bg:rgba(95,212,232,.10); --orange:#F5A04A; --orange-bg:rgba(245,160,74,.12);
+  --red:#FF7A6B; --panel:#10294A; --panel-ink:#E6F1F8; --navy-block:#163A63; --navy-ink:#F2F7FB; color-scheme:dark;
+}
+*,*::before,*::after{box-sizing:border-box}
+html{height:100%;scroll-padding-top:env(safe-area-inset-top,0px)}
+body{height:100%;margin:0;background:var(--bg);color:var(--ink);font-family:"Barlow",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;font-size:1.05rem;line-height:1.55;overflow:hidden}
+body::before{content:"";position:fixed;inset:0;pointer-events:none;
+  background-image:linear-gradient(var(--line) 1px,transparent 1px),linear-gradient(90deg,var(--line) 1px,transparent 1px),
+  linear-gradient(var(--line-strong) 1px,transparent 1px),linear-gradient(90deg,var(--line-strong) 1px,transparent 1px);
+  background-size:24px 24px,24px 24px,120px 120px,120px 120px}
+h1,h2,h3{font-family:"Barlow Semi Condensed","Arial Narrow",system-ui,sans-serif;line-height:1.1;margin:0 0 .5em;letter-spacing:-.005em}
+h1{font-size:clamp(2.2rem,6vw,4.4rem);font-weight:700}
+h2{font-size:clamp(1.6rem,3.8vw,2.7rem);font-weight:700}
+h3{font-size:clamp(1.1rem,2vw,1.35rem);font-weight:600}
+p{margin:0 0 .8em;max-width:68ch}
+strong{font-weight:600}
+.deck{position:relative;height:100%}
+.slide{position:absolute;inset:0;overflow-y:auto;padding:28px 20px 110px;display:none}
+.slide.active{display:block}
+.wrap{max-width:1120px;margin:0 auto;position:relative}
+.act{display:inline-block;font-family:"Barlow Semi Condensed",sans-serif;font-weight:600;font-size:.95rem;color:var(--cyan);border:1px solid var(--cyan);padding:2px 10px;border-radius:3px;margin-bottom:14px}
+.lead{font-size:1.2rem;color:var(--ink-soft);max-width:60ch}
+.grid{display:grid;gap:16px}
+.g2{grid-template-columns:repeat(auto-fit,minmax(280px,1fr))}
+.g3{grid-template-columns:repeat(auto-fit,minmax(230px,1fr))}
+.box{background:var(--panel);color:var(--panel-ink);border:1.5px solid var(--line-strong);padding:18px 20px;position:relative}
+.box::before,.box::after{content:"";position:absolute;width:10px;height:10px;border-color:var(--cyan);border-style:solid}
+.box::before{top:-2px;left:-2px;border-width:2px 0 0 2px}
+.box::after{bottom:-2px;right:-2px;border-width:0 2px 2px 0}
+.box h3{color:var(--cyan)}
+.box p:last-child{margin-bottom:0}
+.navy{background:var(--navy-block);color:var(--navy-ink);border-color:transparent}
+.navy h3{color:#8FE3F1}
+.warn{border:2px solid var(--red);background:transparent;padding:14px 18px;margin-top:20px}
+.warn strong{color:var(--red)}
+.key{border-left:4px solid var(--orange);padding:10px 16px;background:var(--orange-bg);margin-top:20px;font-weight:500;max-width:none}
+.story{font-style:italic;color:var(--ink-soft);border-left:2px dashed var(--cyan);padding-left:14px;margin-top:18px}
+ul.clean{list-style:none;padding:0;margin:0}
+ul.clean li{padding:6px 0 6px 22px;position:relative}
+ul.clean li::before{content:"";position:absolute;left:2px;top:15px;width:10px;height:2px;background:var(--cyan)}
+.chain{display:flex;flex-wrap:wrap;gap:0;align-items:stretch;margin-top:10px}
+.chain .step{flex:1 1 160px;background:var(--panel);border:1.5px solid var(--line-strong);padding:14px;position:relative}
+.chain .step + .step{border-left:none}
+.chain .n{font-family:"Barlow Semi Condensed",sans-serif;font-weight:700;font-size:1.8rem;color:var(--orange);line-height:1}
+.chain .step h3{margin:.3em 0 .3em;font-size:1.1rem}
+.chain .step p{font-size:.95rem;margin:0;color:var(--ink-soft)}
+.cover{min-height:calc(100% - 20px);display:flex;flex-direction:column;justify-content:center}
+.cover h1{max-width:14ch}
+.cover .spec{margin-top:28px;display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:0;border:1.5px solid var(--line-strong);max-width:820px}
+.cover .spec div{padding:12px 16px;border-right:1.5px solid var(--line-strong)}
+.cover .spec div:last-child{border-right:none}
+.cover .spec b{display:block;font-family:"Barlow Semi Condensed",sans-serif;color:var(--cyan);font-size:.9rem}
+.drawing{position:absolute;right:0;top:50%;transform:translateY(-50%);width:min(42vw,440px);opacity:.9;pointer-events:none}
+@media (max-width:820px){.drawing{position:static;transform:none;width:70%;max-width:320px;margin:24px 0 0;opacity:.8}}
+.table-wrap{overflow-x:auto;margin-top:8px}
+table{border-collapse:collapse;width:100%;min-width:640px;background:var(--panel)}
+th,td{border:1.5px solid var(--line-strong);padding:10px 12px;text-align:left;vertical-align:top;font-size:.97rem}
+th{font-family:"Barlow Semi Condensed",sans-serif;font-weight:600;background:var(--cyan-bg);color:var(--ink)}
+.matrix td{text-align:center;height:52px;width:13%;font-size:1.4rem}
+.matrix td:first-child{text-align:left;font-size:.97rem;font-weight:600;width:auto}
+.matrix td.pin{background:var(--orange-bg);color:var(--orange);font-weight:700}
+.matrix button{font:inherit;font-size:.85rem;border:1px solid var(--cyan);background:transparent;color:var(--cyan);padding:4px 10px;cursor:pointer;border-radius:3px}
+.matrix button:hover{background:var(--cyan-bg)}
+.tag{display:inline-block;font-size:.8rem;font-weight:600;padding:1px 8px;border-radius:3px;margin-right:6px;background:var(--cyan-bg);color:var(--cyan)}
+.tag.o{background:var(--orange-bg);color:var(--orange)}
+.funnel{display:grid;gap:10px;max-width:760px}
+.funnel div{padding:14px 18px;border:1.5px solid var(--line-strong);background:var(--panel)}
+.funnel div:nth-child(1){margin-right:0}
+.funnel div:nth-child(2){margin:0 6%}
+.funnel div:nth-child(3){margin:0 12%;border-color:var(--cyan)}
+.funnel b{font-family:"Barlow Semi Condensed",sans-serif;font-size:1.15rem;display:block}
+.vs{display:grid;grid-template-columns:1fr auto 1fr;gap:18px;align-items:stretch}
+.vs .mid{width:2px;background:repeating-linear-gradient(var(--orange) 0 10px,transparent 10px 18px)}
+@media (max-width:720px){.vs{grid-template-columns:1fr}.vs .mid{height:2px;width:100%;background:repeating-linear-gradient(90deg,var(--orange) 0 10px,transparent 10px 18px)}}
+.row{display:grid;grid-template-columns:1fr 40px 1fr;gap:10px;align-items:center;margin-bottom:10px}
+.row .arrow{text-align:center;color:var(--orange);font-weight:700;font-size:1.4rem}
+@media (max-width:620px){.row{grid-template-columns:1fr}.row .arrow{transform:rotate(90deg)}}
+.ring{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px}
+.ring .box{padding:14px}
+.edm{display:flex;gap:10px;flex-wrap:wrap;margin:10px 0 18px}
+.edm span{font-family:"Barlow Semi Condensed",sans-serif;font-weight:700;font-size:1.3rem;padding:8px 18px;border:2px solid var(--cyan);color:var(--cyan)}
+details{background:var(--panel);border:1.5px solid var(--line-strong);margin-bottom:12px}
+summary{cursor:pointer;padding:14px 18px;font-weight:500;list-style:none;display:flex;gap:12px;align-items:flex-start}
+summary::-webkit-details-marker{display:none}
+summary .qn{font-family:"Barlow Semi Condensed",sans-serif;font-weight:700;color:var(--orange);min-width:2.2em}
+summary .hint{margin-left:auto;font-size:.82rem;color:var(--cyan);white-space:nowrap;padding-left:10px}
+details[open] summary .hint{color:var(--ink-soft)}
+details .ans{padding:0 18px 16px 18px;margin-left:calc(2.2em + 12px);border-top:1px dashed var(--line-strong);padding-top:12px;color:var(--ink-soft)}
+details .ans p{max-width:none}
+.qtools{display:flex;gap:10px;flex-wrap:wrap;margin:6px 0 18px}
+.btn{font:inherit;font-weight:600;border:1.5px solid var(--cyan);background:transparent;color:var(--cyan);padding:7px 14px;cursor:pointer;border-radius:3px}
+.btn:hover{background:var(--cyan-bg)}
+.nav{position:fixed;left:0;right:0;bottom:0;padding:10px 16px calc(10px + env(safe-area-inset-bottom,0px));display:flex;align-items:center;gap:12px;background:color-mix(in srgb,var(--bg) 88%,transparent);backdrop-filter:blur(6px);border-top:1.5px solid var(--line-strong);z-index:10}
+.nav button{font:inherit;font-weight:600;min-width:44px;height:40px;border:1.5px solid var(--line-strong);background:var(--panel);color:var(--ink);cursor:pointer;border-radius:3px;padding:0 14px}
+.nav button:disabled{opacity:.35;cursor:default}
+.nav .where{flex:1;min-width:0;font-size:.9rem;color:var(--ink-soft);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.progress{position:fixed;left:0;top:env(safe-area-inset-top,0px);height:3px;background:var(--orange);z-index:11;transition:width .25s}
+button:focus-visible,summary:focus-visible{outline:3px solid var(--orange);outline-offset:2px}
+@media (prefers-reduced-motion:reduce){.progress{transition:none}}
+</style>
+</head>
+<body>
+<div class="progress" id="progress"></div>
+<main class="deck" id="deck">
+
+<!-- 1 CAPA -->
+<section class="slide" data-act="Abertura">
+ <div class="wrap cover">
+  <svg class="drawing" viewBox="0 0 300 300" fill="none" stroke="currentColor" style="color:var(--cyan)" aria-hidden="true">
+   <g stroke-width="1.5"><path d="M150 40 L250 95 L250 205 L150 260 L50 205 L50 95 Z"/><path d="M150 40 L150 150 M50 95 L150 150 L250 95" /><path d="M150 150 L150 260" stroke-dasharray="4 5"/>
+   <path d="M95 120 L95 200 M120 135 L120 215 M180 135 L180 215 M205 120 L205 200" opacity=".5"/></g>
+   <g stroke="var(--orange)" stroke-width="2"><circle cx="150" cy="150" r="26"/><circle cx="150" cy="150" r="10"/>
+   <path d="M150 118v-8M150 190v-8M118 150h-8M190 150h-8M127 127l-6-6M179 179l-6-6M173 127l6-6M121 179l6-6"/></g>
+   <g font-family="Barlow Semi Condensed" font-size="11" fill="currentColor" stroke="none"><text x="8" y="30">conselho</text><text x="228" y="290">chão de fábrica</text></g>
+   <path d="M20 36 L20 60 M20 36 L44 36 M280 264 L280 288 M256 288 L280 288" stroke-width="1"/>
+  </svg>
+  <span class="act">Governança de TI: Capítulos 1, 2 e 3</span>
+  <h1>O Planta da Governança de TI</h1>
+  <p class="lead">Uma história em três atos: por que governar a TI, onde essa exigência nasce e como se desenha o motor que coloca a estratégia do conselho em movimento.</p>
+  <div class="spec">
+   <div><b>Ato I</b>O problema e os fundamentos</div>
+   <div><b>Ato II</b>A origem: estratégia e governança corporativa</div>
+   <div><b>Ato III</b>O motor: o modelo de governança</div>
+  </div>
+  <p style="margin-top:18px;font-size:.9rem;color:var(--ink-soft)">IFAL - Maceió - Governança de Tecnologia da Informação</p>
+  </div>
+</section>
+
+<!-- 2 JORNADA -->
+<section class="slide" data-act="Abertura">
+ <div class="wrap">
+  <span class="act">O roteiro da aula</span>
+  <h2>Cada capítulo responde a uma pergunta, e cada resposta abre a próxima</h2>
+  <div class="chain">
+   <div class="step"><div class="n">1</div><h3>Por que governar?</h3><p>Uma empresa com TI moderna e ainda assim em crise. O que falta não é técnica.</p></div>
+   <div class="step"><div class="n">2</div><h3>De onde vem a exigência?</h3><p>A pressão desce do ambiente externo, passa pelo conselho e chega à TI.</p></div>
+   <div class="step"><div class="n">3</div><h3>Como se constrói?</h3><p>Atores, decisões, arquétipos, mecanismos e princípios formam o motor.</p></div>
+   <div class="step"><div class="n">4</div><h3>Onde isso vira entrega?</h3><p>Processos e projetos, com o PMO como ponte. Gancho para o Capítulo 4.</p></div>
+  </div>
+  <p class="story">Fio condutor: vamos abrir com o caso Comércio Fácil e só fechá-lo no fim, quando tivermos as ferramentas para diagnosticá-lo e propor uma solução.</p>
+ </div>
+</section>
+
+<!-- 3 OBJETIVOS -->
+<section class="slide" data-act="Abertura">
+ <div class="wrap">
+  <span class="act">Objetivos do plano de ensino</span>
+  <h2>Ao final desta sequência, a turma deve ser capaz de</h2>
+  <div class="grid g3">
+   <div class="box"><h3>Capítulo 1: Fundamentos</h3><ul class="clean">
+    <li>Explicar governança de TI e sua motivação (accountability, valor, risco)</li>
+    <li>Diferenciar governança de gestão</li>
+    <li>Relacionar governança de TI e corporativa</li>
+    <li>Relacionar o histórico à mudança de papel da TI</li>
+    <li>Identificar atores e responsabilidades</li></ul></div>
+   <div class="box"><h3>Capítulo 2: Estratégia e governança corporativa</h3><ul class="clean">
+    <li>Explicar planejamento estratégico e alinhamento negócio e TI</li>
+    <li>Descrever princípios da governança corporativa e o papel do conselho</li>
+    <li>Identificar Lei das S.A., Código IBGC e SOX</li>
+    <li>Relacionar princípios corporativos aos objetivos da governança de TI</li></ul></div>
+   <div class="box"><h3>Capítulo 3: O modelo de governança</h3><ul class="clean">
+    <li>Descrever papéis e estruturas (CIO, comitês)</li>
+    <li>Aplicar a matriz de Weill e Ross</li>
+    <li>Classificar mecanismos estruturais, processuais e relacionais</li>
+    <li>Relacionar a ISO/IEC 38500 ao ciclo avaliar, dirigir, monitorar</li></ul></div>
+  </div>
+ </div>
+</section>
+
+<!-- 4 PARADOXO -->
+<section class="slide" data-act="Ato I: Capítulo 1">
+ <div class="wrap">
+  <span class="act">Ato I: o problema</span>
+  <h2>O paradoxo: alta qualidade técnica não é boa governança</h2>
+  <div class="vs">
+   <div class="box"><h3>O mito</h3><p>“Nossa TI é rápida e moderna, logo temos governança.”</p><p style="color:var(--ink-soft)">Servidores novos, equipe competente, sistemas estáveis. Parece suficiente.</p></div>
+   <div class="mid"></div>
+   <div class="box navy"><h3>A realidade: caso Comércio Fácil</h3>
+    <ul class="clean">
+     <li><strong>Sintoma 1, accountability:</strong> 5 sistemas de PDV incompatíveis comprados por gerentes diferentes, sem arquitetura central.</li>
+     <li><strong>Sintoma 2, geração de valor:</strong> projeto de unificação de estoques parado há 2 anos, sem autoridade para arbitrar conflitos.</li>
+     <li><strong>Sintoma 3, gestão de riscos:</strong> vazamento de dados em um sistema desatualizado que a matriz desconhecia.</li>
+    </ul></div>
+  </div>
+  <p class="key">A governança não trata de operar sistemas, mas de garantir que as escolhas de TI certas sejam feitas pelas razões estratégicas corretas.</p>
+  <p class="story">Pergunta para a turma: quem, na Comércio Fácil, deveria ter dito “não” à compra do quinto PDV?</p>
+ </div>
+</section>
+
+<!-- 5 DEFINIÇÃO -->
+<section class="slide" data-act="Ato I: Capítulo 1">
+ <div class="wrap">
+  <span class="act">Ato I: o conceito</span>
+  <h2>O que é governança de TI</h2>
+  <div class="grid g2">
+   <div class="box"><h3>Fernandes e Abreu (2014)</h3><p>O sistema pelo qual o uso atual e futuro da TI é dirigido e controlado, para que a TI sustente e amplie os objetivos estratégicos da organização.</p></div>
+   <div class="box"><h3>ISO/IEC 38500:2024</h3><p>O sistema pelo qual o uso presente e futuro da TI é avaliado, dirigido e monitorado.</p>
+    <div class="edm"><span>Avaliar</span><span>Dirigir</span><span>Monitorar</span></div></div>
+  </div>
+  <h3 style="margin-top:22px">As três motivações, e o sintoma que cada uma explica</h3>
+  <div class="grid g3">
+   <div class="box"><h3>Accountability</h3><p>Deixar claro quem decide o quê e quem responde pelo resultado. Explica os 5 PDVs.</p></div>
+   <div class="box"><h3>Geração de valor</h3><p>Garantir que o investimento em TI produza resultado para o negócio. Explica o projeto parado.</p></div>
+   <div class="box"><h3>Gestão de riscos</h3><p>Tornar os riscos de TI visíveis para a alta administração. Explica o vazamento.</p></div>
+  </div>
+ </div>
+</section>
+
+<!-- 6 GOVERNAR VS GERIR -->
+<section class="slide" data-act="Ato I: Capítulo 1">
+ <div class="wrap">
+  <span class="act">Ato I: a fronteira crítica</span>
+  <h2>Governar não é gerir</h2>
+  <div class="table-wrap"><table>
+   <tr><th></th><th>Governança</th><th>Gestão</th></tr>
+   <tr><td><strong>Atores</strong></td><td>Conselho de administração e alta direção</td><td>CIO e equipe executiva de TI</td></tr>
+   <tr><td><strong>Ação principal</strong></td><td>EDM: avaliar, dirigir, monitorar</td><td>PCEM: planejar, construir, executar, monitorar</td></tr>
+   <tr><td><strong>Papel</strong></td><td>Definir objetivos, ditar prioridades, monitorar conformidade. Não toca nos cabos.</td><td>Executar as atividades técnicas alinhada à direção definida pela governança</td></tr>
+   <tr><td><strong>Pergunta típica</strong></td><td>Estamos fazendo as coisas certas?</td><td>Estamos fazendo as coisas do jeito certo?</td></tr>
+  </table></div>
+  <div class="warn"><strong>Zona de perigo.</strong> Confundir os papéis leva ao <strong>microgerenciamento</strong> (a governança esvazia a gestão) ou à <strong>anarquia</strong> (a gestão toma decisões estratégicas isolada).</div>
+  <p class="story">Na Comércio Fácil, os gerentes que compraram PDVs estavam fazendo governança sem mandato: decidiram estratégia sozinhos.</p>
+ </div>
+</section>
+
+<!-- 7 CASCATA / HISTÓRICO -->
+<section class="slide" data-act="Ato I → Ato II">
+ <div class="wrap">
+  <span class="act">Transição: de onde vem a pressão</span>
+  <h2>O efeito cascata: como a governança nasce</h2>
+  <div class="funnel">
+   <div><b>Nível 1: ambiente externo</b>Escândalos contábeis e riscos globais geram a Lei Sarbanes-Oxley (2002). A transformação digital coloca a TI no centro do negócio.</div>
+   <div><b>Nível 2: governança corporativa</b>O conselho de administração passa a responder por transparência, equidade e prestação de contas (IBGC e Lei das S.A.).</div>
+   <div><b>Nível 3: governança de TI</b>A TI deixa de ser um porão operacional e vira ativo estratégico, estritamente governado.</div>
+  </div>
+  <p class="key">A governança de TI é uma extensão da governança corporativa: o conselho não pode supervisionar finanças com rigor e ignorar a tecnologia que processa essas finanças.</p>
+  <p class="story">Para entender o nível 3, precisamos subir ao nível 2. É isso que o Ato II faz.</p>
+ </div>
+</section>
+
+<!-- 8 PLANEJAMENTO ESTRATÉGICO -->
+<section class="slide" data-act="Ato II: Capítulo 2">
+ <div class="wrap">
+  <span class="act">Ato II: a estratégia</span>
+  <h2>Sem saber para onde ir, nenhum investimento de TI é prioritário</h2>
+  <div class="chain">
+   <div class="step"><div class="n">1</div><h3>Missão</h3><p>A razão de existir da organização</p></div>
+   <div class="step"><div class="n">2</div><h3>Visão</h3><p>Onde pretende chegar, em um horizonte definido</p></div>
+   <div class="step"><div class="n">3</div><h3>Objetivos estratégicos</h3><p>Resultados mensuráveis que tornam a visão concreta</p></div>
+   <div class="step"><div class="n">4</div><h3>Estratégias</h3><p>Os caminhos escolhidos, e os descartados</p></div>
+  </div>
+  <p class="key">Toda decisão de TI deve responder a uma pergunta: a qual objetivo estratégico isto serve?</p>
+  <div class="warn"><strong>Erro recorrente:</strong> decidir tecnologia por modismo ou pressão de fornecedor, antes de perguntar pelo objetivo.</div>
+ </div>
+</section>
+
+<!-- 9 ALINHAMENTO -->
+<section class="slide" data-act="Ato II: Capítulo 2">
+ <div class="wrap">
+  <span class="act">Ato II: o alinhamento</span>
+  <h2>Alinhamento estratégico é uma via de mão dupla</h2>
+  <div class="grid g2">
+   <div class="box"><h3>Negócio para TI</h3><p>As decisões, prioridades e investimentos de TI refletem e sustentam os objetivos do negócio.</p><p style="color:var(--ink-soft)">Exemplo: meta de reduzir ruptura de estoque leva à priorização do projeto de estoque unificado.</p></div>
+   <div class="box"><h3>TI para negócio</h3><p>As capacidades de TI entram na própria formulação da estratégia: a TI habilita ou inspira novos caminhos.</p><p style="color:var(--ink-soft)">Exemplo: a plataforma unificada permite lançar venda omnichannel, algo que o negócio nem tinha planejado.</p></div>
+  </div>
+  <p class="key">Uma TI apenas subordinada executa pedidos. Uma TI alinhada participa da conversa em que a estratégia é escrita.</p>
+ </div>
+</section>
+
+<!-- 10 GOVERNANÇA CORPORATIVA -->
+<section class="slide" data-act="Ato II: Capítulo 2">
+ <div class="wrap">
+  <span class="act">Ato II: governança corporativa</span>
+  <h2>O sistema pelo qual organizações são dirigidas e monitoradas</h2>
+  <p>O conselho de administração é o principal órgão de supervisão estratégica. O IBGC organiza a governança corporativa em quatro princípios:</p>
+  <div class="grid g2" style="grid-template-columns:repeat(auto-fit,minmax(220px,1fr))">
+   <div class="box"><h3>Transparência</h3><p>Informar de forma franca o que interessa às partes, não só o que a lei obriga.</p></div>
+   <div class="box"><h3>Equidade</h3><p>Tratamento justo e isonômico de sócios e partes interessadas.</p></div>
+   <div class="box"><h3>Prestação de contas</h3><p>Responder pelos atos e decisões, de forma clara e tempestiva.</p></div>
+   <div class="box"><h3>Responsabilidade corporativa</h3><p>Zelar pela viabilidade e continuidade da organização a longo prazo.</p></div>
+  </div>
+  <h3 style="margin-top:22px">As regulamentações de referência</h3>
+  <div class="table-wrap"><table>
+   <tr><th>Referência</th><th>Origem</th><th>Por que importa para a TI</th></tr>
+   <tr><td>Lei das S.A. (Lei nº 6.404/1976)</td><td>Brasil, lei</td><td>Define deveres de administradores e o papel do conselho nas sociedades anônimas</td></tr>
+   <tr><td>Código de Melhores Práticas do IBGC</td><td>Brasil, autorregulação</td><td>Estabelece os quatro princípios que a TI precisa reportar</td></tr>
+   <tr><td>Lei Sarbanes-Oxley (2002)</td><td>EUA, lei</td><td>Exige controles internos sobre relatórios financeiros, que dependem de sistemas. Levou a TI à pauta do conselho</td></tr>
+  </table></div>
+ </div>
+</section>
+
+<!-- 11 TRADUTOR -->
+<section class="slide" data-act="Ato II: Capítulo 2">
+ <div class="wrap">
+  <span class="act">Ato II: caso Cooperativa de Crédito</span>
+  <h2>Traduzindo o risco tecnológico para a linguagem do conselho</h2>
+  <p>A cooperativa inclui “riscos e investimentos de TI” na pauta trimestral. O CIO atua como tradutor:</p>
+  <div class="row"><div class="box">Percentual de sistemas críticos sem plano de continuidade testado</div><div class="arrow">→</div><div class="box navy"><h3>Responsabilidade corporativa</h3><p>Risco à continuidade do negócio</p></div></div>
+  <div class="row"><div class="box">Orçamento de TI gasto no trimestre comparado ao planejado</div><div class="arrow">→</div><div class="box navy"><h3>Prestação de contas</h3><p>Execução justificada estrategicamente</p></div></div>
+  <div class="row"><div class="box">Relatório de incidentes de segurança e lições aprendidas</div><div class="arrow">→</div><div class="box navy"><h3>Transparência</h3><p>Comunicação franca</p></div></div>
+  <p class="key">O conselho não precisa aprender jargão técnico; a TI precisa reportar em vocabulário de governança.</p>
+  <p class="story">Temos o porquê (Ato I) e o de onde (Ato II). Falta o como: qual estrutura concreta faz isso acontecer toda semana?</p>
+ </div>
+</section>
+
+<!-- 12 MODELO -->
+<section class="slide" data-act="Ato III: Capítulo 3">
+ <div class="wrap">
+  <span class="act">Ato III: desenhando o motor</span>
+  <h2>O modelo de governança de TI</h2>
+  <p class="lead">Não é abstrato: é o conjunto observável de estruturas, processos e relações que uma organização adota para governar sua TI.</p>
+  <div class="grid g3">
+   <div class="box"><h3>Quem decide</h3><p>Os atores e estruturas: conselho, CEO, CIO, comitês.</p></div>
+   <div class="box"><h3>O que se decide e como</h3><p>Os 5 domínios de decisão e os 6 arquétipos, combinados na matriz de Weill e Ross.</p></div>
+   <div class="box"><h3>O que dá vida</h3><p>Os mecanismos estruturais, processuais e relacionais, guiados pelos princípios da ISO/IEC 38500.</p></div>
+  </div>
+  <p class="key">Não há modelo universal. O desenho depende de porte, setor, estrutura de propriedade, maturidade e cultura.</p>
+ </div>
+</section>
+
+<!-- 13 ATORES -->
+<section class="slide" data-act="Ato III: Capítulo 3">
+ <div class="wrap">
+  <span class="act">Ato III: os atores</span>
+  <h2>Quem se senta à mesa</h2>
+  <div class="grid g2">
+   <div class="box"><h3>Alta direção (conselho e CEO)</h3><p>Responsabilidade final. Delega o exercício cotidiano às estruturas especializadas.</p></div>
+   <div class="box"><h3>CIO</h3><p>A ponte tradutora. Não governa sozinho: conecta a operação técnica às necessidades do negócio e comunica riscos em linguagem executiva.</p></div>
+   <div class="box"><h3>Comitê estratégico de TI</h3><p>Diretores de negócio no comando. Aprova grandes investimentos, prioriza o portfólio e define diretrizes.</p></div>
+   <div class="box"><h3>Comitê técnico ou de arquitetura</h3><p>Especialistas técnicos. Padronização tecnológica, viabilidade e segurança.</p></div>
+  </div>
+  <p class="story">Na Comércio Fácil, faltava justamente um comitê estratégico com autoridade para arbitrar o conflito do projeto de estoques.</p>
+ </div>
+</section>
+
+<!-- 14 DOMÍNIOS -->
+<section class="slide" data-act="Ato III: Capítulo 3">
+ <div class="wrap">
+  <span class="act">Ato III: o que precisa ser decidido</span>
+  <h2>Os 5 domínios de decisão de Weill e Ross</h2>
+  <div class="chain">
+   <div class="step"><div class="n">1</div><h3>Princípios de TI</h3><p>O papel da TI no negócio. Ex.: cloud-first.</p></div>
+   <div class="step"><div class="n">2</div><h3>Arquitetura</h3><p>Padrões, integrações e dados. As fundações.</p></div>
+   <div class="step"><div class="n">3</div><h3>Infraestrutura</h3><p>Serviços compartilhados, redes, suporte. A base física.</p></div>
+   <div class="step"><div class="n">4</div><h3>Aplicações</h3><p>O que construir ou comprar: CRM, ERP, plataformas.</p></div>
+   <div class="step"><div class="n">5</div><h3>Investimentos</h3><p>Quanto, quando e onde gastar. O balanço do portfólio.</p></div>
+  </div>
+  <p class="key">Os domínios são encadeados: princípios ditam a arquitetura, que dita a infraestrutura, que sustenta as aplicações. Investimento atravessa todos.</p>
+ </div>
+</section>
+
+<!-- 15 ARQUÉTIPOS -->
+<section class="slide" data-act="Ato III: Capítulo 3">
+ <div class="wrap">
+  <span class="act">Ato III: quem detém a autoridade</span>
+  <h2>Os 6 arquétipos de governança</h2>
+  <div class="grid g3">
+   <div class="box"><h3>Monarquia de negócio</h3><p>Altos executivos decidem. A TI não vota na etapa final.</p></div>
+   <div class="box"><h3>Monarquia de TI</h3><p>Especialistas de TI detêm a decisão técnica.</p></div>
+   <div class="box"><h3>Feudalismo</h3><p>Cada unidade de negócio decide por si. Zero coordenação.</p></div>
+   <div class="box"><h3>Federalismo</h3><p>Decisão compartilhada entre a matriz e as unidades locais.</p></div>
+   <div class="box"><h3>Duopólio de TI</h3><p>A TI e um grupo de negócio decidem juntos. Ex.: TI e diretoria financeira.</p></div>
+   <div class="box"><h3>Anarquia</h3><p>Pequenos grupos ou indivíduos decidem no vácuo. O estado natural sem governança.</p></div>
+  </div>
+  <p class="story">Qual arquétipo descreve a compra dos 5 PDVs? Deixe a turma responder antes de avançar.</p>
+ </div>
+</section>
+
+<!-- 16 MATRIZ CLÍNICAS -->
+<section class="slide" data-act="Ato III: Capítulo 3">
+ <div class="wrap">
+  <span class="act">Ato III: a matriz na prática</span>
+  <h2>Caso Clínicas Odontológicas: rede com 12 unidades em expansão</h2>
+  <p>Leia o contexto de cada domínio, peça que a turma marque o arquétipo e só então revele.</p>
+  <div class="table-wrap"><table class="matrix" id="matrix">
+   <tr><th>Domínio e contexto</th><th>Mon. negócio</th><th>Mon. TI</th><th>Feudal.</th><th>Federal.</th><th>Duopólio</th><th>Anarquia</th><th></th></tr>
+   <tr data-pin="1"><td>Princípios<br><span style="font-weight:400;font-size:.88rem;color:var(--ink-soft)">A diretoria executiva define sozinha o posicionamento digital</span></td><td></td><td></td><td></td><td></td><td></td><td></td><td><button>Revelar</button></td></tr>
+   <tr data-pin="2"><td>Arquitetura<br><span style="font-weight:400;font-size:.88rem;color:var(--ink-soft)">O gerente de TI define os padrões para todas as clínicas</span></td><td></td><td></td><td></td><td></td><td></td><td></td><td><button>Revelar</button></td></tr>
+   <tr data-pin="2"><td>Infraestrutura<br><span style="font-weight:400;font-size:.88rem;color:var(--ink-soft)">O gerente de TI padroniza as redes entre unidades</span></td><td></td><td></td><td></td><td></td><td></td><td></td><td><button>Revelar</button></td></tr>
+   <tr data-pin="4"><td>Aplicações<br><span style="font-weight:400;font-size:.88rem;color:var(--ink-soft)">TI central e coordenadores clínicos locais decidem juntos</span></td><td></td><td></td><td></td><td></td><td></td><td></td><td><button>Revelar</button></td></tr>
+   <tr data-pin="5"><td>Investimentos<br><span style="font-weight:400;font-size:.88rem;color:var(--ink-soft)">Diretoria executiva e gerente de TI arbitram juntos o orçamento</span></td><td></td><td></td><td></td><td></td><td></td><td></td><td><button>Revelar</button></td></tr>
+  </table></div>
+  <div class="qtools"><button class="btn" id="revealAll">Revelar toda a matriz</button><button class="btn" id="resetMatrix">Limpar</button></div>
+  <p class="key">Engenharia deliberada: organizações de alto desempenho combinam arquétipos diferentes por domínio.</p>
+ </div>
+</section>
+
+<!-- 17 MECANISMOS -->
+<section class="slide" data-act="Ato III: Capítulo 3">
+ <div class="wrap">
+  <span class="act">Ato III: dando vida ao modelo</span>
+  <h2>A tríade de mecanismos</h2>
+  <div class="grid g3">
+   <div class="box"><h3>Estruturais, o esqueleto</h3><p>Comitês de TI, papéis definidos (CIO), escritório de projetos (PMO). O hardware da governança.</p></div>
+   <div class="box"><h3>Processuais, os músculos</h3><p>Matrizes de decisão, SLAs, indicadores BSC, planejamento estratégico de TI. Os ritos de operação.</p></div>
+   <div class="box"><h3>Relacionais, o sistema nervoso</h3><p>Canais contínuos de comunicação, rotação de pessoal, entendimento compartilhado entre TI e negócio.</p></div>
+  </div>
+  <div class="warn"><strong>Governança de papel:</strong> quem implanta só estruturas e processos, ignorando os mecanismos relacionais, tem governança ineficaz na prática. O comitê existe, mas ninguém confia nele.</div>
+ </div>
+</section>
+
+<!-- 18 ISO 38500 -->
+<section class="slide" data-act="Ato III: Capítulo 3">
+ <div class="wrap">
+  <span class="act">Ato III: a bússola</span>
+  <h2>ISO/IEC 38500: seis princípios guiados pelo ciclo EDM</h2>
+  <div class="edm"><span>Avaliar</span><span>Dirigir</span><span>Monitorar</span></div>
+  <div class="ring">
+   <div class="box"><h3>Responsabilidade</h3><p>Limites claros de quem oferta e quem demanda TI.</p></div>
+   <div class="box"><h3>Estratégia</h3><p>A TI atende às necessidades atuais e futuras do negócio.</p></div>
+   <div class="box"><h3>Aquisição</h3><p>Compras com análise transparente e válida.</p></div>
+   <div class="box"><h3>Desempenho</h3><p>Níveis de serviço, qualidade e métricas.</p></div>
+   <div class="box"><h3>Conformidade</h3><p>Atendimento a leis, regulamentos e políticas.</p></div>
+   <div class="box"><h3>Comportamento humano</h3><p>Respeito às pessoas envolvidas no processo.</p></div>
+  </div>
+  <p class="key">Os princípios dizem o que observar; o ciclo EDM diz como a alta direção age sobre cada um.</p>
+ </div>
+</section>
+
+<!-- 19 MAPA -->
+<section class="slide" data-act="Síntese">
+ <div class="wrap">
+  <span class="act">Síntese: o encadeamento completo</span>
+  <h2>Do pulso no conselho à engrenagem no chão de fábrica</h2>
+  <div class="funnel" style="max-width:none">
+   <div><b>Planejamento estratégico e conselho de administração</b>Missão, visão, objetivos. Princípios IBGC, Lei das S.A., SOX. <span class="tag">Cap. 2</span></div>
+   <div><b>Governança de TI: governar, não gerir</b>Accountability, valor e risco, pelo ciclo EDM. <span class="tag">Cap. 1</span></div>
+   <div><b>Modelo de governança</b>Atores e comitês, matriz de Weill e Ross, mecanismos, princípios ISO/IEC 38500. <span class="tag">Cap. 3</span></div>
+   <div style="margin:0 18%;border-color:var(--orange)"><b>PMO e escritório de processos</b>Gestão de projetos e de processos (BPM): onde a direção vira entrega. <span class="tag o">Cap. 4</span></div>
+  </div>
+  <p class="key">A verdadeira governança de TI ocorre quando a decisão tomada no conselho movimenta a engrenagem da operação, e o monitoramento devolve a informação ao conselho.</p>
+ </div>
+</section>
+
+<!-- 20 FECHO DO CASO -->
+<section class="slide" data-act="Síntese">
+ <div class="wrap">
+  <span class="act">Fechando o arco: Comércio Fácil</span>
+  <h2>Agora temos ferramentas para o diagnóstico</h2>
+  <div class="table-wrap"><table>
+   <tr><th>Sintoma</th><th>Diagnóstico</th><th>Resposta do modelo</th></tr>
+   <tr><td>5 PDVs incompatíveis</td><td>Feudalismo em aplicações e arquitetura. Falha de accountability.</td><td>Monarquia de TI em arquitetura e federalismo em aplicações. Comitê de arquitetura.</td></tr>
+   <tr><td>Projeto de estoques parado</td><td>Ninguém com autoridade para priorizar. Falha de geração de valor.</td><td>Comitê estratégico com poder sobre o portfólio. Investimento em duopólio (executivos e TI).</td></tr>
+   <tr><td>Vazamento desconhecido</td><td>Risco invisível à matriz. Falha de gestão de riscos.</td><td>Inventário e relatório de incidentes ao conselho (transparência). Princípio de conformidade da ISO/IEC 38500.</td></tr>
+   <tr><td>Gerentes que não conversam</td><td>Ausência de mecanismos relacionais.</td><td>Canais regulares entre TI e lojas, rotação de pessoal, entendimento compartilhado.</td></tr>
+  </table></div>
+  <p class="story">Não existe uma única resposta certa. O importante é que cada escolha seja justificada por um conceito dos três capítulos.</p>
+ </div>
+</section>
+
+<!-- 21 QUESTIONÁRIO CAP 1 -->
+<section class="slide" data-act="Questionário: Capítulo 1">
+ <div class="wrap">
+  <span class="act">Questionário para resolver com a turma</span>
+  <h2>Capítulo 1: Fundamentos</h2>
+  <div class="qtools"><button class="btn" data-open>Mostrar todas as respostas</button><button class="btn" data-close>Ocultar respostas</button></div>
+  <details><summary><span class="qn">Q1</span><span><span class="tag">Lembrar</span>Qual é a definição de governança de TI segundo a ISO/IEC 38500 e quais são seus três verbos?</span><span class="hint">Resposta esperada</span></summary>
+   <div class="ans"><p>É o sistema pelo qual o uso presente e futuro da TI é avaliado, dirigido e monitorado. Os verbos são avaliar, dirigir e monitorar (EDM), todos de nível estratégico.</p></div></details>
+  <details><summary><span class="qn">Q2</span><span><span class="tag">Entender</span>Por que a Comércio Fácil, com TI rápida e moderna, não tinha governança? Associe cada sintoma a uma motivação.</span><span class="hint">Resposta esperada</span></summary>
+   <div class="ans"><p>Porque qualidade técnica não garante que as decisões certas sejam tomadas pelas razões certas. PDVs incompatíveis indicam falta de accountability; o projeto de estoques parado indica falha na geração de valor; o vazamento desconhecido indica falha na gestão de riscos.</p></div></details>
+  <details><summary><span class="qn">Q3</span><span><span class="tag">Entender</span>Diferencie governança e gestão quanto a atores, ação principal e papel.</span><span class="hint">Resposta esperada</span></summary>
+   <div class="ans"><p>Governança: conselho e alta direção; ciclo EDM; define objetivos, prioriza e monitora conformidade. Gestão: CIO e equipe de TI; planejar, construir, executar e monitorar; executa as atividades técnicas alinhada à direção definida.</p></div></details>
+  <details><summary><span class="qn">Q4</span><span><span class="tag o">Analisar</span>Classifique como governança ou gestão: (a) aprovar o orçamento anual de TI; (b) configurar o firewall; (c) adotar a política cloud-first; (d) escolher a ferramenta de monitoramento de servidores.</span><span class="hint">Resposta esperada</span></summary>
+   <div class="ans"><p>(a) Governança. (b) Gestão. (c) Governança, pois é um princípio de TI. (d) Gestão, desde que respeite a arquitetura definida. Discuta com a turma o que acontece quando (c) é decidido pela equipe técnica sozinha: anarquia ou monarquia de TI sem mandato.</p></div></details>
+  <details><summary><span class="qn">Q5</span><span><span class="tag">Entender</span>Como a Lei Sarbanes-Oxley e a transformação digital mudaram o papel da TI nas organizações?</span><span class="hint">Resposta esperada</span></summary>
+   <div class="ans"><p>A SOX exigiu controles internos sobre relatórios financeiros, que dependem de sistemas, tornando a TI assunto do conselho. A transformação digital colocou a TI no centro do modelo de negócio. Juntas, transformaram a TI de área de suporte operacional em ativo estratégico governado.</p></div></details>
+  <details><summary><span class="qn">Q6</span><span><span class="tag">Lembrar</span>Quem são os principais atores da governança de TI e qual a responsabilidade de cada um?</span><span class="hint">Resposta esperada</span></summary>
+   <div class="ans"><p>Conselho e CEO: responsabilidade final e delegação. CIO: ponte entre negócio e operação técnica. Comitê estratégico de TI: prioriza investimentos e define diretrizes. Comitê técnico ou de arquitetura: padrões, viabilidade e segurança.</p></div></details>
+ </div>
+</section>
+
+<!-- 22 QUESTIONÁRIO CAP 2 -->
+<section class="slide" data-act="Questionário: Capítulo 2">
+ <div class="wrap">
+  <span class="act">Questionário para resolver com a turma</span>
+  <h2>Capítulo 2: Estratégia e governança corporativa</h2>
+  <div class="qtools"><button class="btn" data-open>Mostrar todas as respostas</button><button class="btn" data-close>Ocultar respostas</button></div>
+  <details><summary><span class="qn">Q7</span><span><span class="tag">Lembrar</span>Quais são os quatro princípios de governança corporativa do IBGC?</span><span class="hint">Resposta esperada</span></summary>
+   <div class="ans"><p>Transparência, equidade, prestação de contas (accountability) e responsabilidade corporativa.</p></div></details>
+  <details><summary><span class="qn">Q8</span><span><span class="tag">Entender</span>Por que se diz que o alinhamento estratégico entre negócio e TI é bidirecional? Dê um exemplo.</span><span class="hint">Resposta esperada</span></summary>
+   <div class="ans"><p>Porque a TI deve sustentar a estratégia do negócio e, ao mesmo tempo, suas capacidades devem ser consideradas na formulação dessa estratégia, podendo habilitá-la ou inspirá-la. Exemplo: um estoque unificado, criado para reduzir ruptura, permite ao negócio lançar venda omnichannel.</p></div></details>
+  <details><summary><span class="qn">Q9</span><span><span class="tag">Aplicar</span>Para o IFAL, escreva uma missão, uma visão, um objetivo estratégico e uma decisão de TI que sirva a esse objetivo.</span><span class="hint">Resposta esperada</span></summary>
+   <div class="ans"><p>Resposta aberta. Exemplo: objetivo “reduzir a evasão no primeiro ano em 20%”; decisão de TI: priorizar um painel de alerta de frequência e notas para coordenadores. Avalie se a decisão responde a “a qual objetivo isto serve?”.</p></div></details>
+  <details><summary><span class="qn">Q10</span><span><span class="tag">Entender</span>Relacione cada referência ao seu escopo: Lei das S.A., Código do IBGC e Sarbanes-Oxley.</span><span class="hint">Resposta esperada</span></summary>
+   <div class="ans"><p>Lei nº 6.404/1976: lei brasileira que rege as sociedades anônimas e os deveres de administradores e conselho. Código IBGC: autorregulação brasileira com os quatro princípios. SOX (2002): lei americana sobre controles internos de relatórios financeiros, decisiva para levar a TI ao conselho.</p></div></details>
+  <details><summary><span class="qn">Q11</span><span><span class="tag">Aplicar</span>Na cooperativa, o teste de restauração do backup do sistema de crédito falhou. Como o CIO deve levar isso ao conselho, e a qual princípio corresponde?</span><span class="hint">Resposta esperada</span></summary>
+   <div class="ans"><p>Sem jargão: “Um sistema crítico não tem garantia de recuperação em caso de desastre; o risco é de interrupção das operações de crédito. Propomos ação X, com custo Y e prazo Z.” Corresponde principalmente à responsabilidade corporativa (continuidade) e à transparência.</p></div></details>
+ </div>
+</section>
+
+<!-- 23 QUESTIONÁRIO CAP 3 -->
+<section class="slide" data-act="Questionário: Capítulo 3">
+ <div class="wrap">
+  <span class="act">Questionário para resolver com a turma</span>
+  <h2>Capítulo 3: O modelo de governança</h2>
+  <div class="qtools"><button class="btn" data-open>Mostrar todas as respostas</button><button class="btn" data-close>Ocultar respostas</button></div>
+  <details><summary><span class="qn">Q12</span><span><span class="tag">Lembrar</span>Quais são os cinco domínios de decisão de Weill e Ross e por que se diz que são encadeados?</span><span class="hint">Resposta esperada</span></summary>
+   <div class="ans"><p>Princípios, arquitetura, infraestrutura, aplicações e investimentos. São encadeados porque os princípios orientam a arquitetura, que orienta a infraestrutura, que sustenta as aplicações; os investimentos atravessam todos.</p></div></details>
+  <details><summary><span class="qn">Q13</span><span><span class="tag o">Aplicar</span>No caso das clínicas, qual arquétipo corresponde a cada domínio?</span><span class="hint">Resposta esperada</span></summary>
+   <div class="ans"><p>Princípios: monarquia de negócio. Arquitetura e infraestrutura: monarquia de TI. Aplicações: federalismo (TI central e coordenadores locais). Investimentos: duopólio (diretoria executiva e TI).</p></div></details>
+  <details><summary><span class="qn">Q14</span><span><span class="tag o">Analisar</span>Classifique os mecanismos: comitê estratégico, SLA, rotação de analistas entre TI e negócio, PMO, indicadores BSC, reuniões informais periódicas entre CIO e diretores.</span><span class="hint">Resposta esperada</span></summary>
+   <div class="ans"><p>Estruturais: comitê estratégico e PMO. Processuais: SLA e indicadores BSC. Relacionais: rotação de analistas e reuniões periódicas entre CIO e diretores.</p></div></details>
+  <details><summary><span class="qn">Q15</span><span><span class="tag o">Avaliar</span>Uma empresa criou comitês e SLAs, mas as áreas continuam comprando sistemas por conta própria. Qual o diagnóstico?</span><span class="hint">Resposta esperada</span></summary>
+   <div class="ans"><p>Governança de papel: existem estruturas e processos, mas faltam mecanismos relacionais. Sem entendimento compartilhado e comunicação contínua, as áreas não confiam nem recorrem às estruturas formais, e o feudalismo persiste.</p></div></details>
+  <details><summary><span class="qn">Q16</span><span><span class="tag">Aplicar</span>Associe cada situação a um princípio da ISO/IEC 38500: (a) licitação de ERP com critérios publicados; (b) adequação à LGPD; (c) treinamento antes de trocar o sistema dos atendentes; (d) meta de 99,5% de disponibilidade.</span><span class="hint">Resposta esperada</span></summary>
+   <div class="ans"><p>(a) Aquisição. (b) Conformidade. (c) Comportamento humano. (d) Desempenho.</p></div></details>
+ </div>
+</section>
+
+<!-- 24 INTEGRADORAS -->
+<section class="slide" data-act="Questionário: integração">
+ <div class="wrap">
+  <span class="act">Questões integradoras</span>
+  <h2>Juntando os três capítulos</h2>
+  <div class="qtools"><button class="btn" data-open>Mostrar todas as respostas</button><button class="btn" data-close>Ocultar respostas</button></div>
+  <details><summary><span class="qn">Q17</span><span><span class="tag o">Criar</span>Proponha um modelo mínimo de governança para a Comércio Fácil: um comitê, a matriz de arquétipos, um mecanismo de cada tipo e o princípio ISO mais urgente.</span><span class="hint">Critérios de correção</span></summary>
+   <div class="ans"><p>Resposta aberta. Verifique: (1) comitê com composição e autoridade definidas; (2) arquétipo atribuído aos 5 domínios, com justificativa; (3) um mecanismo estrutural, um processual e um relacional; (4) princípio escolhido ligado a um sintoma, por exemplo conformidade ou responsabilidade diante do vazamento. Esta questão antecipa o projeto integrador.</p></div></details>
+  <details><summary><span class="qn">Q18</span><span><span class="tag o">Avaliar</span>Debate: o feudalismo é sempre ruim? Em que situação ele poderia ser uma escolha deliberada?</span><span class="hint">Pontos para o debate</span></summary>
+   <div class="ans"><p>Não necessariamente. Em unidades de negócio muito diferentes entre si, com pouca sinergia, dar autonomia em aplicações locais pode acelerar a resposta ao mercado. O problema da Comércio Fácil não foi o arquétipo em si, mas sua adoção por omissão e em domínios que exigem padronização, como arquitetura.</p></div></details>
+  <details><summary><span class="qn">Q19</span><span><span class="tag">Entender</span>Explique o caminho que uma decisão do conselho percorre até virar entrega na TI, e o caminho de volta.</span><span class="hint">Resposta esperada</span></summary>
+   <div class="ans"><p>Ida: estratégia corporativa, diretriz do conselho, decisão no comitê conforme a matriz de arquétipos, execução pela gestão via PMO e processos. Volta: indicadores e relatórios (monitorar) retornam ao comitê e ao conselho, que reavaliam e redirecionam. É o ciclo EDM fechando o laço.</p></div></details>
+ </div>
+</section>
+
+<!-- 25 ENCERRAMENTO -->
+<section class="slide" data-act="Encerramento">
+ <div class="wrap cover">
+  <span class="act">Próximo capítulo</span>
+  <h2 style="font-size:clamp(2rem,5vw,3.6rem);max-width:18ch">O motor está desenhado. Agora, o chão de fábrica.</h2>
+  <p class="lead">No Capítulo 4, a governança encontra a gestão de processos (BPM, do As-Is ao To-Be) e a gestão de projetos (PMBOK, PRINCE2), com o PMO como ponte entre a sala de governança e a fábrica de entregas.</p>
+  <p class="story">Para a próxima aula: tragam um processo da vida acadêmica que vocês considerem lento. Vamos descobrir se ele precisa de um projeto ou de governança.</p>
+ </div>
+</section>
+
+</main>
+
+<nav class="nav" aria-label="Navegação dos slides">
+ <button id="prev" aria-label="Slide anterior">‹</button>
+ <div class="where" id="where"></div>
+ <button id="theme" aria-label="Alternar tema claro ou escuro">◐</button>
+ <button id="next" aria-label="Próximo slide">›</button>
+</nav>
+
+<script>
+(function(){
+ const slides=[...document.querySelectorAll('.slide')];
+ const where=document.getElementById('where'),bar=document.getElementById('progress');
+ const prev=document.getElementById('prev'),next=document.getElementById('next');
+ let i=0;
+ function show(n){
+  i=Math.max(0,Math.min(slides.length-1,n));
+  slides.forEach((s,k)=>s.classList.toggle('active',k===i));
+  slides[i].scrollTop=0;
+  where.textContent=(i+1)+' de '+slides.length+': '+slides[i].dataset.act;
+  bar.style.width=((i+1)/slides.length*100)+'%';
+  prev.disabled=i===0; next.disabled=i===slides.length-1;
+  try{history.replaceState(null,'','#'+(i+1))}catch(e){}
+  try{localStorage.setItem('bp-slide',i)}catch(e){}
+ }
+ prev.onclick=()=>show(i-1); next.onclick=()=>show(i+1);
+ document.addEventListener('keydown',e=>{
+  if(e.target.closest('summary,button'))if(e.key===' '||e.key==='Enter')return;
+  if(['ArrowRight','PageDown'].includes(e.key))show(i+1);
+  if(['ArrowLeft','PageUp'].includes(e.key))show(i-1);
+  if(e.key==='Home')show(0); if(e.key==='End')show(slides.length-1);
+ });
+ let x0=null,y0=null;
+ document.addEventListener('touchstart',e=>{x0=e.touches[0].clientX;y0=e.touches[0].clientY},{passive:true});
+ document.addEventListener('touchend',e=>{
+  if(x0===null)return;const dx=e.changedTouches[0].clientX-x0,dy=e.changedTouches[0].clientY-y0;
+  if(Math.abs(dx)>60&&Math.abs(dx)>Math.abs(dy)*1.5&&!e.target.closest('.table-wrap'))show(dx<0?i+1:i-1);x0=null;
+ },{passive:true});
+ let start=parseInt(location.hash.slice(1))-1;
+ if(isNaN(start)){try{start=parseInt(localStorage.getItem('bp-slide'))||0}catch(e){start=0}}
+ show(start);
+
+ // tema
+ const root=document.documentElement;
+ try{const t=localStorage.getItem('bp-theme');if(t)root.dataset.theme=t}catch(e){}
+ document.getElementById('theme').onclick=()=>{
+  const dark=root.dataset.theme?root.dataset.theme==='dark':matchMedia('(prefers-color-scheme: dark)').matches;
+  root.dataset.theme=dark?'light':'dark';
+  try{localStorage.setItem('bp-theme',root.dataset.theme)}catch(e){}
+ };
+
+ // matriz
+ const rows=[...document.querySelectorAll('#matrix tr[data-pin]')];
+ function reveal(r,on){const c=[...r.children];const p=+r.dataset.pin;
+  for(let k=1;k<=6;k++){c[k].classList.toggle('pin',on&&k===p);c[k].textContent=on&&k===p?'●':''}}
+ rows.forEach(r=>r.querySelector('button').onclick=()=>reveal(r,!r.children[r.dataset.pin].classList.contains('pin')));
+ document.getElementById('revealAll').onclick=()=>rows.forEach(r=>reveal(r,true));
+ document.getElementById('resetMatrix').onclick=()=>rows.forEach(r=>reveal(r,false));
+
+ // questionário
+ document.querySelectorAll('[data-open]').forEach(b=>b.onclick=()=>b.closest('.wrap').querySelectorAll('details').forEach(d=>d.open=true));
+ document.querySelectorAll('[data-close]').forEach(b=>b.onclick=()=>b.closest('.wrap').querySelectorAll('details').forEach(d=>d.open=false));
+})();
+</script>
+</body>
+</html>
