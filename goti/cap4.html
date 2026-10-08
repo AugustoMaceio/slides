@@ -1,0 +1,2781 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GOTI · Gestão de Processos e de Projetos</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
+    <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;900&display=swap" rel="stylesheet">
+    <style>
+        /* @MIRA:THEME:START */
+/* MIRA THEME: light-minimal
+   Fundo claro, tipografia escura, laranja como acento pontual.
+   Para ambientes corporativos com projetor fraco ou impressão. */
+:root {
+    --mira-primary: #E8722A;
+    --mira-bg: #FAFAF7;
+    --mira-text: #1A1A1A;
+    --mira-text-soft: rgba(26, 26, 26, 0.72);
+    --mira-text-softer: rgba(26, 26, 26, 0.50);
+    --mira-card-bg: rgba(255, 255, 255, 0.85);
+    --mira-card-border: rgba(0, 0, 0, 0.08);
+    --mira-glow-soft: rgba(232, 114, 42, 0.10);
+    --mira-glow-strong: rgba(232, 114, 42, 0.18);
+    --mira-icon-bg: rgba(232, 114, 42, 0.12);
+    --mira-icon-border: rgba(232, 114, 42, 0.30);
+    --mira-pill-bg: rgba(0, 0, 0, 0.03);
+    --mira-pill-border: rgba(0, 0, 0, 0.08);
+    --mira-stage-glow: rgba(232, 114, 42, 0.05);
+    --mira-accent-2: #2A6FE8;
+}
+
+/* ============================================================
+   MIRA - base.css
+   Estrutura compartilhada por todos os temas.
+   ============================================================ */
+
+body {
+    background: var(--mira-bg);
+    min-height: 100vh;
+    color: var(--mira-text);
+    font-family: 'Inter', sans-serif;
+    font-size: 1.15rem;
+    line-height: 1.6;
+}
+
+.primary-color { color: var(--mira-primary); }
+.primary-bg { background: var(--mira-primary); }
+
+.glass-card {
+    background: var(--mira-card-bg);
+    backdrop-filter: blur(10px);
+    border: 1px solid var(--mira-card-border);
+    box-shadow: 0 12px 36px var(--mira-glow-soft);
+    transition: all 0.3s ease;
+    border-radius: 1rem;
+}
+
+.glass-card:hover {
+    box-shadow: 0 24px 48px var(--mira-glow-strong);
+}
+
+.icon-hero {
+    width: 56px;
+    height: 56px;
+    border-radius: 16px;
+    display: flex;
+    flex: 0 0 auto;
+    align-items: center;
+    justify-content: center;
+    background: var(--mira-icon-bg);
+    border: 1px solid var(--mira-icon-border);
+}
+
+.attribute-pill {
+    background: var(--mira-pill-bg);
+    border: 1px solid var(--mira-pill-border);
+    transition: all 0.25s ease;
+    border-radius: 9999px;
+    padding: 8px 16px;
+    font-size: 1.05rem;
+}
+
+.attribute-pill:hover {
+    background: var(--mira-icon-bg);
+    border-color: var(--mira-icon-border);
+    transform: translateY(-3px);
+}
+
+/* Palco de animação D3, tamanho padrão do canvas */
+.anim-stage {
+    width: 100%;
+    height: clamp(400px, 60vh, 620px);
+    background: radial-gradient(circle at 50% 50%, var(--mira-stage-glow), transparent 70%);
+    border-radius: 8px;
+    overflow: hidden;
+    position: relative;
+}
+
+.anim-stage svg {
+    display: block;
+    width: 100%;
+    height: 100%;
+}
+
+.replay-btn, .pause-btn {
+    position: absolute;
+    top: 12px;
+    z-index: 10;
+    background: var(--mira-pill-bg);
+    border: 1px solid var(--mira-pill-border);
+    color: var(--mira-text-soft);
+    border-radius: 9999px;
+    padding: 6px 14px;
+    font-size: 12px;
+    cursor: pointer;
+    transition: all 0.25s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+.replay-btn { right: 12px; }
+.pause-btn { right: 112px; }
+
+.replay-btn:hover, .pause-btn:hover {
+    background: var(--mira-icon-bg);
+    color: var(--mira-primary);
+}
+.pause-btn.paused {
+    background: var(--mira-icon-bg);
+    border-color: var(--mira-icon-border);
+    color: var(--mira-primary);
+}
+
+.text-soft { color: var(--mira-text-soft); }
+.text-softer { color: var(--mira-text-softer); }
+
+@keyframes mira-pulse {
+    0%, 100% { transform: scale(1); opacity: 1; }
+    50% { transform: scale(1.08); opacity: 0.85; }
+}
+
+@keyframes mira-float {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-10px); }
+}
+        /* @MIRA:THEME:END */
+
+        /* === CONTROLES DE SLIDE (passagem card-a-card) === */
+        html { scroll-behavior: smooth; }
+
+        #mira-progress {
+            position: fixed; top: 0; left: 0; height: 3px; width: 0%;
+            background: linear-gradient(90deg, var(--mira-primary), var(--mira-accent-2), var(--mira-primary));
+            background-size: 200% 100%;
+            animation: mira-shimmer 2s linear infinite;
+            z-index: 9999; transition: width 0.1s linear;
+            box-shadow: 0 0 10px var(--mira-glow-strong);
+        }
+
+        @keyframes mira-shimmer {
+            0% { background-position: -200% center; }
+            100% { background-position: 200% center; }
+        }
+
+        #mira-next {
+            position: fixed; bottom: 32px; right: 32px;
+            width: 48px; height: 48px; border-radius: 50%;
+            background: var(--mira-primary); color: var(--mira-bg);
+            display: flex; align-items: center; justify-content: center;
+            cursor: pointer; border: none;
+            opacity: 0; transform: translateY(20px);
+            transition: all 0.3s ease; z-index: 9998;
+            box-shadow: 0 4px 20px var(--mira-glow-strong);
+        }
+        #mira-next.visible { opacity: 1; transform: translateY(0); }
+        #mira-next:hover { transform: translateY(-3px) scale(1.1); }
+
+        /* === Capa === */
+        #capa-stage { position: absolute; inset: 0; pointer-events: none; }
+        #capa-stage svg { width: 100%; height: 100%; display: block; }
+
+        /* === Trilha de navegação (nível top-down) === */
+        .nivel-chip {
+            display: inline-flex; align-items: center; gap: 8px;
+            font-size: 13px; letter-spacing: 2px; text-transform: uppercase; font-weight: 800;
+            color: var(--mira-primary);
+            background: var(--mira-icon-bg);
+            border: 1px solid var(--mira-icon-border);
+            border-radius: 9999px; padding: 5px 14px;
+        }
+        .nivel-dots { display: inline-flex; gap: 5px; margin-left: 6px; }
+        .nivel-dots i { width: 7px; height: 7px; border-radius: 50%; background: var(--mira-icon-border); display: block; }
+        .nivel-dots i.on { background: var(--mira-primary); }
+
+        .tag-ilustrativo {
+            font-size: 12px; letter-spacing: 1.5px; text-transform: uppercase; font-weight: 700;
+            color: var(--mira-accent-2);
+            border: 1.5px dashed var(--mira-accent-2);
+            border-radius: 9999px; padding: 4px 10px; margin-left: 8px;
+        }
+        .tag-conceitual {
+            font-size: 12px; letter-spacing: 1.5px; text-transform: uppercase; font-weight: 700;
+            color: var(--mira-primary);
+            border: 1.5px solid var(--mira-icon-border);
+            background: var(--mira-icon-bg);
+            border-radius: 9999px; padding: 4px 12px; margin-left: 8px;
+        }
+
+        .fonte-linha { font-size: 13px; color: var(--mira-text-softer); text-align: center; margin-top: 4px; font-weight: 500; }
+
+        /* Pílula acesa pela animação (sincronizada com o palco) */
+        .attribute-pill.pill-on {
+            background: var(--mira-icon-bg);
+            border-color: var(--mira-primary);
+            box-shadow: 0 6px 18px var(--mira-glow-strong);
+            transform: translateY(-3px);
+        }
+
+        /* Slides com oito pílulas: palco um pouco mais baixo para caber na tela */
+        #pmbok-stage, #ciclo-stage { height: clamp(340px, 52vh, 540px); }
+
+        /* Questões de fixação */
+        .bloom {
+            display: inline-block; min-width: 92px; text-align: center;
+            font-size: 11px; letter-spacing: 1.5px; text-transform: uppercase; font-weight: 800;
+            color: var(--mira-primary); background: var(--mira-icon-bg);
+            border: 1px solid var(--mira-icon-border); border-radius: 9999px; padding: 3px 10px;
+        }
+
+    </style>
+</head>
+
+<body>
+    <!-- Controles de slide: barra de progresso + botão flutuante "próximo" -->
+    <div id="mira-progress"></div>
+    <button id="mira-next" aria-label="Próximo slide">
+        <i data-lucide="chevron-down" class="w-6 h-6" id="mira-next-icon"></i>
+    </button>
+
+    <!-- ============ SLIDE 1: CAPA ============ -->
+    <section id="s1" class="min-h-screen flex flex-col items-center justify-center relative overflow-hidden px-6">
+        <!-- @MIRA:SIZE 3/10 -->
+        <div id="capa-stage"><svg viewBox="0 0 1280 720" preserveAspectRatio="xMidYMid slice"></svg></div>
+        <div class="relative z-10 text-center max-w-4xl" data-aos="fade-up">
+            <p class="attribute-pill inline-block px-5 py-2 text-sm tracking-widest uppercase text-soft mb-8">GOTI · Capítulo 4 · 10h/aula</p>
+            <h1 class="text-6xl md:text-7xl font-black leading-tight mb-6">
+                Gestão de Processos<br>
+                <span class="primary-color">e de Projetos</span>
+            </h1>
+            <p class="text-xl text-soft max-w-2xl mx-auto mb-10">A governança decide. Processos que giram e projetos que terminam fazem a decisão acontecer.</p>
+            <div class="flex items-center justify-center gap-3 text-softer text-sm">
+                <i data-lucide="user" class="w-4 h-4 primary-color"></i> Prof. Augusto
+                <span class="opacity-40">|</span>
+                <i data-lucide="school" class="w-4 h-4 primary-color"></i> IFAL · Bacharelado em Sistemas de Informação
+            </div>
+        </div>
+        <div class="absolute bottom-10 left-1/2 -translate-x-1/2 text-softer text-xs tracking-widest uppercase z-10">
+            Use as setas para avançar
+        </div>
+    </section>
+
+
+    <!-- ============ SLIDE 2: SUMÁRIO ============ -->
+    <section id="sumario" class="min-h-screen flex flex-col items-center justify-center px-6 pt-3 pb-6">
+        <div class="w-full max-w-6xl" data-aos="fade-up" data-aos-delay="100">
+            <div class="text-center mb-2">
+                <h2 class="text-4xl md:text-5xl font-bold mb-2">Trilha do <span class="primary-color italic">Capítulo 4</span></h2>
+                <p class="text-softer italic text-xl md:text-2xl font-medium">Quatro paradas: processos, projetos, governança e prática.</p>
+            </div>
+            <div class="glass-card rounded-2xl p-1 md:p-2 relative">
+                <div class="flex items-center justify-between mb-2 px-1">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-lg flex items-center justify-center" style="background: var(--mira-icon-bg);">
+                            <i data-lucide="compass" class="w-5 h-5 primary-color"></i>
+                        </div>
+                        <div>
+                            <p class="mb-1"><span class="nivel-chip">Visão geral · Roteiro<span class="nivel-dots"><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i></span></span></p>
+                            <p class="font-bold text-base md:text-lg">Sumário e trilha de aprendizagem</p>
+                            <p class="text-softer text-sm md:text-base italic font-medium">Capítulo 4 · 10h/aula · Do processo como ativo ao PMO.</p>
+                        </div>
+                    </div>
+                    <button id="pause-sumario" class="pause-btn" type="button" aria-label="Pausar animação"></button>
+                    <button id="replay-sumario" class="replay-btn" type="button"><i data-lucide="rotate-cw" class="w-4 h-4"></i>Replay</button>
+                </div>
+                <!-- @MIRA:SIZE 3/10 -->
+                <div class="anim-stage" id="sumario-stage">
+                    <svg id="sumario-svg" viewBox="0 0 1280 720" preserveAspectRatio="xMidYMid meet"></svg>
+                </div>
+                <div class="border-t pt-1 mt-1 mb-1" style="border-color: var(--mira-card-border);">
+                    <p class="text-sm uppercase tracking-[3px] text-softer text-center font-bold mb-2">Os quatro objetivos do capítulo · clique para saltar</p>
+                    <div class="grid grid-cols-2 md:grid-cols-4 gap-2">
+                        <a href="#s3" class="attribute-pill text-center p-2 rounded-xl block cursor-pointer" id="sumario-pill-0">
+                            <i data-lucide="refresh-cw" class="w-4 h-4 primary-color mx-auto mb-1"></i>
+                            <p class="text-base font-bold tracking-wide">N1 · Processos</p>
+                            <p class="text-xs text-softer mt-0.5">Explicar o conceito e o ciclo de vida do BPM</p>
+                        </a>
+                        <a href="#s9" class="attribute-pill text-center p-2 rounded-xl block cursor-pointer" id="sumario-pill-1">
+                            <i data-lucide="flag" class="w-4 h-4 primary-color mx-auto mb-1"></i>
+                            <p class="text-base font-bold tracking-wide">N2 · Projetos</p>
+                            <p class="text-xs text-softer mt-0.5">Descrever princípios e domínios do PMBOK 7</p>
+                        </a>
+                        <a href="#s13" class="attribute-pill text-center p-2 rounded-xl block cursor-pointer" id="sumario-pill-2">
+                            <i data-lucide="git-compare" class="w-4 h-4 primary-color mx-auto mb-1"></i>
+                            <p class="text-base font-bold tracking-wide">N3 · Na governança</p>
+                            <p class="text-xs text-softer mt-0.5">Diferenciar processo e projeto; papel do PMO</p>
+                        </a>
+                        <a href="#s17" class="attribute-pill text-center p-2 rounded-xl block cursor-pointer" id="sumario-pill-3">
+                            <i data-lucide="graduation-cap" class="w-4 h-4 primary-color mx-auto mb-1"></i>
+                            <p class="text-base font-bold tracking-wide">N4 · Na prática</p>
+                            <p class="text-xs text-softer mt-0.5">Matrícula de calouros, síntese e questões</p>
+                        </a>
+                    </div>
+                    <p class="fonte-linha">Fonte: e-book GOTI, Cap. 4 (objetivos de aprendizagem); plano de curso, Cap. 4 (10h).</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+
+    <!-- ============ S3: Do conhecimento tácito ao processo gerido ============ -->
+    <section id="s3" class="min-h-screen flex flex-col items-center justify-center px-6 pt-3 pb-6">
+        <div class="w-full max-w-6xl" data-aos="fade-up" data-aos-delay="100">
+            <div class="text-center mb-2">
+                <h2 class="text-4xl md:text-5xl font-bold mb-2">Processo é <span class="primary-color italic">ativo</span>, não segredo</h2>
+                <p class="text-softer italic text-xl md:text-2xl font-medium">O BPM tira o processo da cabeça das pessoas e o coloca na mesa.</p>
+            </div>
+            <div class="glass-card rounded-2xl p-1 md:p-2 relative">
+                <div class="flex items-center justify-between mb-2 px-1">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-lg flex items-center justify-center" style="background: var(--mira-icon-bg);">
+                            <i data-lucide="puzzle" class="w-5 h-5 primary-color"></i>
+                        </div>
+                        <div>
+                            <p class="mb-1"><span class="nivel-chip">N1 · Processos<span class="nivel-dots"><i class="on"></i><i></i><i></i><i></i></span></span></p>
+                            <p class="font-bold text-base md:text-lg">Do conhecimento tácito ao processo gerido</p>
+                            <p class="text-softer text-sm md:text-base italic font-medium">Cada pessoa ou sistema guarda um pedaço; ninguém enxerga o todo.</p>
+                        </div>
+                    </div>
+                    <button id="pause-ativo" class="pause-btn" type="button" aria-label="Pausar animação"></button>
+                    <button id="replay-ativo" class="replay-btn" type="button"><i data-lucide="rotate-cw" class="w-4 h-4"></i>Replay</button>
+                </div>
+                <!-- @MIRA:SIZE 3/10 -->
+                <div class="anim-stage" id="ativo-stage">
+                    <svg id="ativo-svg" viewBox="0 0 1280 720" preserveAspectRatio="xMidYMid meet"></svg>
+                </div>
+                <div class="border-t pt-1 mt-1 mb-1" style="border-color: var(--mira-card-border);">
+                    <p class="text-sm uppercase tracking-[3px] text-softer text-center font-bold mb-2">O que o BPM faz com um processo de negócio</p>
+                    <div class="grid grid-cols-2 md:grid-cols-5 gap-2">
+                        <div class="attribute-pill text-center p-2 rounded-xl" id="ativo-pill-0">
+                            <i data-lucide="search" class="w-4 h-4 primary-color mx-auto mb-1"></i>
+                            <p class="text-base font-bold tracking-wide">Identificar</p>
+                            
+                        </div>
+                        <div class="attribute-pill text-center p-2 rounded-xl" id="ativo-pill-1">
+                            <i data-lucide="pen-tool" class="w-4 h-4 primary-color mx-auto mb-1"></i>
+                            <p class="text-base font-bold tracking-wide">Modelar</p>
+                            
+                        </div>
+                        <div class="attribute-pill text-center p-2 rounded-xl" id="ativo-pill-2">
+                            <i data-lucide="play" class="w-4 h-4 primary-color mx-auto mb-1"></i>
+                            <p class="text-base font-bold tracking-wide">Executar</p>
+                            
+                        </div>
+                        <div class="attribute-pill text-center p-2 rounded-xl" id="ativo-pill-3">
+                            <i data-lucide="activity" class="w-4 h-4 primary-color mx-auto mb-1"></i>
+                            <p class="text-base font-bold tracking-wide">Monitorar</p>
+                            
+                        </div>
+                        <div class="attribute-pill text-center p-2 rounded-xl" id="ativo-pill-4">
+                            <i data-lucide="trending-up" class="w-4 h-4 primary-color mx-auto mb-1"></i>
+                            <p class="text-base font-bold tracking-wide">Melhorar sempre</p>
+                            
+                        </div>
+                    </div>
+                    <p class="fonte-linha">Fonte: e-book GOTI, seção 4.1; ABPMP (2019), BPM CBOK v4.0.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+
+    <!-- ============ S3-CONCEITO: fundamentação ============ -->
+    <section id="s3-conceito" class="min-h-screen flex flex-col items-center justify-center px-6 pt-4 pb-8">
+        <div class="w-full max-w-6xl" data-aos="fade-up" data-aos-delay="100">
+            <div class="text-center mb-4">
+                <h2 class="text-4xl md:text-5xl font-black mb-2">Conceito: <span class="primary-color italic">o que é BPM</span></h2>
+                <p class="text-softer text-xl md:text-2xl font-medium">Business Process Management, ou gestão de processos de negócio.</p>
+            </div>
+            <div class="glass-card rounded-2xl p-6 md:p-8 relative">
+                <div class="flex items-center justify-between mb-6 pb-4 border-b border-black/10">
+                    <div class="flex items-center gap-4">
+                        <div class="w-12 h-12 rounded-xl flex items-center justify-center" style="background: var(--mira-icon-bg);">
+                            <i data-lucide="book-open" class="w-6 h-6 primary-color"></i>
+                        </div>
+                        <div>
+                            <span class="nivel-chip">N1 · Processos<span class="nivel-dots"><i class="on"></i><i></i><i></i><i></i></span></span>
+                            <span class="tag-conceitual">Conceitos e definições</span>
+                            <h3 class="font-bold text-xl md:text-2xl mt-1">Por que a governança de TI se importa com processos?</h3>
+                        </div>
+                    </div>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+                    <div class="p-5 rounded-2xl border flex flex-col justify-between " style="background: var(--mira-pill-bg); border-color: var(--mira-card-border);">
+                        <div>
+                            <div class="flex items-center gap-2 mb-3">
+                                <i data-lucide="layers" class="w-5 h-5 primary-color"></i>
+                                <h4 class="font-bold text-lg">Uma disciplina de gestão</h4>
+                            </div>
+                            <p class="text-base text-soft leading-relaxed">O BPM trata processos organizacionais como <strong>ativos</strong> que devem ser identificados, modelados, executados, monitorados e continuamente melhorados, em vez de conhecimento tácito disperso entre colaboradores.</p>
+                        </div>
+                        <p class="text-xs font-semibold text-softer mt-4 pt-2 border-t border-black/5">ABPMP (2019); e-book, seção 4.1</p>
+                    </div>
+                    <div class="p-5 rounded-2xl border flex flex-col justify-between " style="background: var(--mira-pill-bg); border-color: var(--mira-card-border);">
+                        <div>
+                            <div class="flex items-center gap-2 mb-3">
+                                <i data-lucide="workflow" class="w-5 h-5 primary-color"></i>
+                                <h4 class="font-bold text-lg">O que é um processo de negócio</h4>
+                            </div>
+                            <p class="text-base text-soft leading-relaxed">Conjunto de atividades e comportamentos executados por <strong>pessoas ou sistemas</strong>, organizados para alcançar um objetivo e gerar valor a um cliente interno ou externo. Exemplos: <em>atender a um chamado de suporte técnico</em>, <em>processar uma solicitação de crédito</em>.</p>
+                        </div>
+                        <p class="text-xs font-semibold text-softer mt-4 pt-2 border-t border-black/5">e-book, seção 4.1</p>
+                    </div>
+                    <div class="p-5 rounded-2xl border flex flex-col justify-between " style="background: var(--mira-pill-bg); border-color: var(--mira-card-border);">
+                        <div>
+                            <div class="flex items-center gap-2 mb-3">
+                                <i data-lucide="bug" class="w-5 h-5 primary-color"></i>
+                                <h4 class="font-bold text-lg">Sistema ruim, processo confuso</h4>
+                            </div>
+                            <p class="text-base text-soft leading-relaxed">Muitos projetos de TI são, na verdade, projetos de <strong>automação ou redesenho de processos</strong>. Um sistema mal projetado é, com frequência, sintoma de um processo mal compreendido antes mesmo de ser automatizado.</p>
+                        </div>
+                        <p class="text-xs font-semibold text-softer mt-4 pt-2 border-t border-black/5">e-book, seção 4.1; slides, 4.1</p>
+                    </div>
+                </div>
+                <div class="p-4 rounded-xl border flex items-center gap-4" style="background: var(--mira-icon-bg); border-color: var(--mira-icon-border);">
+                    <i data-lucide="quote" class="w-8 h-8 primary-color shrink-0"></i>
+                    <p class="text-base md:text-lg font-medium"><strong>Regra das organizações maduras:</strong> toda iniciativa de TI é precedida, ou acompanhada, de um esforço explícito de modelagem e análise de processos, e não apenas de especificação de requisitos de sistema.</p>
+                </div>
+                <p class="fonte-linha mt-4">Fonte: e-book GOTI, seção 4.1; ASSOCIATION OF BUSINESS PROCESS MANAGEMENT PROFESSIONALS (2019).</p>
+            </div>
+        </div>
+    </section>
+
+
+    <!-- ============ S5: Ciclo de vida BPM (BPM CBOK) ============ -->
+    <section id="s5" class="min-h-screen flex flex-col items-center justify-center px-6 pt-3 pb-6">
+        <div class="w-full max-w-6xl" data-aos="fade-up" data-aos-delay="100">
+            <div class="text-center mb-2">
+                <h2 class="text-4xl md:text-5xl font-bold mb-2">Seis fases, um <span class="primary-color italic">ciclo sem fim</span></h2>
+                <p class="text-softer italic text-xl md:text-2xl font-medium">BPM não é projeto único: é capacidade permanente.</p>
+            </div>
+            <div class="glass-card rounded-2xl p-1 md:p-2 relative">
+                <div class="flex items-center justify-between mb-2 px-1">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-lg flex items-center justify-center" style="background: var(--mira-icon-bg);">
+                            <i data-lucide="refresh-cw" class="w-5 h-5 primary-color"></i>
+                        </div>
+                        <div>
+                            <p class="mb-1"><span class="nivel-chip">N1 · Processos<span class="nivel-dots"><i class="on"></i><i></i><i></i><i></i></span></span></p>
+                            <p class="font-bold text-base md:text-lg">Ciclo de vida BPM (BPM CBOK)</p>
+                            <p class="text-softer text-sm md:text-base italic font-medium">O refinamento reinicia o planejamento, na lógica do PDCA.</p>
+                        </div>
+                    </div>
+                    <button id="pause-ciclo" class="pause-btn" type="button" aria-label="Pausar animação"></button>
+                    <button id="replay-ciclo" class="replay-btn" type="button"><i data-lucide="rotate-cw" class="w-4 h-4"></i>Replay</button>
+                </div>
+                <!-- @MIRA:SIZE 3/10 -->
+                <div class="anim-stage" id="ciclo-stage">
+                    <svg id="ciclo-svg" viewBox="0 0 1280 720" preserveAspectRatio="xMidYMid meet"></svg>
+                </div>
+                <div class="border-t pt-1 mt-1 mb-1" style="border-color: var(--mira-card-border);">
+                    <p class="text-sm uppercase tracking-[3px] text-softer text-center font-bold mb-2">As seis fases do ciclo de vida</p>
+                    <div class="grid grid-cols-2 md:grid-cols-6 gap-2">
+                        <div class="attribute-pill text-center p-2 rounded-xl" id="ciclo-pill-0">
+                            <i data-lucide="target" class="w-4 h-4 primary-color mx-auto mb-1"></i>
+                            <p class="text-base font-bold tracking-wide">Planejamento</p>
+                            <p class="text-xs text-softer mt-0.5">prioriza processos</p>
+                        </div>
+                        <div class="attribute-pill text-center p-2 rounded-xl" id="ciclo-pill-1">
+                            <i data-lucide="search" class="w-4 h-4 primary-color mx-auto mb-1"></i>
+                            <p class="text-base font-bold tracking-wide">Análise</p>
+                            <p class="text-xs text-softer mt-0.5">“como está”</p>
+                        </div>
+                        <div class="attribute-pill text-center p-2 rounded-xl" id="ciclo-pill-2">
+                            <i data-lucide="pen-tool" class="w-4 h-4 primary-color mx-auto mb-1"></i>
+                            <p class="text-base font-bold tracking-wide">Desenho</p>
+                            <p class="text-xs text-softer mt-0.5">“como deveria ser”</p>
+                        </div>
+                        <div class="attribute-pill text-center p-2 rounded-xl" id="ciclo-pill-3">
+                            <i data-lucide="rocket" class="w-4 h-4 primary-color mx-auto mb-1"></i>
+                            <p class="text-base font-bold tracking-wide">Implementação</p>
+                            <p class="text-xs text-softer mt-0.5">põe em operação</p>
+                        </div>
+                        <div class="attribute-pill text-center p-2 rounded-xl" id="ciclo-pill-4">
+                            <i data-lucide="gauge" class="w-4 h-4 primary-color mx-auto mb-1"></i>
+                            <p class="text-base font-bold tracking-wide">Monitoramento e controle</p>
+                            <p class="text-xs text-softer mt-0.5">indicadores</p>
+                        </div>
+                        <div class="attribute-pill text-center p-2 rounded-xl" id="ciclo-pill-5">
+                            <i data-lucide="repeat" class="w-4 h-4 primary-color mx-auto mb-1"></i>
+                            <p class="text-base font-bold tracking-wide">Refinamento</p>
+                            <p class="text-xs text-softer mt-0.5">ajusta e reinicia</p>
+                        </div>
+                    </div>
+                    <p class="fonte-linha">Fonte: e-book GOTI, seção 4.2; ABPMP (2019), BPM CBOK v4.0.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+
+    <!-- ============ S5-CONCEITO: fundamentação ============ -->
+    <section id="s5-conceito" class="min-h-screen flex flex-col items-center justify-center px-6 pt-4 pb-8">
+        <div class="w-full max-w-6xl" data-aos="fade-up" data-aos-delay="100">
+            <div class="text-center mb-4">
+                <h2 class="text-4xl md:text-5xl font-black mb-2">Do <span class="primary-color italic">“como está”</span> ao <span class="primary-color italic">“como deveria ser”</span></h2>
+                <p class="text-softer text-xl md:text-2xl font-medium">O coração do ciclo BPM é comparar o processo real com o processo desejado.</p>
+            </div>
+            <div class="glass-card rounded-2xl p-6 md:p-8 relative">
+                <div class="flex items-center justify-between mb-6 pb-4 border-b border-black/10">
+                    <div class="flex items-center gap-4">
+                        <div class="w-12 h-12 rounded-xl flex items-center justify-center" style="background: var(--mira-icon-bg);">
+                            <i data-lucide="book-open" class="w-6 h-6 primary-color"></i>
+                        </div>
+                        <div>
+                            <span class="nivel-chip">N1 · Processos<span class="nivel-dots"><i class="on"></i><i></i><i></i><i></i></span></span>
+                            <span class="tag-conceitual">Ciclo de vida BPM</span>
+                            <h3 class="font-bold text-xl md:text-2xl mt-1">Cada fase entrega um insumo para a seguinte, e a última reabre a primeira.</h3>
+                        </div>
+                    </div>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-4">
+                    <div class="p-5 rounded-2xl border flex flex-col justify-between " style="background: var(--mira-pill-bg); border-color: var(--mira-card-border);">
+                        <div>
+                            <div class="flex items-center gap-2 mb-3">
+                                <i data-lucide="search" class="w-5 h-5 primary-color"></i>
+                                <h4 class="font-bold text-lg">2 · Análise: o processo “como está”</h4>
+                            </div>
+                            <p class="text-base text-soft leading-relaxed">Examina o processo como ele é executado hoje, identificando <strong>problemas, gargalos e oportunidades</strong> de melhoria. É precedida pelo <strong>planejamento</strong>, que define a estratégia de gestão de processos e prioriza quais processos merecem atenção.</p>
+                        </div>
+                        <p class="text-xs font-semibold text-softer mt-4 pt-2 border-t border-black/5">e-book, seção 4.2</p>
+                    </div>
+                    <div class="p-5 rounded-2xl border flex flex-col justify-between " style="background: var(--mira-pill-bg); border-color: var(--mira-card-border);">
+                        <div>
+                            <div class="flex items-center gap-2 mb-3">
+                                <i data-lucide="pen-tool" class="w-5 h-5 primary-color"></i>
+                                <h4 class="font-bold text-lg">3 · Desenho: o processo “como deveria ser”</h4>
+                            </div>
+                            <p class="text-base text-soft leading-relaxed">Propõe uma versão melhorada, especificando <strong>atividades, responsáveis, regras de negócio</strong> e, quando aplicável, <strong>requisitos de automação</strong>. É aqui que nasce a especificação que a TI vai implementar.</p>
+                        </div>
+                        <p class="text-xs font-semibold text-softer mt-4 pt-2 border-t border-black/5">e-book, seção 4.2</p>
+                    </div>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+                    <div class="p-5 rounded-2xl border flex flex-col justify-between " style="background: var(--mira-pill-bg); border-color: var(--mira-card-border);">
+                        <div>
+                            <div class="flex items-center gap-2 mb-3">
+                                <i data-lucide="rocket" class="w-5 h-5 primary-color"></i>
+                                <h4 class="font-bold text-lg">4 · Implementação</h4>
+                            </div>
+                            <p class="text-base text-soft leading-relaxed">Coloca o processo redesenhado em operação: mudanças organizacionais, treinamento, desenvolvimento ou configuração de sistemas. <strong>Ponte direta com a gestão de projetos.</strong></p>
+                        </div>
+                        <p class="text-xs font-semibold text-softer mt-4 pt-2 border-t border-black/5">e-book, seções 4.2 e 4.4</p>
+                    </div>
+                    <div class="p-5 rounded-2xl border flex flex-col justify-between " style="background: var(--mira-pill-bg); border-color: var(--mira-card-border);">
+                        <div>
+                            <div class="flex items-center gap-2 mb-3">
+                                <i data-lucide="gauge" class="w-5 h-5 primary-color"></i>
+                                <h4 class="font-bold text-lg">5 · Monitoramento e controle</h4>
+                            </div>
+                            <p class="text-base text-soft leading-relaxed">Acompanha a execução por meio de <strong>indicadores de desempenho</strong>, verificando se os resultados esperados do redesenho de fato se concretizam.</p>
+                        </div>
+                        <p class="text-xs font-semibold text-softer mt-4 pt-2 border-t border-black/5">e-book, seção 4.2</p>
+                    </div>
+                    <div class="p-5 rounded-2xl border flex flex-col justify-between " style="background: var(--mira-pill-bg); border-color: var(--mira-card-border);">
+                        <div>
+                            <div class="flex items-center gap-2 mb-3">
+                                <i data-lucide="repeat" class="w-5 h-5 primary-color"></i>
+                                <h4 class="font-bold text-lg">6 · Refinamento</h4>
+                            </div>
+                            <p class="text-base text-soft leading-relaxed">Usa os dados de monitoramento para propor <strong>ajustes contínuos</strong>, reiniciando o ciclo. A lógica é a do PDCA (Plan, Do, Check, Act).</p>
+                        </div>
+                        <p class="text-xs font-semibold text-softer mt-4 pt-2 border-t border-black/5">e-book, seção 4.2</p>
+                    </div>
+                </div>
+                <div class="p-4 rounded-xl border flex items-center gap-4" style="background: var(--mira-icon-bg); border-color: var(--mira-icon-border);">
+                    <i data-lucide="infinity" class="w-8 h-8 primary-color shrink-0"></i>
+                    <p class="text-base md:text-lg font-medium"><strong>Ideia-chave:</strong> BPM não é um projeto único e finito, mas uma <strong>capacidade organizacional permanente</strong>.</p>
+                </div>
+                <p class="fonte-linha mt-4">Fonte: e-book GOTI, seção 4.2; ABPMP (2019), BPM CBOK v4.0.</p>
+            </div>
+        </div>
+    </section>
+
+
+    <!-- ============ S7: Atender a um chamado de suporte técnico ============ -->
+    <section id="s7" class="min-h-screen flex flex-col items-center justify-center px-6 pt-3 pb-6">
+        <div class="w-full max-w-6xl" data-aos="fade-up" data-aos-delay="100">
+            <div class="text-center mb-2">
+                <h2 class="text-4xl md:text-5xl font-bold mb-2">BPMN: o processo <span class="primary-color italic">vira desenho</span></h2>
+                <p class="text-softer italic text-xl md:text-2xl font-medium">Uma notação que negócio e TI leem do mesmo jeito.</p>
+            </div>
+            <div class="glass-card rounded-2xl p-1 md:p-2 relative">
+                <div class="flex items-center justify-between mb-2 px-1">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-lg flex items-center justify-center" style="background: var(--mira-icon-bg);">
+                            <i data-lucide="git-branch" class="w-5 h-5 primary-color"></i>
+                        </div>
+                        <div>
+                            <p class="mb-1"><span class="nivel-chip">N1 · Processos<span class="nivel-dots"><i class="on"></i><i></i><i></i><i></i></span></span><span class="tag-ilustrativo">Ilustrativo</span></p>
+                            <p class="font-bold text-base md:text-lg">Atender a um chamado de suporte técnico</p>
+                            <p class="text-softer text-sm md:text-base italic font-medium">Os quatro elementos do BPMN em ação: acompanhe o token.</p>
+                        </div>
+                    </div>
+                    <button id="pause-bpmn" class="pause-btn" type="button" aria-label="Pausar animação"></button>
+                    <button id="replay-bpmn" class="replay-btn" type="button"><i data-lucide="rotate-cw" class="w-4 h-4"></i>Replay</button>
+                </div>
+                <!-- @MIRA:SIZE 3/10 -->
+                <div class="anim-stage" id="bpmn-stage">
+                    <svg id="bpmn-svg" viewBox="0 0 1280 720" preserveAspectRatio="xMidYMid meet"></svg>
+                </div>
+                <div class="border-t pt-1 mt-1 mb-1" style="border-color: var(--mira-card-border);">
+                    <p class="text-sm uppercase tracking-[3px] text-softer text-center font-bold mb-2">Os elementos do BPMN citados no e-book</p>
+                    <div class="grid grid-cols-2 md:grid-cols-4 gap-2">
+                        <div class="attribute-pill text-center p-2 rounded-xl" id="bpmn-pill-0">
+                            <i data-lucide="circle" class="w-4 h-4 primary-color mx-auto mb-1"></i>
+                            <p class="text-base font-bold tracking-wide">Eventos</p>
+                            <p class="text-xs text-softer mt-0.5">iniciam ou encerram o processo</p>
+                        </div>
+                        <div class="attribute-pill text-center p-2 rounded-xl" id="bpmn-pill-1">
+                            <i data-lucide="square" class="w-4 h-4 primary-color mx-auto mb-1"></i>
+                            <p class="text-base font-bold tracking-wide">Atividades</p>
+                            <p class="text-xs text-softer mt-0.5">o trabalho executado</p>
+                        </div>
+                        <div class="attribute-pill text-center p-2 rounded-xl" id="bpmn-pill-2">
+                            <i data-lucide="diamond" class="w-4 h-4 primary-color mx-auto mb-1"></i>
+                            <p class="text-base font-bold tracking-wide">Gateways</p>
+                            <p class="text-xs text-softer mt-0.5">pontos de decisão ou divergência</p>
+                        </div>
+                        <div class="attribute-pill text-center p-2 rounded-xl" id="bpmn-pill-3">
+                            <i data-lucide="rows-3" class="w-4 h-4 primary-color mx-auto mb-1"></i>
+                            <p class="text-base font-bold tracking-wide">Raias</p>
+                            <p class="text-xs text-softer mt-0.5">quem executa: pessoa, área ou sistema</p>
+                        </div>
+                    </div>
+                    <p class="fonte-linha">Fonte: e-book GOTI, seção 4.3; BPMN, Object Management Group. Diagrama ilustrativo construído para a aula.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+
+    <!-- ============ S7-CONCEITO: fundamentação ============ -->
+    <section id="s7-conceito" class="min-h-screen flex flex-col items-center justify-center px-6 pt-4 pb-8">
+        <div class="w-full max-w-6xl" data-aos="fade-up" data-aos-delay="100">
+            <div class="text-center mb-4">
+                <h2 class="text-4xl md:text-5xl font-black mb-2">Por que <span class="primary-color italic">padronizar o desenho</span>?</h2>
+                <p class="text-softer text-xl md:text-2xl font-medium">BPMN (Business Process Model and Notation), mantido pelo Object Management Group.</p>
+            </div>
+            <div class="glass-card rounded-2xl p-6 md:p-8 relative">
+                <div class="flex items-center justify-between mb-6 pb-4 border-b border-black/10">
+                    <div class="flex items-center gap-4">
+                        <div class="w-12 h-12 rounded-xl flex items-center justify-center" style="background: var(--mira-icon-bg);">
+                            <i data-lucide="book-open" class="w-6 h-6 primary-color"></i>
+                        </div>
+                        <div>
+                            <span class="nivel-chip">N1 · Processos<span class="nivel-dots"><i class="on"></i><i></i><i></i><i></i></span></span>
+                            <span class="tag-conceitual">Notação de processos</span>
+                            <h3 class="font-bold text-xl md:text-2xl mt-1">Processo desenhado é processo que pode ser revisado, auditado e automatizado.</h3>
+                        </div>
+                    </div>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-4">
+                    <div class="p-5 rounded-2xl border flex flex-col justify-between " style="background: var(--mira-pill-bg); border-color: var(--mira-card-border);">
+                        <div>
+                            <div class="flex items-center gap-2 mb-3">
+                                <i data-lucide="circle" class="w-5 h-5 primary-color"></i>
+                                <h4 class="font-bold text-lg">Eventos</h4>
+                            </div>
+                            <p class="text-base text-soft leading-relaxed">O que <strong>inicia ou encerra</strong> um processo. Ex.: “chamado aberto”, “solução confirmada”.</p>
+                        </div>
+                        <p class="text-xs font-semibold text-softer mt-4 pt-2 border-t border-black/5">e-book, seção 4.3</p>
+                    </div>
+                    <div class="p-5 rounded-2xl border flex flex-col justify-between " style="background: var(--mira-pill-bg); border-color: var(--mira-card-border);">
+                        <div>
+                            <div class="flex items-center gap-2 mb-3">
+                                <i data-lucide="square" class="w-5 h-5 primary-color"></i>
+                                <h4 class="font-bold text-lg">Atividades</h4>
+                            </div>
+                            <p class="text-base text-soft leading-relaxed">O <strong>trabalho executado</strong>. Ex.: “registrar e classificar o chamado”.</p>
+                        </div>
+                        <p class="text-xs font-semibold text-softer mt-4 pt-2 border-t border-black/5">e-book, seção 4.3</p>
+                    </div>
+                    <div class="p-5 rounded-2xl border flex flex-col justify-between " style="background: var(--mira-pill-bg); border-color: var(--mira-card-border);">
+                        <div>
+                            <div class="flex items-center gap-2 mb-3">
+                                <i data-lucide="diamond" class="w-5 h-5 primary-color"></i>
+                                <h4 class="font-bold text-lg">Gateways</h4>
+                            </div>
+                            <p class="text-base text-soft leading-relaxed">Pontos de <strong>decisão ou divergência</strong> de fluxo. Ex.: “resolve no 1º nível?”.</p>
+                        </div>
+                        <p class="text-xs font-semibold text-softer mt-4 pt-2 border-t border-black/5">e-book, seção 4.3</p>
+                    </div>
+                    <div class="p-5 rounded-2xl border flex flex-col justify-between " style="background: var(--mira-pill-bg); border-color: var(--mira-card-border);">
+                        <div>
+                            <div class="flex items-center gap-2 mb-3">
+                                <i data-lucide="rows-3" class="w-5 h-5 primary-color"></i>
+                                <h4 class="font-bold text-lg">Piscinas e raias</h4>
+                            </div>
+                            <p class="text-base text-soft leading-relaxed">Atribuem atividades a <strong>diferentes responsáveis ou sistemas</strong>. Ex.: usuário x suporte de TI.</p>
+                        </div>
+                        <p class="text-xs font-semibold text-softer mt-4 pt-2 border-t border-black/5">e-book, seção 4.3</p>
+                    </div>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+                    <div class="p-5 rounded-2xl border flex flex-col justify-between " style="background: var(--mira-pill-bg); border-color: var(--mira-card-border);">
+                        <div>
+                            <div class="flex items-center gap-2 mb-3">
+                                <i data-lucide="file-check" class="w-5 h-5 primary-color"></i>
+                                <h4 class="font-bold text-lg">Documentado e auditável</h4>
+                            </div>
+                            <p class="text-base text-soft leading-relaxed">O processo deixa de ser conhecimento tácito e disperso e vira <strong>artefato revisável e auditável</strong>.</p>
+                        </div>
+                        <p class="text-xs font-semibold text-softer mt-4 pt-2 border-t border-black/5">e-book, seção 4.3</p>
+                    </div>
+                    <div class="p-5 rounded-2xl border flex flex-col justify-between " style="background: var(--mira-pill-bg); border-color: var(--mira-card-border);">
+                        <div>
+                            <div class="flex items-center gap-2 mb-3">
+                                <i data-lucide="users" class="w-5 h-5 primary-color"></i>
+                                <h4 class="font-bold text-lg">Treina quem chega</h4>
+                            </div>
+                            <p class="text-base text-soft leading-relaxed">O mesmo diagrama serve para <strong>treinar novos colaboradores</strong>.</p>
+                        </div>
+                        <p class="text-xs font-semibold text-softer mt-4 pt-2 border-t border-black/5">e-book, seção 4.3</p>
+                    </div>
+                    <div class="p-5 rounded-2xl border flex flex-col justify-between " style="background: var(--mira-pill-bg); border-color: var(--mira-card-border);">
+                        <div>
+                            <div class="flex items-center gap-2 mb-3">
+                                <i data-lucide="code" class="w-5 h-5 primary-color"></i>
+                                <h4 class="font-bold text-lg">Especificação inequívoca</h4>
+                            </div>
+                            <p class="text-base text-soft leading-relaxed">Serve de base para os sistemas que automatizam o processo, <strong>reduzindo mal-entendidos</strong> entre negócio e TI.</p>
+                        </div>
+                        <p class="text-xs font-semibold text-softer mt-4 pt-2 border-t border-black/5">e-book, seção 4.3</p>
+                    </div>
+                </div>
+                <p class="fonte-linha mt-4">Fonte: e-book GOTI, seção 4.3; slides da disciplina, 4.3. Exemplos de eventos e atividades: ilustrativos.</p>
+            </div>
+        </div>
+    </section>
+
+
+    <!-- ============ S9: Da decisão de governança ao valor entregue ============ -->
+    <section id="s9" class="min-h-screen flex flex-col items-center justify-center px-6 pt-3 pb-6">
+        <div class="w-full max-w-6xl" data-aos="fade-up" data-aos-delay="100">
+            <div class="text-center mb-2">
+                <h2 class="text-4xl md:text-5xl font-bold mb-2">Projeto: começo, meio e <span class="primary-color italic">fim</span></h2>
+                <p class="text-softer italic text-xl md:text-2xl font-medium">A decisão de investimento só vira valor quando o projeto entrega.</p>
+            </div>
+            <div class="glass-card rounded-2xl p-1 md:p-2 relative">
+                <div class="flex items-center justify-between mb-2 px-1">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-lg flex items-center justify-center" style="background: var(--mira-icon-bg);">
+                            <i data-lucide="flag" class="w-5 h-5 primary-color"></i>
+                        </div>
+                        <div>
+                            <p class="mb-1"><span class="nivel-chip">N2 · Projetos<span class="nivel-dots"><i class="on"></i><i class="on"></i><i></i><i></i></span></span></p>
+                            <p class="font-bold text-base md:text-lg">Da decisão de governança ao valor entregue</p>
+                            <p class="text-softer text-sm md:text-base italic font-medium">O comitê decide o investimento (Cap. 3); o projeto o materializa.</p>
+                        </div>
+                    </div>
+                    <button id="pause-projeto" class="pause-btn" type="button" aria-label="Pausar animação"></button>
+                    <button id="replay-projeto" class="replay-btn" type="button"><i data-lucide="rotate-cw" class="w-4 h-4"></i>Replay</button>
+                </div>
+                <!-- @MIRA:SIZE 3/10 -->
+                <div class="anim-stage" id="projeto-stage">
+                    <svg id="projeto-svg" viewBox="0 0 1280 720" preserveAspectRatio="xMidYMid meet"></svg>
+                </div>
+                <div class="border-t pt-1 mt-1 mb-1" style="border-color: var(--mira-card-border);">
+                    <p class="text-sm uppercase tracking-[3px] text-softer text-center font-bold mb-2">O que faz de um esforço um projeto</p>
+                    <div class="grid grid-cols-2 md:grid-cols-4 gap-2">
+                        <div class="attribute-pill text-center p-2 rounded-xl" id="projeto-pill-0">
+                            <i data-lucide="hourglass" class="w-4 h-4 primary-color mx-auto mb-1"></i>
+                            <p class="text-base font-bold tracking-wide">Temporário</p>
+                            <p class="text-xs text-softer mt-0.5">início e fim definidos</p>
+                        </div>
+                        <div class="attribute-pill text-center p-2 rounded-xl" id="projeto-pill-1">
+                            <i data-lucide="gem" class="w-4 h-4 primary-color mx-auto mb-1"></i>
+                            <p class="text-base font-bold tracking-wide">Único</p>
+                            <p class="text-xs text-softer mt-0.5">produto, serviço ou resultado</p>
+                        </div>
+                        <div class="attribute-pill text-center p-2 rounded-xl" id="projeto-pill-2">
+                            <i data-lucide="server" class="w-4 h-4 primary-color mx-auto mb-1"></i>
+                            <p class="text-base font-bold tracking-wide">Comum em TI</p>
+                            <p class="text-xs text-softer mt-0.5">sistema novo, nuvem, arquitetura</p>
+                        </div>
+                        <div class="attribute-pill text-center p-2 rounded-xl" id="projeto-pill-3">
+                            <i data-lucide="badge-check" class="w-4 h-4 primary-color mx-auto mb-1"></i>
+                            <p class="text-base font-bold tracking-wide">Entrega valor</p>
+                            <p class="text-xs text-softer mt-0.5">cumpre a promessa da decisão</p>
+                        </div>
+                    </div>
+                    <p class="fonte-linha">Fonte: e-book GOTI, seção 4.4; PMI (2021), PMBOK 7ª ed.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+
+    <!-- ============ S9-CONCEITO: fundamentação ============ -->
+    <section id="s9-conceito" class="min-h-screen flex flex-col items-center justify-center px-6 pt-4 pb-8">
+        <div class="w-full max-w-6xl" data-aos="fade-up" data-aos-delay="100">
+            <div class="text-center mb-4">
+                <h2 class="text-4xl md:text-5xl font-black mb-2">Conceito: <span class="primary-color italic">projeto e gestão de projetos</span></h2>
+                <p class="text-softer text-xl md:text-2xl font-medium">Definições do PMI e a ponte com os capítulos anteriores.</p>
+            </div>
+            <div class="glass-card rounded-2xl p-6 md:p-8 relative">
+                <div class="flex items-center justify-between mb-6 pb-4 border-b border-black/10">
+                    <div class="flex items-center gap-4">
+                        <div class="w-12 h-12 rounded-xl flex items-center justify-center" style="background: var(--mira-icon-bg);">
+                            <i data-lucide="book-open" class="w-6 h-6 primary-color"></i>
+                        </div>
+                        <div>
+                            <span class="nivel-chip">N2 · Projetos<span class="nivel-dots"><i class="on"></i><i class="on"></i><i></i><i></i></span></span>
+                            <span class="tag-conceitual">Conceitos e definições</span>
+                            <h3 class="font-bold text-xl md:text-2xl mt-1">Projetos são o caminho pelo qual decisões de governança viram resultado.</h3>
+                        </div>
+                    </div>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+                    <div class="p-5 rounded-2xl border flex flex-col justify-between " style="background: var(--mira-pill-bg); border-color: var(--mira-card-border);">
+                        <div>
+                            <div class="flex items-center gap-2 mb-3">
+                                <i data-lucide="flag" class="w-5 h-5 primary-color"></i>
+                                <h4 class="font-bold text-lg">Projeto</h4>
+                            </div>
+                            <p class="text-base text-soft leading-relaxed">Esforço <strong>temporário</strong> empreendido para criar um <strong>produto, serviço ou resultado único</strong>, com início e fim definidos.</p>
+                        </div>
+                        <p class="text-xs font-semibold text-softer mt-4 pt-2 border-t border-black/5">PMI (2021); e-book, seção 4.4</p>
+                    </div>
+                    <div class="p-5 rounded-2xl border flex flex-col justify-between " style="background: var(--mira-pill-bg); border-color: var(--mira-card-border);">
+                        <div>
+                            <div class="flex items-center gap-2 mb-3">
+                                <i data-lucide="wrench" class="w-5 h-5 primary-color"></i>
+                                <h4 class="font-bold text-lg">Gestão de projetos</h4>
+                            </div>
+                            <p class="text-base text-soft leading-relaxed">Aplicação de <strong>conhecimentos, habilidades, ferramentas e técnicas</strong> às atividades do projeto para atender aos seus requisitos.</p>
+                        </div>
+                        <p class="text-xs font-semibold text-softer mt-4 pt-2 border-t border-black/5">PMI (2021); e-book, seção 4.4</p>
+                    </div>
+                    <div class="p-5 rounded-2xl border flex flex-col justify-between " style="background: var(--mira-pill-bg); border-color: var(--mira-card-border);">
+                        <div>
+                            <div class="flex items-center gap-2 mb-3">
+                                <i data-lucide="server" class="w-5 h-5 primary-color"></i>
+                                <h4 class="font-bold text-lg">Projetos em TI</h4>
+                            </div>
+                            <p class="text-base text-soft leading-relaxed">A grande maioria das iniciativas de mudança em TI é conduzida como projeto: <strong>implantar um novo sistema</strong>, <strong>migrar para a nuvem</strong>, <strong>redesenhar uma arquitetura</strong>.</p>
+                        </div>
+                        <p class="text-xs font-semibold text-softer mt-4 pt-2 border-t border-black/5">e-book, seção 4.4</p>
+                    </div>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-0">
+                    <div class="p-5 rounded-2xl border flex flex-col justify-between " style="background: var(--mira-pill-bg); border-color: var(--mira-card-border);">
+                        <div>
+                            <div class="flex items-center gap-2 mb-3">
+                                <i data-lucide="scale" class="w-5 h-5 primary-color"></i>
+                                <h4 class="font-bold text-lg">Elo com o Cap. 3</h4>
+                            </div>
+                            <p class="text-base text-soft leading-relaxed">Decisões de <strong>investimento e priorização</strong> (seção 3.3) tipicamente se materializam como projetos específicos.</p>
+                        </div>
+                        <p class="text-xs font-semibold text-softer mt-4 pt-2 border-t border-black/5">e-book, seções 3.3 e 4.4</p>
+                    </div>
+                    <div class="p-5 rounded-2xl border flex flex-col justify-between " style="background: var(--mira-pill-bg); border-color: var(--mira-card-border);">
+                        <div>
+                            <div class="flex items-center gap-2 mb-3">
+                                <i data-lucide="trending-up" class="w-5 h-5 primary-color"></i>
+                                <h4 class="font-bold text-lg">Elo com o Cap. 1</h4>
+                            </div>
+                            <p class="text-base text-soft leading-relaxed">A qualidade da gestão do projeto determina se o <strong>valor prometido</strong> na decisão de investimento efetivamente se concretiza (seção 1.3).</p>
+                        </div>
+                        <p class="text-xs font-semibold text-softer mt-4 pt-2 border-t border-black/5">e-book, seções 1.3 e 4.4</p>
+                    </div>
+                </div>
+                <p class="fonte-linha mt-4">Fonte: e-book GOTI, seção 4.4; PROJECT MANAGEMENT INSTITUTE (2021).</p>
+            </div>
+        </div>
+    </section>
+
+
+    <!-- ============ S11: Domínios de desempenho: todos ativos, o projeto inteiro ============ -->
+    <section id="s11" class="min-h-screen flex flex-col items-center justify-center px-6 pt-3 pb-6">
+        <div class="w-full max-w-6xl" data-aos="fade-up" data-aos-delay="100">
+            <div class="text-center mb-2">
+                <h2 class="text-4xl md:text-5xl font-bold mb-2">PMBOK 7: oito <span class="primary-color italic">domínios simultâneos</span></h2>
+                <p class="text-softer italic text-xl md:text-2xl font-medium">Sai a sequência de processos; entram princípios e áreas de foco.</p>
+            </div>
+            <div class="glass-card rounded-2xl p-1 md:p-2 relative">
+                <div class="flex items-center justify-between mb-2 px-1">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-lg flex items-center justify-center" style="background: var(--mira-icon-bg);">
+                            <i data-lucide="orbit" class="w-5 h-5 primary-color"></i>
+                        </div>
+                        <div>
+                            <p class="mb-1"><span class="nivel-chip">N2 · Projetos<span class="nivel-dots"><i class="on"></i><i class="on"></i><i></i><i></i></span></span></p>
+                            <p class="font-bold text-base md:text-lg">Domínios de desempenho: todos ativos, o projeto inteiro</p>
+                            <p class="text-softer text-sm md:text-base italic font-medium">Diferente de um processo linear: atenção constante e integrada.</p>
+                        </div>
+                    </div>
+                    <button id="pause-pmbok" class="pause-btn" type="button" aria-label="Pausar animação"></button>
+                    <button id="replay-pmbok" class="replay-btn" type="button"><i data-lucide="rotate-cw" class="w-4 h-4"></i>Replay</button>
+                </div>
+                <!-- @MIRA:SIZE 3/10 -->
+                <div class="anim-stage" id="pmbok-stage">
+                    <svg id="pmbok-svg" viewBox="0 0 1280 720" preserveAspectRatio="xMidYMid meet"></svg>
+                </div>
+                <div class="border-t pt-1 mt-1 mb-1" style="border-color: var(--mira-card-border);">
+                    <p class="text-sm uppercase tracking-[3px] text-softer text-center font-bold mb-2">Os oito domínios de desempenho (PMI, 2021)</p>
+                    <div class="grid grid-cols-2 md:grid-cols-8 gap-2">
+                        <div class="attribute-pill text-center p-2 rounded-xl" id="pmbok-pill-0">
+                            <i data-lucide="users" class="w-4 h-4 primary-color mx-auto mb-1"></i>
+                            <p class="text-base font-bold tracking-wide">Partes interessadas</p>
+                            
+                        </div>
+                        <div class="attribute-pill text-center p-2 rounded-xl" id="pmbok-pill-1">
+                            <i data-lucide="users-round" class="w-4 h-4 primary-color mx-auto mb-1"></i>
+                            <p class="text-base font-bold tracking-wide">Equipe</p>
+                            
+                        </div>
+                        <div class="attribute-pill text-center p-2 rounded-xl" id="pmbok-pill-2">
+                            <i data-lucide="git-fork" class="w-4 h-4 primary-color mx-auto mb-1"></i>
+                            <p class="text-base font-bold tracking-wide">Abordagem e ciclo de vida</p>
+                            
+                        </div>
+                        <div class="attribute-pill text-center p-2 rounded-xl" id="pmbok-pill-3">
+                            <i data-lucide="calendar" class="w-4 h-4 primary-color mx-auto mb-1"></i>
+                            <p class="text-base font-bold tracking-wide">Planejamento</p>
+                            
+                        </div>
+                        <div class="attribute-pill text-center p-2 rounded-xl" id="pmbok-pill-4">
+                            <i data-lucide="hammer" class="w-4 h-4 primary-color mx-auto mb-1"></i>
+                            <p class="text-base font-bold tracking-wide">Trabalho do projeto</p>
+                            
+                        </div>
+                        <div class="attribute-pill text-center p-2 rounded-xl" id="pmbok-pill-5">
+                            <i data-lucide="package-check" class="w-4 h-4 primary-color mx-auto mb-1"></i>
+                            <p class="text-base font-bold tracking-wide">Entrega</p>
+                            
+                        </div>
+                        <div class="attribute-pill text-center p-2 rounded-xl" id="pmbok-pill-6">
+                            <i data-lucide="ruler" class="w-4 h-4 primary-color mx-auto mb-1"></i>
+                            <p class="text-base font-bold tracking-wide">Medição</p>
+                            
+                        </div>
+                        <div class="attribute-pill text-center p-2 rounded-xl" id="pmbok-pill-7">
+                            <i data-lucide="cloud-lightning" class="w-4 h-4 primary-color mx-auto mb-1"></i>
+                            <p class="text-base font-bold tracking-wide">Incerteza</p>
+                            
+                        </div>
+                    </div>
+                    <p class="fonte-linha">Fonte: e-book GOTI, seção 4.5; PMI (2021), PMBOK 7ª ed.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+
+    <!-- ============ S11-CONCEITO: fundamentação ============ -->
+    <section id="s11-conceito" class="min-h-screen flex flex-col items-center justify-center px-6 pt-4 pb-8">
+        <div class="w-full max-w-6xl" data-aos="fade-up" data-aos-delay="100">
+            <div class="text-center mb-4">
+                <h2 class="text-4xl md:text-5xl font-black mb-2">PMBOK 7: <span class="primary-color italic">princípios e domínios</span></h2>
+                <p class="text-softer text-xl md:text-2xl font-medium">A 7ª edição (PMI, 2021) mudou a forma de organizar o conhecimento.</p>
+            </div>
+            <div class="glass-card rounded-2xl p-6 md:p-8 relative">
+                <div class="flex items-center justify-between mb-6 pb-4 border-b border-black/10">
+                    <div class="flex items-center gap-4">
+                        <div class="w-12 h-12 rounded-xl flex items-center justify-center" style="background: var(--mira-icon-bg);">
+                            <i data-lucide="book-open" class="w-6 h-6 primary-color"></i>
+                        </div>
+                        <div>
+                            <span class="nivel-chip">N2 · Projetos<span class="nivel-dots"><i class="on"></i><i class="on"></i><i></i><i></i></span></span>
+                            <span class="tag-conceitual">Antes e agora</span>
+                            <h3 class="font-bold text-xl md:text-2xl mt-1">De uma receita de processos obrigatórios para orientações de conduta.</h3>
+                        </div>
+                    </div>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-4">
+                    <div class="p-5 rounded-2xl border flex flex-col justify-between " style="background: var(--mira-pill-bg); border-color: var(--mira-card-border);">
+                        <div>
+                            <div class="flex items-center gap-2 mb-3">
+                                <i data-lucide="list-ordered" class="w-5 h-5 primary-color"></i>
+                                <h4 class="font-bold text-lg">Edições anteriores</h4>
+                            </div>
+                            <p class="text-base text-soft leading-relaxed">Conhecimento organizado em torno de <strong>processos sequenciais</strong> e <strong>áreas de conhecimento fixas</strong>: uma lógica prescritiva de processos obrigatórios.</p>
+                        </div>
+                        <p class="text-xs font-semibold text-softer mt-4 pt-2 border-t border-black/5">e-book, seção 4.5</p>
+                    </div>
+                    <div class="p-5 rounded-2xl border flex flex-col justify-between " style="background: var(--mira-pill-bg); border-color: var(--mira-card-border);">
+                        <div>
+                            <div class="flex items-center gap-2 mb-3">
+                                <i data-lucide="compass" class="w-5 h-5 primary-color"></i>
+                                <h4 class="font-bold text-lg">7ª edição (2021)</h4>
+                            </div>
+                            <p class="text-base text-soft leading-relaxed"><strong>Princípios</strong> (orientações gerais de conduta) e <strong>domínios de desempenho</strong>, mais compatíveis com abordagens <strong>ágeis e híbridas</strong>. Exemplos de princípios: “ser um administrador diligente, respeitoso e cuidadoso”; “adaptar a abordagem de entrega com base no contexto”.</p>
+                        </div>
+                        <p class="text-xs font-semibold text-softer mt-4 pt-2 border-t border-black/5">e-book, seção 4.5</p>
+                    </div>
+                </div>
+                <div class="rounded-2xl border overflow-hidden mb-4" style="border-color: var(--mira-card-border);">
+                    <table class="w-full text-base">
+                        <thead style="background: var(--mira-icon-bg);"><tr><th class="text-left font-bold text-sm uppercase tracking-wider text-softer px-4 py-3">Domínio</th><th class="text-left font-bold text-sm uppercase tracking-wider text-softer px-4 py-3">Trata de</th><th class="text-left font-bold text-sm uppercase tracking-wider text-softer px-4 py-3">Domínio</th><th class="text-left font-bold text-sm uppercase tracking-wider text-softer px-4 py-3">Trata de</th></tr></thead>
+                        <tbody><tr class="border-t" style="border-color: var(--mira-card-border);"><td class="px-4 py-3 font-bold">Partes interessadas</td><td class="px-4 py-3 text-soft">relacionamento produtivo com todos os envolvidos</td><td class="px-4 py-3 text-soft"><strong>Trabalho do projeto</strong></td><td class="px-4 py-3 text-soft">execução eficiente das atividades</td></tr><tr class="border-t" style="border-color: var(--mira-card-border);"><td class="px-4 py-3 font-bold">Equipe</td><td class="px-4 py-3 text-soft">formação e liderança de um grupo de alto desempenho</td><td class="px-4 py-3 text-soft"><strong>Entrega</strong></td><td class="px-4 py-3 text-soft">realização dos resultados e benefícios esperados</td></tr><tr class="border-t" style="border-color: var(--mira-card-border);"><td class="px-4 py-3 font-bold">Abordagem e ciclo de vida</td><td class="px-4 py-3 text-soft">escolha entre preditiva, ágil ou híbrida</td><td class="px-4 py-3 text-soft"><strong>Medição</strong></td><td class="px-4 py-3 text-soft">avaliação objetiva do desempenho do projeto</td></tr><tr class="border-t" style="border-color: var(--mira-card-border);"><td class="px-4 py-3 font-bold">Planejamento</td><td class="px-4 py-3 text-soft">organização coordenada do trabalho</td><td class="px-4 py-3 text-soft"><strong>Incerteza</strong></td><td class="px-4 py-3 text-soft">gestão proativa de riscos e oportunidades</td></tr></tbody>
+                    </table>
+                </div>
+                <div class="p-4 rounded-xl border flex items-center gap-4" style="background: var(--mira-icon-bg); border-color: var(--mira-icon-border);">
+                    <i data-lucide="orbit" class="w-8 h-8 primary-color shrink-0"></i>
+                    <p class="text-base md:text-lg font-medium"><strong>Sem fila:</strong> os oito domínios operam <strong>simultaneamente</strong> ao longo de todo o projeto, exigindo atenção constante e integrada do gerente de projetos.</p>
+                </div>
+                <p class="fonte-linha mt-4">Fonte: e-book GOTI, seção 4.5; PROJECT MANAGEMENT INSTITUTE (2021).</p>
+            </div>
+        </div>
+    </section>
+
+
+    <!-- ============ S13: A alternância processo, projeto, processo ============ -->
+    <section id="s13" class="min-h-screen flex flex-col items-center justify-center px-6 pt-3 pb-6">
+        <div class="w-full max-w-6xl" data-aos="fade-up" data-aos-delay="100">
+            <div class="text-center mb-2">
+                <h2 class="text-4xl md:text-5xl font-bold mb-2">Processos giram, <span class="primary-color italic">projetos terminam</span></h2>
+                <p class="text-softer italic text-xl md:text-2xl font-medium">E um alimenta o outro, num ciclo de gestão contínuo.</p>
+            </div>
+            <div class="glass-card rounded-2xl p-1 md:p-2 relative">
+                <div class="flex items-center justify-between mb-2 px-1">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-lg flex items-center justify-center" style="background: var(--mira-icon-bg);">
+                            <i data-lucide="git-compare" class="w-5 h-5 primary-color"></i>
+                        </div>
+                        <div>
+                            <p class="mb-1"><span class="nivel-chip">N3 · Na governança<span class="nivel-dots"><i class="on"></i><i class="on"></i><i class="on"></i><i></i></span></span></p>
+                            <p class="font-bold text-base md:text-lg">A alternância processo, projeto, processo</p>
+                            <p class="text-softer text-sm md:text-base italic font-medium">A análise acha a ineficiência; um projeto redesenha; nasce um novo processo.</p>
+                        </div>
+                    </div>
+                    <button id="pause-alterna" class="pause-btn" type="button" aria-label="Pausar animação"></button>
+                    <button id="replay-alterna" class="replay-btn" type="button"><i data-lucide="rotate-cw" class="w-4 h-4"></i>Replay</button>
+                </div>
+                <!-- @MIRA:SIZE 3/10 -->
+                <div class="anim-stage" id="alterna-stage">
+                    <svg id="alterna-svg" viewBox="0 0 1280 720" preserveAspectRatio="xMidYMid meet"></svg>
+                </div>
+                <div class="border-t pt-1 mt-1 mb-1" style="border-color: var(--mira-card-border);">
+                    <p class="text-sm uppercase tracking-[3px] text-softer text-center font-bold mb-2">Duas naturezas, duas réguas de medição</p>
+                    <div class="grid grid-cols-2 md:grid-cols-4 gap-2">
+                        <div class="attribute-pill text-center p-2 rounded-xl" id="alterna-pill-0">
+                            <i data-lucide="refresh-cw" class="w-4 h-4 primary-color mx-auto mb-1"></i>
+                            <p class="text-base font-bold tracking-wide">Processo</p>
+                            <p class="text-xs text-softer mt-0.5">contínuo e repetitivo</p>
+                        </div>
+                        <div class="attribute-pill text-center p-2 rounded-xl" id="alterna-pill-1">
+                            <i data-lucide="gauge" class="w-4 h-4 primary-color mx-auto mb-1"></i>
+                            <p class="text-base font-bold tracking-wide">Mede eficiência</p>
+                            <p class="text-xs text-softer mt-0.5">tempo médio de atendimento</p>
+                        </div>
+                        <div class="attribute-pill text-center p-2 rounded-xl" id="alterna-pill-2">
+                            <i data-lucide="flag" class="w-4 h-4 primary-color mx-auto mb-1"></i>
+                            <p class="text-base font-bold tracking-wide">Projeto</p>
+                            <p class="text-xs text-softer mt-0.5">temporário e único</p>
+                        </div>
+                        <div class="attribute-pill text-center p-2 rounded-xl" id="alterna-pill-3">
+                            <i data-lucide="target" class="w-4 h-4 primary-color mx-auto mb-1"></i>
+                            <p class="text-base font-bold tracking-wide">Mede sucesso</p>
+                            <p class="text-xs text-softer mt-0.5">prazo, escopo e orçamento</p>
+                        </div>
+                    </div>
+                    <p class="fonte-linha">Fonte: e-book GOTI, seção 4.6; slides da disciplina, 4.6.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+
+    <!-- ============ S13-CONCEITO: fundamentação ============ -->
+    <section id="s13-conceito" class="min-h-screen flex flex-col items-center justify-center px-6 pt-4 pb-8">
+        <div class="w-full max-w-6xl" data-aos="fade-up" data-aos-delay="100">
+            <div class="text-center mb-4">
+                <h2 class="text-4xl md:text-5xl font-black mb-2">Processo x projeto: <span class="primary-color italic">diferentes e complementares</span></h2>
+                <p class="text-softer text-xl md:text-2xl font-medium">A distinção central está na natureza temporal do objeto de gestão.</p>
+            </div>
+            <div class="glass-card rounded-2xl p-6 md:p-8 relative">
+                <div class="flex items-center justify-between mb-6 pb-4 border-b border-black/10">
+                    <div class="flex items-center gap-4">
+                        <div class="w-12 h-12 rounded-xl flex items-center justify-center" style="background: var(--mira-icon-bg);">
+                            <i data-lucide="book-open" class="w-6 h-6 primary-color"></i>
+                        </div>
+                        <div>
+                            <span class="nivel-chip">N3 · Na governança<span class="nivel-dots"><i class="on"></i><i class="on"></i><i class="on"></i><i></i></span></span>
+                            <span class="tag-conceitual">Comparativo</span>
+                            <h3 class="font-bold text-xl md:text-2xl mt-1">Ferramentas e métricas de uma disciplina costumam ser inadequadas para a outra.</h3>
+                        </div>
+                    </div>
+                </div>
+                <div class="rounded-2xl border overflow-hidden mb-6" style="border-color: var(--mira-card-border);">
+                    <table class="w-full text-base">
+                        <thead style="background: var(--mira-icon-bg);"><tr><th class="text-left font-bold text-sm uppercase tracking-wider text-softer px-4 py-3">Critério</th><th class="text-left font-bold text-sm uppercase tracking-wider text-softer px-4 py-3">Gestão de processos</th><th class="text-left font-bold text-sm uppercase tracking-wider text-softer px-4 py-3">Gestão de projetos</th></tr></thead>
+                        <tbody><tr class="border-t" style="border-color: var(--mira-card-border);"><td class="px-4 py-3 font-bold">Natureza</td><td class="px-4 py-3 text-soft">contínuo e repetitivo</td><td class="px-4 py-3 text-soft">temporário e único</td></tr><tr class="border-t" style="border-color: var(--mira-card-border);"><td class="px-4 py-3 font-bold">Exemplo</td><td class="px-4 py-3 text-soft">atendimento a chamados, executado milhares de vezes ao longo dos anos</td><td class="px-4 py-3 text-soft">implantação de um novo sistema de atendimento, com início e fim definidos</td></tr><tr class="border-t" style="border-color: var(--mira-card-border);"><td class="px-4 py-3 font-bold">Métrica típica</td><td class="px-4 py-3 text-soft">eficiência: tempo médio de atendimento</td><td class="px-4 py-3 text-soft">sucesso: entrega no prazo, escopo e orçamento</td></tr><tr class="border-t" style="border-color: var(--mira-card-border);"><td class="px-4 py-3 font-bold">Referência</td><td class="px-4 py-3 text-soft">BPM CBOK (ABPMP, 2019)</td><td class="px-4 py-3 text-soft">PMBOK 7ª ed. (PMI, 2021)</td></tr></tbody>
+                    </table>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-4">
+                    <div class="p-5 rounded-2xl border flex flex-col justify-between " style="background: var(--mira-pill-bg); border-color: var(--mira-card-border);">
+                        <div>
+                            <div class="flex items-center gap-2 mb-3">
+                                <i data-lucide="search" class="w-5 h-5 primary-color"></i>
+                                <h4 class="font-bold text-lg">1 · Processo ineficiente</h4>
+                            </div>
+                            <p class="text-base text-soft leading-relaxed">Identificado na fase de <strong>análise</strong> do ciclo BPM (seção 4.2).</p>
+                        </div>
+                        <p class="text-xs font-semibold text-softer mt-4 pt-2 border-t border-black/5">e-book, seção 4.6</p>
+                    </div>
+                    <div class="p-5 rounded-2xl border flex flex-col justify-between " style="background: var(--mira-pill-bg); border-color: var(--mira-card-border);">
+                        <div>
+                            <div class="flex items-center gap-2 mb-3">
+                                <i data-lucide="flag" class="w-5 h-5 primary-color"></i>
+                                <h4 class="font-bold text-lg">2 · Projeto de redesenho</h4>
+                            </div>
+                            <p class="text-base text-soft leading-relaxed">O processo é redesenhado e implementado <strong>por meio de um projeto</strong> (seção 4.4).</p>
+                        </div>
+                        <p class="text-xs font-semibold text-softer mt-4 pt-2 border-t border-black/5">e-book, seção 4.6</p>
+                    </div>
+                    <div class="p-5 rounded-2xl border flex flex-col justify-between " style="background: var(--mira-pill-bg); border-color: var(--mira-card-border);">
+                        <div>
+                            <div class="flex items-center gap-2 mb-3">
+                                <i data-lucide="refresh-cw" class="w-5 h-5 primary-color"></i>
+                                <h4 class="font-bold text-lg">3 · Novo processo contínuo</h4>
+                            </div>
+                            <p class="text-base text-soft leading-relaxed">Concluído o projeto, nasce um processo que será <strong>novamente avaliado</strong>, reiniciando o ciclo.</p>
+                        </div>
+                        <p class="text-xs font-semibold text-softer mt-4 pt-2 border-t border-black/5">e-book, seção 4.6</p>
+                    </div>
+                </div>
+                <div class="p-4 rounded-xl border flex items-center gap-4" style="background: var(--mira-icon-bg); border-color: var(--mira-icon-border);">
+                    <i data-lucide="link" class="w-8 h-8 primary-color shrink-0"></i>
+                    <p class="text-base md:text-lg font-medium"><strong>Para a governança:</strong> melhoria de processos e projetos de sistemas não são esforços desconectados, mas partes de <strong>um mesmo ciclo de gestão organizacional</strong>.</p>
+                </div>
+                <p class="fonte-linha mt-4">Fonte: e-book GOTI, seção 4.6.</p>
+            </div>
+        </div>
+    </section>
+
+
+    <!-- ============ S15: Comitê decide, PMO acompanha, projetos executam ============ -->
+    <section id="s15" class="min-h-screen flex flex-col items-center justify-center px-6 pt-3 pb-6">
+        <div class="w-full max-w-6xl" data-aos="fade-up" data-aos-delay="100">
+            <div class="text-center mb-2">
+                <h2 class="text-4xl md:text-5xl font-bold mb-2">PMO: elo entre <span class="primary-color italic">decisão e entrega</span></h2>
+                <p class="text-softer italic text-xl md:text-2xl font-medium">O mecanismo estrutural que vigia o portfólio para a governança.</p>
+            </div>
+            <div class="glass-card rounded-2xl p-1 md:p-2 relative">
+                <div class="flex items-center justify-between mb-2 px-1">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-lg flex items-center justify-center" style="background: var(--mira-icon-bg);">
+                            <i data-lucide="building-2" class="w-5 h-5 primary-color"></i>
+                        </div>
+                        <div>
+                            <p class="mb-1"><span class="nivel-chip">N3 · Na governança<span class="nivel-dots"><i class="on"></i><i class="on"></i><i class="on"></i><i></i></span></span></p>
+                            <p class="font-bold text-base md:text-lg">Comitê decide, PMO acompanha, projetos executam</p>
+                            <p class="text-softer text-sm md:text-base italic font-medium">Métodos descem, indicadores sobem, desvios voltam como nova decisão.</p>
+                        </div>
+                    </div>
+                    <button id="pause-pmo" class="pause-btn" type="button" aria-label="Pausar animação"></button>
+                    <button id="replay-pmo" class="replay-btn" type="button"><i data-lucide="rotate-cw" class="w-4 h-4"></i>Replay</button>
+                </div>
+                <!-- @MIRA:SIZE 3/10 -->
+                <div class="anim-stage" id="pmo-stage">
+                    <svg id="pmo-svg" viewBox="0 0 1280 720" preserveAspectRatio="xMidYMid meet"></svg>
+                </div>
+                <div class="border-t pt-1 mt-1 mb-1" style="border-color: var(--mira-card-border);">
+                    <p class="text-sm uppercase tracking-[3px] text-softer text-center font-bold mb-2">O que o PMO faz pela governança de TI</p>
+                    <div class="grid grid-cols-2 md:grid-cols-5 gap-2">
+                        <div class="attribute-pill text-center p-2 rounded-xl" id="pmo-pill-0">
+                            <i data-lucide="ruler" class="w-4 h-4 primary-color mx-auto mb-1"></i>
+                            <p class="text-base font-bold tracking-wide">Padroniza</p>
+                            <p class="text-xs text-softer mt-0.5">métodos, ferramentas e técnicas</p>
+                        </div>
+                        <div class="attribute-pill text-center p-2 rounded-xl" id="pmo-pill-1">
+                            <i data-lucide="share-2" class="w-4 h-4 primary-color mx-auto mb-1"></i>
+                            <p class="text-base font-bold tracking-wide">Compartilha</p>
+                            <p class="text-xs text-softer mt-0.5">recursos entre projetos</p>
+                        </div>
+                        <div class="attribute-pill text-center p-2 rounded-xl" id="pmo-pill-2">
+                            <i data-lucide="eye" class="w-4 h-4 primary-color mx-auto mb-1"></i>
+                            <p class="text-base font-bold tracking-wide">Monitora</p>
+                            <p class="text-xs text-softer mt-0.5">projetos aprovados pelos comitês</p>
+                        </div>
+                        <div class="attribute-pill text-center p-2 rounded-xl" id="pmo-pill-3">
+                            <i data-lucide="chart-column" class="w-4 h-4 primary-color mx-auto mb-1"></i>
+                            <p class="text-base font-bold tracking-wide">Reporta</p>
+                            <p class="text-xs text-softer mt-0.5">indicadores do portfólio</p>
+                        </div>
+                        <div class="attribute-pill text-center p-2 rounded-xl" id="pmo-pill-4">
+                            <i data-lucide="siren" class="w-4 h-4 primary-color mx-auto mb-1"></i>
+                            <p class="text-base font-bold tracking-wide">Sinaliza desvios</p>
+                            <p class="text-xs text-softer mt-0.5">que exigem nova decisão</p>
+                        </div>
+                    </div>
+                    <p class="fonte-linha">Fonte: e-book GOTI, seção 4.7; mecanismos estruturais, seção 3.5.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+
+    <!-- ============ S15-CONCEITO: fundamentação ============ -->
+    <section id="s15-conceito" class="min-h-screen flex flex-col items-center justify-center px-6 pt-4 pb-8">
+        <div class="w-full max-w-6xl" data-aos="fade-up" data-aos-delay="100">
+            <div class="text-center mb-4">
+                <h2 class="text-4xl md:text-5xl font-black mb-2">Conceito: <span class="primary-color italic">escritório de projetos</span></h2>
+                <p class="text-softer text-xl md:text-2xl font-medium">Project Management Office (PMO) e seus graus de autoridade.</p>
+            </div>
+            <div class="glass-card rounded-2xl p-6 md:p-8 relative">
+                <div class="flex items-center justify-between mb-6 pb-4 border-b border-black/10">
+                    <div class="flex items-center gap-4">
+                        <div class="w-12 h-12 rounded-xl flex items-center justify-center" style="background: var(--mira-icon-bg);">
+                            <i data-lucide="book-open" class="w-6 h-6 primary-color"></i>
+                        </div>
+                        <div>
+                            <span class="nivel-chip">N3 · Na governança<span class="nivel-dots"><i class="on"></i><i class="on"></i><i class="on"></i><i></i></span></span>
+                            <span class="tag-conceitual">Mecanismo estrutural</span>
+                            <h3 class="font-bold text-xl md:text-2xl mt-1">Um dos elos operacionais mais importantes entre decidir e executar.</h3>
+                        </div>
+                    </div>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+                    <div class="p-5 rounded-2xl border flex flex-col justify-between " style="background: var(--mira-pill-bg); border-color: var(--mira-card-border);">
+                        <div>
+                            <div class="flex items-center gap-2 mb-3">
+                                <i data-lucide="building-2" class="w-5 h-5 primary-color"></i>
+                                <h4 class="font-bold text-lg">O que é</h4>
+                            </div>
+                            <p class="text-base text-soft leading-relaxed">Estrutura organizacional, um dos <strong>mecanismos estruturais</strong> de governança (seção 3.5), que padroniza a gestão de projetos, compartilha recursos, metodologias, ferramentas e técnicas e apoia, ou controla, o portfólio.</p>
+                        </div>
+                        <p class="text-xs font-semibold text-softer mt-4 pt-2 border-t border-black/5">e-book, seção 4.7</p>
+                    </div>
+                    <div class="p-5 rounded-2xl border flex flex-col justify-between " style="background: var(--mira-pill-bg); border-color: var(--mira-card-border);">
+                        <div>
+                            <div class="flex items-center gap-2 mb-3">
+                                <i data-lucide="sliders-horizontal" class="w-5 h-5 primary-color"></i>
+                                <h4 class="font-bold text-lg">Do consultivo ao diretivo</h4>
+                            </div>
+                            <p class="text-base text-soft leading-relaxed">O PMO pode ter papel <strong>puramente consultivo</strong>, de suporte metodológico, ou papel <strong>diretivo</strong>, gerenciando efetivamente os projetos mais críticos.</p>
+                        </div>
+                        <p class="text-xs font-semibold text-softer mt-4 pt-2 border-t border-black/5">e-book, seção 4.7</p>
+                    </div>
+                    <div class="p-5 rounded-2xl border flex flex-col justify-between " style="background: var(--mira-pill-bg); border-color: var(--mira-card-border);">
+                        <div>
+                            <div class="flex items-center gap-2 mb-3">
+                                <i data-lucide="radar" class="w-5 h-5 primary-color"></i>
+                                <h4 class="font-bold text-lg">Na governança de TI</h4>
+                            </div>
+                            <p class="text-base text-soft leading-relaxed">Monitora se os projetos aprovados pelos comitês avançam, <strong>consolida indicadores</strong> do portfólio para a alta administração e <strong>sinaliza desvios</strong>, como o cancelamento de um projeto cujos pressupostos de negócio deixaram de valer.</p>
+                        </div>
+                        <p class="text-xs font-semibold text-softer mt-4 pt-2 border-t border-black/5">e-book, seção 4.7</p>
+                    </div>
+                </div>
+                <div class="p-4 rounded-xl border flex items-center gap-4" style="background: var(--mira-icon-bg); border-color: var(--mira-icon-border);">
+                    <i data-lucide="circle-help" class="w-8 h-8 primary-color shrink-0"></i>
+                    <p class="text-base md:text-lg font-medium"><strong>Para pensar (questão 7):</strong> “em uma organização com bom PMO, o comitê de TI se torna desnecessário”. Concorda? Use a distinção entre governança e gestão do Capítulo 1.</p>
+                </div>
+                <p class="fonte-linha mt-4">Fonte: e-book GOTI, seção 4.7 e questões de fixação; seção 3.5 (mecanismos estruturais).</p>
+            </div>
+        </div>
+    </section>
+
+
+    <!-- ============ S17: Exemplo aplicado: matrícula de calouros ============ -->
+    <section id="s17" class="min-h-screen flex flex-col items-center justify-center px-6 pt-3 pb-6">
+        <div class="w-full max-w-6xl" data-aos="fade-up" data-aos-delay="100">
+            <div class="text-center mb-2">
+                <h2 class="text-4xl md:text-5xl font-bold mb-2">Matrícula: de <span class="primary-color italic">12 dias a 3</span></h2>
+                <p class="text-softer italic text-xl md:text-2xl font-medium">Do processo ao projeto, numa faculdade privada.</p>
+            </div>
+            <div class="glass-card rounded-2xl p-1 md:p-2 relative">
+                <div class="flex items-center justify-between mb-2 px-1">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-lg flex items-center justify-center" style="background: var(--mira-icon-bg);">
+                            <i data-lucide="graduation-cap" class="w-5 h-5 primary-color"></i>
+                        </div>
+                        <div>
+                            <p class="mb-1"><span class="nivel-chip">N4 · Na prática<span class="nivel-dots"><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i></span></span></p>
+                            <p class="font-bold text-base md:text-lg">Exemplo aplicado: matrícula de calouros</p>
+                            <p class="text-softer text-sm md:text-base italic font-medium">A análise BPM revela o gargalo; um projeto PMBOK entrega o novo processo.</p>
+                        </div>
+                    </div>
+                    <button id="pause-matricula" class="pause-btn" type="button" aria-label="Pausar animação"></button>
+                    <button id="replay-matricula" class="replay-btn" type="button"><i data-lucide="rotate-cw" class="w-4 h-4"></i>Replay</button>
+                </div>
+                <!-- @MIRA:SIZE 3/10 -->
+                <div class="anim-stage" id="matricula-stage">
+                    <svg id="matricula-svg" viewBox="0 0 1280 720" preserveAspectRatio="xMidYMid meet"></svg>
+                </div>
+                <div class="border-t pt-1 mt-1 mb-1" style="border-color: var(--mira-card-border);">
+                    <p class="text-sm uppercase tracking-[3px] text-softer text-center font-bold mb-2">O caso em quatro números</p>
+                    <div class="grid grid-cols-2 md:grid-cols-4 gap-2">
+                        <div class="attribute-pill text-center p-2 rounded-xl" id="matricula-pill-0">
+                            <i data-lucide="files" class="w-4 h-4 primary-color mx-auto mb-1"></i>
+                            <p class="text-base font-bold tracking-wide">14 etapas manuais</p>
+                            <p class="text-xs text-softer mt-0.5">papel entre 3 departamentos</p>
+                        </div>
+                        <div class="attribute-pill text-center p-2 rounded-xl" id="matricula-pill-1">
+                            <i data-lucide="monitor-smartphone" class="w-4 h-4 primary-color mx-auto mb-1"></i>
+                            <p class="text-base font-bold tracking-wide">6 etapas digitais</p>
+                            <p class="text-xs text-softer mt-0.5">um único formulário eletrônico</p>
+                        </div>
+                        <div class="attribute-pill text-center p-2 rounded-xl" id="matricula-pill-2">
+                            <i data-lucide="timer" class="w-4 h-4 primary-color mx-auto mb-1"></i>
+                            <p class="text-base font-bold tracking-wide">Meta: até 3 dias</p>
+                            <p class="text-xs text-softer mt-0.5">antes, 12 dias em média</p>
+                        </div>
+                        <div class="attribute-pill text-center p-2 rounded-xl" id="matricula-pill-3">
+                            <i data-lucide="repeat" class="w-4 h-4 primary-color mx-auto mb-1"></i>
+                            <p class="text-base font-bold tracking-wide">O projeto termina</p>
+                            <p class="text-xs text-softer mt-0.5">o processo segue a cada ingresso</p>
+                        </div>
+                    </div>
+                    <p class="fonte-linha">Fonte: e-book GOTI, Cap. 4, exemplo aplicado “do processo ao projeto”; slides da disciplina.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+
+    <!-- ============ S17-CONCEITO: fundamentação ============ -->
+    <section id="s17-conceito" class="min-h-screen flex flex-col items-center justify-center px-6 pt-4 pb-8">
+        <div class="w-full max-w-6xl" data-aos="fade-up" data-aos-delay="100">
+            <div class="text-center mb-4">
+                <h2 class="text-4xl md:text-5xl font-black mb-2">O caso pela lente do <span class="primary-color italic">BPM e do PMBOK</span></h2>
+                <p class="text-softer text-xl md:text-2xl font-medium">Cada disciplina entra no momento certo do ciclo.</p>
+            </div>
+            <div class="glass-card rounded-2xl p-6 md:p-8 relative">
+                <div class="flex items-center justify-between mb-6 pb-4 border-b border-black/10">
+                    <div class="flex items-center gap-4">
+                        <div class="w-12 h-12 rounded-xl flex items-center justify-center" style="background: var(--mira-icon-bg);">
+                            <i data-lucide="book-open" class="w-6 h-6 primary-color"></i>
+                        </div>
+                        <div>
+                            <span class="nivel-chip">N4 · Na prática<span class="nivel-dots"><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i></span></span>
+                            <span class="tag-conceitual">Análise do exemplo</span>
+                            <h3 class="font-bold text-xl md:text-2xl mt-1">O sucesso foi definido pelo processo, não pelo lançamento do sistema.</h3>
+                        </div>
+                    </div>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-4">
+                    <div class="p-5 rounded-2xl border flex flex-col justify-between " style="background: var(--mira-pill-bg); border-color: var(--mira-card-border);">
+                        <div>
+                            <div class="flex items-center gap-2 mb-3">
+                                <i data-lucide="search" class="w-5 h-5 primary-color"></i>
+                                <h4 class="font-bold text-lg">Análise</h4>
+                            </div>
+                            <p class="text-base text-soft leading-relaxed"><strong>Como está:</strong> 14 etapas manuais, formulários em papel entre 3 departamentos, 12 dias em média.</p>
+                        </div>
+                        <p class="text-xs font-semibold text-softer mt-4 pt-2 border-t border-black/5">Ciclo BPM, fase 2</p>
+                    </div>
+                    <div class="p-5 rounded-2xl border flex flex-col justify-between " style="background: var(--mira-pill-bg); border-color: var(--mira-card-border);">
+                        <div>
+                            <div class="flex items-center gap-2 mb-3">
+                                <i data-lucide="pen-tool" class="w-5 h-5 primary-color"></i>
+                                <h4 class="font-bold text-lg">Desenho</h4>
+                            </div>
+                            <p class="text-base text-soft leading-relaxed"><strong>Como deveria ser:</strong> 6 etapas, todas digitais, com um único formulário eletrônico.</p>
+                        </div>
+                        <p class="text-xs font-semibold text-softer mt-4 pt-2 border-t border-black/5">Ciclo BPM, fase 3</p>
+                    </div>
+                    <div class="p-5 rounded-2xl border flex flex-col justify-between " style="background: var(--mira-pill-bg); border-color: var(--mira-card-border);">
+                        <div>
+                            <div class="flex items-center gap-2 mb-3">
+                                <i data-lucide="flag" class="w-5 h-5 primary-color"></i>
+                                <h4 class="font-bold text-lg">Implementação</h4>
+                            </div>
+                            <p class="text-base text-soft leading-relaxed">Um <strong>projeto de TI</strong> desenvolve o sistema que sustenta o novo processo, seguindo o PMBOK 7.</p>
+                        </div>
+                        <p class="text-xs font-semibold text-softer mt-4 pt-2 border-t border-black/5">Ciclo BPM, fase 4</p>
+                    </div>
+                    <div class="p-5 rounded-2xl border flex flex-col justify-between " style="background: var(--mira-pill-bg); border-color: var(--mira-card-border);">
+                        <div>
+                            <div class="flex items-center gap-2 mb-3">
+                                <i data-lucide="repeat" class="w-5 h-5 primary-color"></i>
+                                <h4 class="font-bold text-lg">E depois</h4>
+                            </div>
+                            <p class="text-base text-soft leading-relaxed">O projeto encerra quando o sistema entra em produção; o processo segue e é <strong>reavaliado a cada ingresso</strong>.</p>
+                        </div>
+                        <p class="text-xs font-semibold text-softer mt-4 pt-2 border-t border-black/5">Seção 4.6</p>
+                    </div>
+                </div>
+                <div class="rounded-2xl border overflow-hidden mb-4" style="border-color: var(--mira-card-border);">
+                    <table class="w-full text-base">
+                        <thead style="background: var(--mira-icon-bg);"><tr><th class="text-left font-bold text-sm uppercase tracking-wider text-softer px-4 py-3">Domínio do PMBOK 7</th><th class="text-left font-bold text-sm uppercase tracking-wider text-softer px-4 py-3">Aplicação no projeto da matrícula</th></tr></thead>
+                        <tbody><tr class="border-t" style="border-color: var(--mira-card-border);"><td class="px-4 py-3 font-bold">Partes interessadas</td><td class="px-4 py-3 text-soft">envolve os três departamentos afetados desde o início</td></tr><tr class="border-t" style="border-color: var(--mira-card-border);"><td class="px-4 py-3 font-bold">Entrega</td><td class="px-4 py-3 text-soft">sucesso = reduzir a matrícula para no máximo 3 dias, e não apenas “lançar um sistema”</td></tr><tr class="border-t" style="border-color: var(--mira-card-border);"><td class="px-4 py-3 font-bold">Incerteza</td><td class="px-4 py-3 text-soft">antecipa a resistência dos departamentos acostumados ao processo em papel</td></tr></tbody>
+                    </table>
+                </div>
+                <div class="p-4 rounded-xl border flex items-center gap-4" style="background: var(--mira-icon-bg); border-color: var(--mira-icon-border);">
+                    <i data-lucide="circle-help" class="w-8 h-8 primary-color shrink-0"></i>
+                    <p class="text-base md:text-lg font-medium"><strong>Para pensar (questão 6):</strong> por que seria arriscado iniciar o desenvolvimento do sistema sem antes concluir a fase de desenho do processo?</p>
+                </div>
+                <p class="fonte-linha mt-4">Fonte: e-book GOTI, Cap. 4, exemplo aplicado e questões de fixação.</p>
+            </div>
+        </div>
+    </section>
+
+
+    <!-- ============ S19: Mapa do capítulo ============ -->
+    <section id="s19" class="min-h-screen flex flex-col items-center justify-center px-6 pt-3 pb-6">
+        <div class="w-full max-w-6xl" data-aos="fade-up" data-aos-delay="100">
+            <div class="text-center mb-2">
+                <h2 class="text-4xl md:text-5xl font-bold mb-2">O que fica do <span class="primary-color italic">capítulo 4</span></h2>
+                <p class="text-softer italic text-xl md:text-2xl font-medium">A governança decide; processos e projetos fazem acontecer.</p>
+            </div>
+            <div class="glass-card rounded-2xl p-1 md:p-2 relative">
+                <div class="flex items-center justify-between mb-2 px-1">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-lg flex items-center justify-center" style="background: var(--mira-icon-bg);">
+                            <i data-lucide="map" class="w-5 h-5 primary-color"></i>
+                        </div>
+                        <div>
+                            <p class="mb-1"><span class="nivel-chip">N4 · Na prática<span class="nivel-dots"><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i></span></span></p>
+                            <p class="font-bold text-base md:text-lg">Mapa do capítulo</p>
+                            <p class="text-softer text-sm md:text-base italic font-medium">Dois motores de gestão e um elo com quem decide.</p>
+                        </div>
+                    </div>
+                    <button id="pause-sintese" class="pause-btn" type="button" aria-label="Pausar animação"></button>
+                    <button id="replay-sintese" class="replay-btn" type="button"><i data-lucide="rotate-cw" class="w-4 h-4"></i>Replay</button>
+                </div>
+                <!-- @MIRA:SIZE 3/10 -->
+                <div class="anim-stage" id="sintese-stage">
+                    <svg id="sintese-svg" viewBox="0 0 1280 720" preserveAspectRatio="xMidYMid meet"></svg>
+                </div>
+                <div class="border-t pt-1 mt-1 mb-1" style="border-color: var(--mira-card-border);">
+                    <p class="text-sm uppercase tracking-[3px] text-softer text-center font-bold mb-2">Cinco ideias para levar</p>
+                    <div class="grid grid-cols-2 md:grid-cols-5 gap-2">
+                        <div class="attribute-pill text-center p-2 rounded-xl" id="sintese-pill-0">
+                            <i data-lucide="refresh-cw" class="w-4 h-4 primary-color mx-auto mb-1"></i>
+                            <p class="text-base font-bold tracking-wide">BPM</p>
+                            <p class="text-xs text-softer mt-0.5">ciclo de 6 fases</p>
+                        </div>
+                        <div class="attribute-pill text-center p-2 rounded-xl" id="sintese-pill-1">
+                            <i data-lucide="git-branch" class="w-4 h-4 primary-color mx-auto mb-1"></i>
+                            <p class="text-base font-bold tracking-wide">BPMN</p>
+                            <p class="text-xs text-softer mt-0.5">notação padronizada</p>
+                        </div>
+                        <div class="attribute-pill text-center p-2 rounded-xl" id="sintese-pill-2">
+                            <i data-lucide="orbit" class="w-4 h-4 primary-color mx-auto mb-1"></i>
+                            <p class="text-base font-bold tracking-wide">PMBOK 7</p>
+                            <p class="text-xs text-softer mt-0.5">princípios e 8 domínios</p>
+                        </div>
+                        <div class="attribute-pill text-center p-2 rounded-xl" id="sintese-pill-3">
+                            <i data-lucide="git-compare" class="w-4 h-4 primary-color mx-auto mb-1"></i>
+                            <p class="text-base font-bold tracking-wide">Alternância</p>
+                            <p class="text-xs text-softer mt-0.5">processo gera projeto, e vice-versa</p>
+                        </div>
+                        <div class="attribute-pill text-center p-2 rounded-xl" id="sintese-pill-4">
+                            <i data-lucide="building-2" class="w-4 h-4 primary-color mx-auto mb-1"></i>
+                            <p class="text-base font-bold tracking-wide">PMO</p>
+                            <p class="text-xs text-softer mt-0.5">liga decisão e execução</p>
+                        </div>
+                    </div>
+                    <p class="fonte-linha">Fonte: e-book GOTI, Cap. 4, resumo do capítulo. Próximo: Cap. 5, modelos de melhores práticas.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+
+    <!-- ============ S19-CONCEITO: fundamentação ============ -->
+    <section id="s19-conceito" class="min-h-screen flex flex-col items-center justify-center px-6 pt-4 pb-8">
+        <div class="w-full max-w-6xl" data-aos="fade-up" data-aos-delay="100">
+            <div class="text-center mb-4">
+                <h2 class="text-4xl md:text-5xl font-black mb-2">Questões de <span class="primary-color italic">fixação</span></h2>
+                <p class="text-softer text-xl md:text-2xl font-medium">Do lembrar ao avaliar: sete degraus da taxonomia de Bloom.</p>
+            </div>
+            <div class="glass-card rounded-2xl p-6 md:p-8 relative">
+                <div class="flex items-center justify-between mb-6 pb-4 border-b border-black/10">
+                    <div class="flex items-center gap-4">
+                        <div class="w-12 h-12 rounded-xl flex items-center justify-center" style="background: var(--mira-icon-bg);">
+                            <i data-lucide="clipboard-check" class="w-6 h-6 primary-color"></i>
+                        </div>
+                        <div>
+                            <span class="nivel-chip">N4 · Na prática<span class="nivel-dots"><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i></span></span>
+                            <span class="tag-conceitual">Atividade</span>
+                            <h3 class="font-bold text-xl md:text-2xl mt-1">Responda antes de abrir o Capítulo 5.</h3>
+                        </div>
+                    </div>
+                </div>
+                <ul class="mb-4">
+                    <li class="flex items-start gap-3 py-2 border-t" style="border-color: var(--mira-card-border);">
+                        <span class="font-black primary-color text-lg w-6 shrink-0">1</span>
+                        <span class="bloom shrink-0 mt-1">Lembrar</span>
+                        <span class="text-base text-soft">Liste as seis fases do ciclo de vida BPM segundo o BPM CBOK.</span>
+                    </li>
+                    <li class="flex items-start gap-3 py-2 border-t" style="border-color: var(--mira-card-border);">
+                        <span class="font-black primary-color text-lg w-6 shrink-0">2</span>
+                        <span class="bloom shrink-0 mt-1">Lembrar</span>
+                        <span class="text-base text-soft">Nomeie os oito domínios de desempenho do PMBOK 7ª edição.</span>
+                    </li>
+                    <li class="flex items-start gap-3 py-2 border-t" style="border-color: var(--mira-card-border);">
+                        <span class="font-black primary-color text-lg w-6 shrink-0">3</span>
+                        <span class="bloom shrink-0 mt-1">Entender</span>
+                        <span class="text-base text-soft">Explique a diferença fundamental entre um processo de negócio e um projeto.</span>
+                    </li>
+                    <li class="flex items-start gap-3 py-2 border-t" style="border-color: var(--mira-card-border);">
+                        <span class="font-black primary-color text-lg w-6 shrink-0">4</span>
+                        <span class="bloom shrink-0 mt-1">Entender</span>
+                        <span class="text-base text-soft">Explique o papel de um PMO na governança de TI, distinguindo um papel consultivo de um papel diretivo.</span>
+                    </li>
+                    <li class="flex items-start gap-3 py-2 border-t" style="border-color: var(--mira-card-border);">
+                        <span class="font-black primary-color text-lg w-6 shrink-0">5</span>
+                        <span class="bloom shrink-0 mt-1">Aplicar</span>
+                        <span class="text-base text-soft">Escolha um processo de uma organização que você conheça e descreva-o com os elementos do BPMN (eventos, atividades, gateways, raias).</span>
+                    </li>
+                    <li class="flex items-start gap-3 py-2 border-t" style="border-color: var(--mira-card-border);">
+                        <span class="font-black primary-color text-lg w-6 shrink-0">6</span>
+                        <span class="bloom shrink-0 mt-1">Analisar</span>
+                        <span class="text-base text-soft">No exemplo da faculdade, em que fase do ciclo BPM o projeto de TI foi iniciado? Por que seria arriscado desenvolver o sistema antes de concluir o desenho do processo?</span>
+                    </li>
+                    <li class="flex items-start gap-3 py-2 border-t" style="border-color: var(--mira-card-border);">
+                        <span class="font-black primary-color text-lg w-6 shrink-0">7</span>
+                        <span class="bloom shrink-0 mt-1">Avaliar</span>
+                        <span class="text-base text-soft">Avalie: “em uma organização com bom PMO, o comitê de TI se torna desnecessário”. Justifique com os papéis de governança e gestão do Capítulo 1.</span>
+                    </li>
+                </ul>
+                <div class="p-4 rounded-xl border text-sm text-soft" style="background: var(--mira-pill-bg); border-color: var(--mira-card-border);">
+                    <p class="font-bold uppercase tracking-wider text-xs text-softer mb-2">Referências deste capítulo (ABNT)</p>
+                    <p class="mb-1">ASSOCIATION OF BUSINESS PROCESS MANAGEMENT PROFESSIONALS (ABPMP). <em>BPM CBOK</em>: Guide to the Business Process Management Common Body of Knowledge. Versão 4.0. [S.l.]: ABPMP International, 2019.</p>
+                    <p>PROJECT MANAGEMENT INSTITUTE (PMI). <em>A Guide to the Project Management Body of Knowledge (PMBOK Guide)</em> and The Standard for Project Management. 7. ed. Newtown Square, PA: PMI, 2021.</p>
+                </div>
+                <p class="fonte-linha mt-4">Fonte: e-book GOTI, Cap. 4, questões de fixação e referências.</p>
+            </div>
+        </div>
+    </section>
+
+    <script>
+        AOS.init({ duration: 800, once: true });
+        lucide.createIcons();
+
+        const cssVar = v => getComputedStyle(document.documentElement).getPropertyValue(v).trim();
+        const PRIMARY = cssVar('--mira-primary');
+        const ACCENT = cssVar('--mira-accent-2');
+        const TEXT = cssVar('--mira-text');
+        const SOFT = cssVar('--mira-text-soft');
+        const SOFTER = cssVar('--mira-text-softer');
+        const CARD = cssVar('--mira-card-bg');
+        const BORDER = cssVar('--mira-card-border');
+        const PILLBG = cssVar('--mira-pill-bg');
+        const ICONBG = cssVar('--mira-icon-bg');
+        const ICONBORDER = cssVar('--mira-icon-border');
+
+        window.__gen = window.__gen || {};
+        window.__ctx = window.__ctx || {};
+        window.__paused = window.__paused || {};
+        window.MIRA_SLIDES = window.MIRA_SLIDES || [];
+
+        // ===== Contexto de animação com geração anti-vazamento =====
+        // Cada chamada invalida a geração anterior: o timer mestre antigo para,
+        // timeouts pendentes são cancelados e o SVG é limpo. O relógio (t) não
+        // avança enquanto a animação está pausada.
+        function makeCtx(name, stageId) {
+            const prev = window.__ctx[name];
+            if (prev) prev.stop();
+            window.__gen[name] = (window.__gen[name] || 0) + 1;
+            const gen = window.__gen[name];
+
+            const svg = d3.select('#' + stageId).select('svg');
+            svg.selectAll('*').interrupt().remove();
+
+            const frames = [];
+            const timeouts = [];
+            let t = (window.__T0 || 0), last = null, master = null;
+
+            const ctx = {
+                svg: svg, W: 1280, H: 720,
+                alive: () => gen === window.__gen[name],
+                frame: fn => { frames.push(fn); },
+                after: (ms, fn) => {
+                    const id = setTimeout(() => { if (ctx.alive()) fn(); }, ms);
+                    timeouts.push(id);
+                    return id;
+                },
+                stop: () => { if (master) master.stop(); timeouts.forEach(clearTimeout); }
+            };
+            master = d3.timer(now => {
+                if (!ctx.alive()) { master.stop(); return; }
+                if (last === null) last = now;
+                const dt = now - last; last = now;
+                if (window.__paused[name]) return;
+                t += dt;
+                for (let i = 0; i < frames.length; i++) frames[i](t, dt);
+            });
+            window.__ctx[name] = ctx;
+            return ctx;
+        }
+
+        // ===== Utilitários de matemática e tempo =====
+        const clamp01 = x => Math.max(0, Math.min(1, x));
+        const lerp = (a, b, u) => a + (b - a) * u;
+        const seg = (u, a, b) => clamp01((u - a) / (b - a));      // mapeia u em [a,b] para [0,1]
+        const cyc = (t, period) => (t % period) / period;          // fase 0..1
+        const tri = u => 1 - Math.abs(2 * u - 1);                  // 0→1→0
+        const eio = d3.easeCubicInOut;
+
+        // ===== Utilitários de desenho SVG =====
+        function txt(parent, x, y, str, o) {
+            o = o || {};
+            const el = parent.append('text')
+                .attr('x', x).attr('y', y)
+                .attr('text-anchor', o.anchor || 'middle')
+                .attr('fill', o.fill || TEXT)
+                .attr('font-size', o.size || 24)
+                .attr('font-weight', o.weight || 600);
+            const lines = String(str).split('\n');
+            const lh = (o.size || 24) * (o.lh || 1.18);
+            const y0 = y - (o.vmid ? (lines.length - 1) * lh / 2 : 0);
+            lines.forEach((ln, i) => {
+                el.append('tspan').attr('x', x).attr('y', y0 + i * lh).text(ln);
+            });
+            return el;
+        }
+
+        function rbox(parent, x, y, w, h, r, o) {
+            o = o || {};
+            return parent.append('rect')
+                .attr('x', x).attr('y', y).attr('width', w).attr('height', h).attr('rx', r)
+                .attr('fill', o.fill || CARD)
+                .attr('stroke', o.stroke || BORDER)
+                .attr('stroke-width', o.sw || 1.5);
+        }
+
+        // Entrada: sobe 24px com overshoot e surge. Retorna o grupo para encadear.
+        function enter(g, x, y, delay) {
+            return g.attr('transform', 'translate(' + x + ',' + (y + 24) + ')').attr('opacity', 0)
+                .transition().delay(delay || 0).duration(650).ease(d3.easeBackOut.overshoot(1.1))
+                .attr('transform', 'translate(' + x + ',' + y + ')').attr('opacity', 1);
+        }
+
+        function fadeIn(sel, delay, dur) {
+            return sel.attr('opacity', 0).transition().delay(delay || 0).duration(dur || 500).attr('opacity', 1);
+        }
+
+        // Seta simples entre dois pontos (linha + ponta)
+        function arrow(parent, x1, y1, x2, y2, o) {
+            o = o || {};
+            const g = parent.append('g');
+            g.append('line').attr('x1', x1).attr('y1', y1).attr('x2', x2).attr('y2', y2)
+                .attr('stroke', o.stroke || SOFTER).attr('stroke-width', o.sw || 2.5)
+                .attr('stroke-dasharray', o.dash || null);
+            const a = Math.atan2(y2 - y1, x2 - x1), s = o.head || 10;
+            g.append('path')
+                .attr('d', 'M' + x2 + ',' + y2 + ' L' + (x2 - s * Math.cos(a - 0.45)) + ',' + (y2 - s * Math.sin(a - 0.45)) +
+                    ' L' + (x2 - s * Math.cos(a + 0.45)) + ',' + (y2 - s * Math.sin(a + 0.45)) + ' Z')
+                .attr('fill', o.stroke || SOFTER);
+            return g;
+        }
+
+        // Ponto sobre um caminho SVG (fração 0..1)
+        function pointOn(pathEl, u) {
+            const L = pathEl.getTotalLength();
+            const p = pathEl.getPointAtLength(clamp01(u) * L);
+            return p;
+        }
+
+        const ebo = d3.easeBackOut.overshoot(1.1);
+
+        // ===== Utilitário: acende a pílula do rodapé sincronizada com o palco =====
+        function pillSync(name, n) {
+            let last = -2;
+            return function (idx) {
+                if (idx === last) return;
+                last = idx;
+                for (let i = 0; i < n; i++) {
+                    const el = document.getElementById(name + '-pill-' + i);
+                    if (el) el.classList.toggle('pill-on', i === idx || idx === 'all');
+                }
+            };
+        }
+
+        // ===== CAPA: anéis de processo girando e projetos nascendo e terminando =====
+        // Loop: os anéis fluem sem parar, um cometa orbita o anel do meio (processo contínuo)
+        // e, na linha do tempo, barras de projeto crescem do início ao fim e somem.
+        function animateCapa() {
+            const c = makeCtx('capa', 'capa-stage'), svg = c.svg;
+            const cx = 640, cy = 330;
+            const rings = [
+                { r: 200, dash: '6 10', sw: 1.6, v: 0.012, col: PRIMARY, op: 0.40 },
+                { r: 280, dash: '2 14', sw: 1.4, v: -0.008, col: PRIMARY, op: 0.28 },
+                { r: 370, dash: '14 22', sw: 1.2, v: 0.005, col: ACCENT, op: 0.18 }
+            ];
+            const rs = rings.map((a, i) => {
+                const e = svg.append('ellipse').attr('cx', cx).attr('cy', cy).attr('rx', 0).attr('ry', 0)
+                    .attr('fill', 'none').attr('stroke', a.col).attr('stroke-opacity', a.op)
+                    .attr('stroke-width', a.sw).attr('stroke-dasharray', a.dash);
+                e.transition().delay(200 + i * 160).duration(900).ease(ebo)
+                    .attr('rx', a.r).attr('ry', a.r * 0.62);
+                return { e: e, a: a };
+            });
+
+            const LY = 650, LX0 = 120;
+            svg.append('line').attr('x1', LX0).attr('y1', LY).attr('x2', 1160).attr('y2', LY)
+                .attr('stroke', SOFTER).attr('stroke-width', 2).attr('stroke-dasharray', '3 9').attr('opacity', 0.5);
+            const bars = d3.range(3).map(() => {
+                const g = svg.append('g').attr('opacity', 0);
+                const bar = g.append('rect').attr('y', LY - 7).attr('height', 14).attr('rx', 7).attr('fill', PRIMARY).attr('opacity', 0.35);
+                const p0 = g.append('line').attr('y1', LY - 7).attr('y2', LY - 36).attr('stroke', PRIMARY).attr('stroke-width', 2.5).attr('opacity', 0.6);
+                const p1 = g.append('line').attr('y1', LY - 7).attr('y2', LY - 36).attr('stroke', PRIMARY).attr('stroke-width', 2.5).attr('opacity', 0.6);
+                const flag = g.append('path').attr('fill', PRIMARY).attr('opacity', 0.6);
+                return { g: g, bar: bar, p0: p0, p1: p1, flag: flag };
+            });
+
+            const trail = d3.range(10).map(i => svg.append('circle').attr('r', 5 - i * 0.4).attr('fill', PRIMARY).attr('opacity', 0));
+            const comet = svg.append('circle').attr('r', 7).attr('fill', PRIMARY).attr('opacity', 0)
+                .style('filter', 'drop-shadow(0 0 12px ' + PRIMARY + ')');
+
+            c.frame(t => {
+                rs.forEach(o => o.e.attr('stroke-dashoffset', -t * o.a.v));
+                const on = seg(t, 1000, 1600);
+                const a = t * 0.0011;
+                comet.attr('cx', cx + Math.cos(a) * 280).attr('cy', cy + Math.sin(a) * 280 * 0.62).attr('opacity', 0.95 * on);
+                trail.forEach((d, i) => {
+                    const b = a - (i + 1) * 0.05;
+                    d.attr('cx', cx + Math.cos(b) * 280).attr('cy', cy + Math.sin(b) * 280 * 0.62).attr('opacity', (0.45 - i * 0.045) * on);
+                });
+                const barsOn = seg(t, 1500, 2200);
+                bars.forEach((o, j) => {
+                    const tt = t + j * 1200;
+                    const k = Math.floor(tt / 3600), u = (tt % 3600) / 3600;
+                    const x0 = LX0 + ((k * 389 + j * 211) % 700);
+                    const len = 180 + ((k * 97 + j * 53) % 140);
+                    const w = len * eio(seg(u, 0.05, 0.6));
+                    o.g.attr('opacity', barsOn * seg(u, 0, 0.08) * (1 - seg(u, 0.8, 1)));
+                    o.bar.attr('x', x0).attr('width', w);
+                    o.p0.attr('x1', x0).attr('x2', x0);
+                    const done = u > 0.6 ? 1 : 0;
+                    o.p1.attr('x1', x0 + len).attr('x2', x0 + len).attr('opacity', 0.6 * done);
+                    o.flag.attr('d', 'M' + (x0 + len) + ',' + (LY - 36) + ' l18,6 l-18,6 Z').attr('opacity', 0.6 * done);
+                });
+            });
+        }
+        window.MIRA_SLIDES.push({ id: 'capa-stage', fn: animateCapa, name: 'capa' });
+
+        // ===== SUMÁRIO: quatro estações da trilha =====
+        // Loop: um token percorre o trilho parando em cada estação; a estação ativa ganha halo
+        // e a pílula correspondente do rodapé acende. Depois da quarta, volta ao começo.
+        function animateSumario() {
+            const c = makeCtx('sumario', 'sumario-stage'), svg = c.svg;
+            const pill = pillSync('sumario', 4);
+            const PERIOD = 12000, railY = 110;
+            const est = [
+                { tag: 'N1 · PROCESSOS', tit: 'Processos', cx: 170, cor: PRIMARY, slides: 'Slides 3 a 8',
+                  itens: [['Processo como ativo', 'BPM e conhecimento tácito'], ['Ciclo de vida BPM', 'seis fases, lógica PDCA'], ['Notação BPMN', 'eventos, atividades, gateways']] },
+                { tag: 'N2 · PROJETOS', tit: 'Projetos', cx: 490, cor: ACCENT, slides: 'Slides 9 a 12',
+                  itens: [['O que é projeto', 'temporário e único'], ['Decisão vira projeto', 'elo com a seção 3.3'], ['PMBOK 7ª edição', 'princípios e 8 domínios']] },
+                { tag: 'N3 · GOVERNANÇA', tit: 'Na governança', cx: 810, cor: PRIMARY, slides: 'Slides 13 a 16',
+                  itens: [['Processo x projeto', 'diferenças e alternância'], ['Escritório de projetos', 'PMO, mecanismo estrutural'], ['Consultivo ou diretivo', 'graus de autoridade']] },
+                { tag: 'N4 · PRÁTICA', tit: 'Na prática', cx: 1130, cor: ACCENT, slides: 'Slides 17 a 20',
+                  itens: [['Matrícula de calouros', 'de 12 dias a 3'], ['Síntese do capítulo', 'mapa das ideias'], ['Questões de fixação', 'do lembrar ao avaliar']] }
+            ];
+
+            svg.append('line').attr('x1', est[0].cx).attr('y1', railY).attr('x2', est[3].cx).attr('y2', railY)
+                .attr('stroke', SOFTER).attr('stroke-width', 3).attr('stroke-dasharray', '4 8').attr('opacity', 0.5);
+            const progLine = svg.append('line').attr('x1', est[0].cx).attr('y1', railY).attr('x2', est[0].cx).attr('y2', railY)
+                .attr('stroke', PRIMARY).attr('stroke-width', 4).attr('stroke-linecap', 'round');
+
+            const cards = est.map((e, i) => {
+                svg.append('line').attr('x1', e.cx).attr('y1', railY + 18).attr('x2', e.cx).attr('y2', 190)
+                    .attr('stroke', e.cor).attr('stroke-width', 2).attr('stroke-dasharray', '3 3').attr('opacity', 0.6);
+                const node = svg.append('circle').attr('cx', e.cx).attr('cy', railY).attr('r', 18)
+                    .attr('fill', CARD).attr('stroke', e.cor).attr('stroke-width', 3);
+                txt(svg, e.cx, railY + 6, String(i + 1), { size: 17, weight: 800, fill: e.cor });
+
+                const g = svg.append('g');
+                const halo = g.append('rect').attr('x', -152).attr('y', 182).attr('width', 304).attr('height', 476).attr('rx', 22)
+                    .attr('fill', 'none').attr('stroke', e.cor).attr('stroke-width', 3).attr('opacity', 0);
+                rbox(g, -145, 190, 290, 460, 18, { fill: CARD, stroke: BORDER, sw: 1.5 });
+                rbox(g, -88, 210, 176, 30, 15, { fill: ICONBG, stroke: e.cor, sw: 1.2 });
+                txt(g, 0, 231, e.tag, { size: 14, weight: 800, fill: e.cor });
+                txt(g, 0, 288, e.tit, { size: 28, weight: 800 });
+                g.append('line').attr('x1', -115).attr('y1', 312).attr('x2', 115).attr('y2', 312).attr('stroke', BORDER);
+                e.itens.forEach((it, k) => {
+                    const y = 360 + k * 82;
+                    g.append('circle').attr('cx', -116).attr('cy', y - 6).attr('r', 5).attr('fill', e.cor);
+                    txt(g, -102, y, it[0], { size: 19, weight: 700, anchor: 'start' });
+                    txt(g, -102, y + 26, it[1], { size: 16, weight: 500, fill: SOFTER, anchor: 'start' });
+                });
+                rbox(g, -75, 602, 150, 30, 15, { fill: PILLBG, stroke: BORDER, sw: 1 });
+                txt(g, 0, 623, e.slides, { size: 15, weight: 700, fill: SOFTER });
+                enter(g, e.cx, 0, 200 + i * 180);
+                return { halo: halo, node: node };
+            });
+
+            const token = svg.append('g').attr('opacity', 0);
+            token.append('circle').attr('r', 22).attr('fill', PRIMARY).attr('opacity', 0.22);
+            token.append('circle').attr('r', 10).attr('fill', PRIMARY);
+
+            c.frame(t => {
+                const tt = t - 1200;
+                if (tt < 0) return;
+                const p = (tt % PERIOD) / PERIOD * 4;
+                const i = Math.floor(p), f = p - i;
+                let x = est[i].cx, op = 1;
+                if (f > 0.6) {
+                    if (i < 3) x = lerp(est[i].cx, est[i + 1].cx, eio(seg(f, 0.6, 1)));
+                    else { op = 1 - seg(f, 0.6, 0.75) + seg(f, 0.85, 1); x = f < 0.8 ? est[3].cx : est[0].cx; }
+                }
+                token.attr('transform', 'translate(' + x + ',' + railY + ')').attr('opacity', op * seg(tt, 0, 400));
+                progLine.attr('x2', x);
+                cards.forEach((cg, k) => {
+                    const on = k === i && f <= 0.6;
+                    cg.halo.attr('opacity', on ? Math.sin(seg(f, 0, 0.6) * Math.PI) * 0.95 : 0);
+                    cg.node.attr('r', on ? 21 : 18);
+                });
+                pill(f <= 0.6 ? i : -1);
+            });
+        }
+        window.MIRA_SLIDES.push({ id: 'sumario-stage', fn: animateSumario, name: 'sumario' });
+
+        // ===== SLIDE 3: processo como ativo (peças de quebra-cabeça) =====
+        // Loop: cada pessoa ou sistema guarda uma peça; partículas viajam sem parar das pessoas
+        // até o passo correspondente do processo modelado, e os cinco verbos do BPM acendem em sequência.
+        function animateAtivo() {
+            const c = makeCtx('ativo', 'ativo-stage'), svg = c.svg;
+            const pill = pillSync('ativo', 5);
+            const people = [
+                { nome: 'Atendente', y: 160, sis: false },
+                { nome: 'Analista', y: 295, sis: false },
+                { nome: 'Supervisor', y: 430, sis: false },
+                { nome: 'Sistema legado', y: 565, sis: true }
+            ];
+            const SLOTX = d3.range(4).map(k => 720 + k * 118), SLOTY = 190;
+
+            txt(svg, 200, 70, 'Conhecimento tácito', { size: 22, weight: 800, fill: SOFT });
+            txt(svg, 940, 70, 'Processo como ativo', { size: 22, weight: 800, fill: PRIMARY });
+
+            // Pessoas e sistema, cada um com um pedaço do processo
+            people.forEach((p, i) => {
+                const g = svg.append('g');
+                if (p.sis) {
+                    rbox(g, 94, p.y - 34, 52, 40, 6, { fill: CARD, stroke: SOFT, sw: 2.5 });
+                    g.append('line').attr('x1', 120).attr('y1', p.y + 6).attr('x2', 120).attr('y2', p.y + 18).attr('stroke', SOFT).attr('stroke-width', 3);
+                    g.append('line').attr('x1', 104).attr('y1', p.y + 20).attr('x2', 136).attr('y2', p.y + 20).attr('stroke', SOFT).attr('stroke-width', 3);
+                } else {
+                    g.append('circle').attr('cx', 120).attr('cy', p.y - 22).attr('r', 18).attr('fill', CARD).attr('stroke', SOFT).attr('stroke-width', 2.5);
+                    g.append('path').attr('d', 'M92,' + (p.y + 24) + ' Q120,' + (p.y - 14) + ' 148,' + (p.y + 24) + ' Z')
+                        .attr('fill', CARD).attr('stroke', SOFT).attr('stroke-width', 2.5);
+                }
+                txt(g, 166, p.y - 4, p.nome, { size: 20, weight: 700, anchor: 'start' });
+                txt(g, 166, p.y + 20, 'guarda o passo ' + (i + 1), { size: 15, weight: 500, fill: SOFTER, anchor: 'start' });
+                enter(g, 0, 0, 150 + i * 160);
+            });
+
+            // Documento: o processo modelado
+            const doc = svg.append('g');
+            rbox(doc, 690, 100, 500, 520, 18, { fill: CARD, stroke: BORDER, sw: 2 });
+            txt(doc, 940, 150, 'Processo modelado', { size: 24, weight: 800 });
+            const slots = SLOTX.map((x, k) => {
+                const r = rbox(doc, x, SLOTY, 96, 58, 12, { fill: 'none', stroke: SOFTER, sw: 2 }).attr('stroke-dasharray', '6 5');
+                const lab = txt(doc, x + 48, SLOTY + 36, 'Passo ' + (k + 1), { size: 17, weight: 700, fill: SOFTER });
+                if (k < 3) arrow(doc, x + 98, SLOTY + 29, x + 116, SLOTY + 29, { stroke: SOFTER, sw: 2, head: 7 });
+                return { r: r, lab: lab };
+            });
+            doc.append('line').attr('x1', 720).attr('y1', 290).attr('x2', 1160).attr('y2', 290).attr('stroke', BORDER);
+            txt(doc, 720, 330, 'O processo agora é:', { size: 18, weight: 600, fill: SOFTER, anchor: 'start' });
+            const verbos = ['Identificado', 'Modelado', 'Executado', 'Monitorado', 'Melhorado continuamente'];
+            const vItems = verbos.map((v, k) => {
+                const y = 375 + k * 48;
+                const ck = doc.append('circle').attr('cx', 735).attr('cy', y - 7).attr('r', 13).attr('fill', PILLBG).attr('stroke', SOFTER).attr('stroke-width', 2);
+                const lb = txt(doc, 760, y, v, { size: 22, weight: 700, anchor: 'start', fill: SOFT });
+                return { ck: ck, lb: lb };
+            });
+            fadeIn(doc, 900, 700);
+
+            // Caminhos das peças até os passos
+            const paths = people.map((p, i) => {
+                const tx = SLOTX[i] + 48, ty = SLOTY + 60;
+                return svg.append('path')
+                    .attr('d', 'M330,' + p.y + ' C520,' + p.y + ' ' + (tx - 80) + ',' + (ty + 140) + ' ' + tx + ',' + ty)
+                    .attr('fill', 'none').attr('stroke', ICONBORDER).attr('stroke-width', 2).attr('stroke-dasharray', '4 7').attr('opacity', 0);
+            });
+            paths.forEach((p, i) => fadeIn(p, 1400 + i * 120, 500).attr('opacity', 0.8));
+            const pieces = people.map((p, i) => {
+                const g = svg.append('g').attr('opacity', 0);
+                rbox(g, -17, -17, 34, 34, 7, { fill: ICONBG, stroke: PRIMARY, sw: 2.5 });
+                txt(g, 0, 7, String(i + 1), { size: 18, weight: 800, fill: PRIMARY });
+                return g;
+            });
+            const parts = people.map(() => svg.append('circle').attr('r', 7).attr('fill', PRIMARY).attr('opacity', 0)
+                .style('filter', 'drop-shadow(0 0 8px ' + PRIMARY + ')'));
+
+            const nota = txt(svg, 640, 685, 'Sistema mal projetado costuma ser sintoma de processo mal compreendido.', { size: 19, weight: 600, fill: SOFT }).attr('font-style', 'italic').attr('opacity', 0);
+            fadeIn(nota, 4200, 700);
+
+            c.frame(t => {
+                people.forEach((p, i) => {
+                    const s0 = 2000 + i * 400;
+                    const u = seg(t, s0, s0 + 900);
+                    const pt = pointOn(paths[i].node(), eio(u));
+                    const atPile = t < s0;
+                    const x = atPile ? 330 : pt.x, y = atPile ? p.y : pt.y;
+                    pieces[i].attr('transform', 'translate(' + x + ',' + y + ')')
+                        .attr('opacity', seg(t, 1000 + i * 150, 1500 + i * 150) * (1 - seg(u, 0.9, 1)));
+                    const filled = u >= 1;
+                    // Pulso das partículas depois que o passo foi preenchido
+                    let flash = 0;
+                    if (t > 4000) {
+                        const up = ((t - 4000 + i * 700) % 2800) / 2800;
+                        const q = pointOn(paths[i].node(), eio(seg(up, 0, 0.6)));
+                        parts[i].attr('cx', q.x).attr('cy', q.y).attr('opacity', up < 0.6 ? 0.9 : 0);
+                        flash = up > 0.6 ? 1 - seg(up, 0.6, 0.85) : 0;
+                    }
+                    slots[i].r.attr('fill', filled ? ICONBG : 'none').attr('stroke', filled ? PRIMARY : SOFTER)
+                        .attr('stroke-dasharray', filled ? null : '6 5').attr('stroke-width', 2 + flash * 2.5);
+                    slots[i].lab.attr('fill', filled ? TEXT : SOFTER);
+                });
+                // Verbos do BPM acendendo um por vez
+                if (t > 3800) {
+                    const k = Math.floor((t - 3800) / 1400) % 5;
+                    vItems.forEach((v, j) => {
+                        v.ck.attr('fill', j <= k ? PRIMARY : PILLBG).attr('stroke', j <= k ? PRIMARY : SOFTER);
+                        v.lb.attr('fill', j === k ? PRIMARY : (j < k ? TEXT : SOFT));
+                    });
+                    pill(k);
+                }
+            });
+        }
+        window.MIRA_SLIDES.push({ id: 'ativo-stage', fn: animateAtivo, name: 'ativo' });
+
+        // ===== SLIDE 5: ciclo de vida BPM em seis fases =====
+        // Loop: um token orbita o anel sem parar, acendendo a fase por onde passa; no centro,
+        // um ponto gira no anel do PDCA. Ao completar a volta, o refinamento reabre o planejamento.
+        function animateCiclo() {
+            const c = makeCtx('ciclo', 'ciclo-stage'), svg = c.svg;
+            const pill = pillSync('ciclo', 6);
+            const CX = 640, CY = 360, R = 230, PERIOD = 13200, S0 = 2200;
+            const fases = [
+                { n: 'Planejamento', s: 'prioriza processos' },
+                { n: 'Análise', s: '“como está”' },
+                { n: 'Desenho', s: '“como deveria ser”' },
+                { n: 'Implementação', s: 'ponte com projetos' },
+                { n: 'Monitoramento e controle', s: 'indicadores de desempenho' },
+                { n: 'Refinamento', s: 'ajusta e reinicia' }
+            ];
+            const circ = 2 * Math.PI * R;
+            svg.append('circle').attr('cx', CX).attr('cy', CY).attr('r', R).attr('fill', 'none')
+                .attr('stroke', SOFTER).attr('stroke-width', 2).attr('stroke-dasharray', '5 7').attr('opacity', 0.6);
+            const prog = svg.append('circle').attr('cx', CX).attr('cy', CY).attr('r', R).attr('fill', 'none')
+                .attr('stroke', PRIMARY).attr('stroke-width', 5).attr('stroke-linecap', 'round')
+                .attr('transform', 'rotate(-90,' + CX + ',' + CY + ')')
+                .attr('stroke-dasharray', circ).attr('stroke-dashoffset', circ);
+
+            const nodes = fases.map((f, i) => {
+                const a = (-90 + i * 60) * Math.PI / 180;
+                const x = CX + R * Math.cos(a), y = CY + R * Math.sin(a);
+                const g = svg.append('g');
+                const circle = g.append('circle').attr('r', 40).attr('fill', CARD).attr('stroke', PRIMARY).attr('stroke-width', 2.5);
+                txt(g, 0, 9, String(i + 1), { size: 26, weight: 800, fill: PRIMARY });
+                let lx = 0, ly = 0, anchor = 'middle';
+                if (i === 0) { ly = -78; }
+                else if (i === 3) { ly = 72; }
+                else if (i < 3) { lx = 58; ly = -4; anchor = 'start'; }
+                else { lx = -58; ly = -4; anchor = 'end'; }
+                const name = txt(g, lx, ly, f.n, { size: 22, weight: 800, anchor: anchor });
+                txt(g, lx, ly + 24, f.s, { size: 16, weight: 500, fill: i === 3 ? ACCENT : SOFTER, anchor: anchor });
+                enter(g, x, y, 700 + i * 170);
+                return { circle: circle, name: name };
+            });
+
+            // Centro: lógica PDCA
+            const ctr = svg.append('g').attr('transform', 'translate(' + CX + ',' + CY + ')');
+            ctr.append('circle').attr('r', 112).attr('fill', PILLBG).attr('stroke', BORDER);
+            const pdcaRing = ctr.append('circle').attr('r', 86).attr('fill', 'none').attr('stroke', ICONBORDER)
+                .attr('stroke-width', 2).attr('stroke-dasharray', '3 6');
+            [['P', -90], ['D', 0], ['C', 90], ['A', 180]].forEach(d => {
+                const a = d[1] * Math.PI / 180;
+                txt(ctr, Math.cos(a) * 86, Math.sin(a) * 86 + 7, d[0], { size: 20, weight: 900, fill: ACCENT });
+            });
+            txt(ctr, 0, -4, 'lógica', { size: 16, weight: 600, fill: SOFTER });
+            txt(ctr, 0, 22, 'PDCA', { size: 28, weight: 900 });
+            const pdcaDot = ctr.append('circle').attr('r', 6).attr('fill', ACCENT);
+            fadeIn(ctr, 1500, 700);
+
+            const token = svg.append('circle').attr('r', 12).attr('fill', PRIMARY).attr('opacity', 0)
+                .style('filter', 'drop-shadow(0 0 12px ' + PRIMARY + ')');
+
+            c.frame(t => {
+                prog.attr('stroke-dashoffset', t < S0 ? circ * (1 - 0.0 * seg(t, 0, 1)) : circ * (1 - ((t - S0) % PERIOD) / PERIOD));
+                pdcaRing.attr('stroke-dashoffset', -t * 0.02);
+                const pa = t * 0.0016;
+                pdcaDot.attr('cx', Math.cos(pa) * 86).attr('cy', Math.sin(pa) * 86).attr('opacity', seg(t, 1800, 2300));
+                if (t < S0) return;
+                const u = ((t - S0) % PERIOD) / PERIOD;
+                const a = -Math.PI / 2 + u * 2 * Math.PI;
+                token.attr('cx', CX + R * Math.cos(a)).attr('cy', CY + R * Math.sin(a)).attr('opacity', seg(t, S0, S0 + 300));
+                const pos = u * 6;
+                const act = Math.round(pos) % 6;
+                nodes.forEach((nd, i) => {
+                    let d = Math.abs(pos - i);
+                    d = Math.min(d, 6 - d);
+                    const k = clamp01(1 - d / 0.45);
+                    nd.circle.attr('r', 40 + 8 * k).attr('fill', k > 0.2 ? ICONBG : CARD).attr('stroke-width', 2.5 + 2 * k);
+                    nd.name.attr('fill', k > 0.2 ? PRIMARY : TEXT);
+                });
+                pill(act);
+            });
+        }
+        window.MIRA_SLIDES.push({ id: 'ciclo-stage', fn: animateCiclo, name: 'ciclo' });
+
+        // ===== SLIDE 7: BPMN do atendimento de chamado =====
+        // Loop: um token percorre o diagrama do evento inicial ao final; a cada volta o gateway
+        // alterna entre "sim" e "não", e a pílula do elemento tocado (evento, atividade, gateway, raia) acende.
+        function animateBpmn() {
+            const c = makeCtx('bpmn', 'bpmn-stage'), svg = c.svg;
+            const pill = pillSync('bpmn', 4);
+            const S0 = 3200, CYCLE = 8000;
+            svg.append('defs').append('marker').attr('id', 'bp-arr').attr('viewBox', '0 0 10 10')
+                .attr('refX', 9).attr('refY', 5).attr('markerWidth', 7).attr('markerHeight', 7).attr('orient', 'auto')
+                .append('path').attr('d', 'M0,0 L10,5 L0,10 Z').attr('fill', SOFT);
+
+            // Piscina e raias
+            const pool = svg.append('g');
+            txt(pool, 40, 50, 'Processo: atender a um chamado de suporte técnico', { size: 20, weight: 700, fill: SOFT, anchor: 'start' });
+            const laneU = pool.append('rect').attr('x', 100).attr('y', 70).attr('width', 1140).attr('height', 230).attr('fill', ICONBG).attr('opacity', 0);
+            const laneS = pool.append('rect').attr('x', 100).attr('y', 300).attr('width', 1140).attr('height', 370).attr('fill', ICONBG).attr('opacity', 0);
+            rbox(pool, 40, 70, 1200, 600, 10, { fill: 'none', stroke: SOFT, sw: 2 });
+            pool.append('line').attr('x1', 100).attr('y1', 70).attr('x2', 100).attr('y2', 670).attr('stroke', SOFT).attr('stroke-width', 2);
+            pool.append('line').attr('x1', 40).attr('y1', 300).attr('x2', 1240).attr('y2', 300).attr('stroke', SOFT).attr('stroke-width', 2);
+            txt(pool, 70, 192, 'Usuário', { size: 20, weight: 800 }).attr('transform', 'rotate(-90,70,185)');
+            txt(pool, 70, 492, 'Suporte de TI', { size: 20, weight: 800 }).attr('transform', 'rotate(-90,70,485)');
+            fadeIn(pool, 0, 600);
+
+            // Fluxos de sequência
+            const flows = ['M172,190 L213,190', 'M300,228 L300,470 L383,470', 'M555,470 L604,470', 'M676,470 L813,470',
+                'M640,506 L640,590 L683,590', 'M855,590 L900,590 L900,510', 'M900,432 L900,190 L973,190', 'M1145,190 L1171,190'];
+            flows.forEach((d, i) => {
+                const p = svg.append('path').attr('d', d).attr('fill', 'none').attr('stroke', SOFT).attr('stroke-width', 2.5)
+                    .attr('marker-end', 'url(#bp-arr)');
+                fadeIn(p, 1400 + i * 120, 400);
+            });
+            const sim = txt(svg, 745, 456, 'sim', { size: 17, weight: 700, fill: SOFTER });
+            const nao = txt(svg, 652, 556, 'não', { size: 17, weight: 700, fill: SOFTER, anchor: 'start' });
+            fadeIn(sim, 2200, 400); fadeIn(nao, 2200, 400);
+
+            // Elementos
+            const els = [];
+            function evento(x, y, fim, label, delay) {
+                const g = svg.append('g');
+                const s = g.append('circle').attr('r', 22).attr('fill', CARD).attr('stroke', fim ? TEXT : SOFT).attr('stroke-width', fim ? 5 : 2.5);
+                txt(g, 0, 46, label, { size: 15, weight: 600, fill: SOFTER });
+                enter(g, x, y, delay);
+                els.push({ x: x, y: y, type: 0, s: s, base: fim ? 5 : 2.5 });
+            }
+            function atividade(x, y, label, delay) {
+                const g = svg.append('g');
+                const s = rbox(g, -85, -38, 170, 76, 14, { fill: CARD, stroke: SOFT, sw: 2 });
+                txt(g, 0, 0, label, { size: 18, weight: 700, vmid: true }).attr('dominant-baseline', 'middle');
+                enter(g, x, y, delay);
+                els.push({ x: x, y: y, type: 1, s: s, base: 2 });
+            }
+            evento(150, 190, false, 'chamado aberto', 500);
+            atividade(300, 190, 'Abrir\nchamado', 650);
+            atividade(470, 470, 'Registrar e\nclassificar', 800);
+            const gw = svg.append('g');
+            const gs = gw.append('path').attr('d', 'M0,-36 L36,0 L0,36 L-36,0 Z').attr('fill', CARD).attr('stroke', SOFT).attr('stroke-width', 2);
+            gw.append('path').attr('d', 'M-11,-11 L11,11 M11,-11 L-11,11').attr('stroke', SOFT).attr('stroke-width', 3);
+            txt(gw, 0, -70, 'Resolve no\n1º nível?', { size: 16, weight: 700, fill: SOFT });
+            enter(gw, 640, 470, 950);
+            els.push({ x: 640, y: 470, type: 2, s: gs, base: 2 });
+            atividade(900, 470, 'Resolver e\nresponder', 1100);
+            atividade(770, 590, 'Acionar\nespecialista', 1150);
+            atividade(1060, 190, 'Confirmar\nsolução', 1250);
+            evento(1195, 190, true, 'solução confirmada', 1350);
+
+            const routeSim = [[150, 190], [300, 190], [300, 470], [470, 470], [640, 470], [900, 470], [900, 190], [1060, 190], [1195, 190]];
+            const routeNao = [[150, 190], [300, 190], [300, 470], [470, 470], [640, 470], [640, 590], [770, 590], [900, 590], [900, 470], [900, 190], [1060, 190], [1195, 190]];
+            const toD = r => 'M' + r.map(p => p.join(',')).join(' L');
+            const pSim = svg.append('path').attr('d', toD(routeSim)).attr('fill', 'none').attr('stroke', 'none');
+            const pNao = svg.append('path').attr('d', toD(routeNao)).attr('fill', 'none').attr('stroke', 'none');
+            const token = svg.append('circle').attr('r', 11).attr('fill', PRIMARY).attr('opacity', 0)
+                .style('filter', 'drop-shadow(0 0 10px ' + PRIMARY + ')');
+
+            c.frame(t => {
+                if (t < S0) return;
+                const k = Math.floor((t - S0) / CYCLE), local = (t - S0) % CYCLE;
+                const naoRoute = k % 2 === 1;
+                const path = (naoRoute ? pNao : pSim).node();
+                const u = seg(local, 0, 7000);
+                const p = pointOn(path, u);
+                token.attr('cx', p.x).attr('cy', p.y).attr('opacity', seg(local, 0, 250) * (1 - seg(local, 7600, 8000)));
+                let type = -1;
+                els.forEach(e => {
+                    const near = Math.hypot(p.x - e.x, p.y - e.y) < 46;
+                    if (near) type = e.type;
+                    e.s.attr('stroke', near ? PRIMARY : (e.base === 5 ? TEXT : SOFT)).attr('stroke-width', near ? e.base + 2 : e.base)
+                        .attr('fill', near ? ICONBG : CARD);
+                });
+                const crossing = Math.abs(p.y - 300) < 70 && (Math.abs(p.x - 300) < 4 || Math.abs(p.x - 900) < 4);
+                if (type < 0 && crossing) type = 3;
+                laneU.attr('opacity', p.y < 300 ? (crossing ? 0.9 : 0.45) : 0);
+                laneS.attr('opacity', p.y >= 300 ? (crossing ? 0.9 : 0.45) : 0);
+                const pastGw = p.x > 660 || p.y > 520;
+                sim.attr('fill', pastGw && !naoRoute ? PRIMARY : SOFTER);
+                nao.attr('fill', pastGw && naoRoute ? PRIMARY : SOFTER);
+                pill(type);
+            });
+        }
+        window.MIRA_SLIDES.push({ id: 'bpmn-stage', fn: animateBpmn, name: 'bpmn' });
+
+        // ===== SLIDE 9: projeto com começo, meio e fim =====
+        // Loop: o comitê dispara uma decisão, a barra do projeto enche do início ao fim, nasce o
+        // resultado único e o valor é entregue; o próximo projeto de TI começa, sem parar.
+        function animateProjeto() {
+            const c = makeCtx('projeto', 'projeto-stage'), svg = c.svg;
+            const pill = pillSync('projeto', 4);
+            const projs = ['Implantar novo sistema', 'Migrar para a nuvem', 'Redesenhar a arquitetura'];
+            const X0 = 380, X1 = 1000, BY = 330, P = 7000, S0 = 1600;
+
+            const com = svg.append('g');
+            rbox(com, -115, -72, 230, 144, 18, { fill: CARD, stroke: SOFT, sw: 2 });
+            txt(com, 0, -30, 'Comitê de TI', { size: 22, weight: 800 });
+            txt(com, 0, 2, 'decide o\ninvestimento', { size: 17, weight: 600, fill: SOFT });
+            txt(com, 0, 56, 'seção 3.3', { size: 14, weight: 600, fill: SOFTER });
+            const comRing = com.append('rect').attr('x', -122).attr('y', -79).attr('width', 244).attr('height', 158).attr('rx', 22)
+                .attr('fill', 'none').attr('stroke', PRIMARY).attr('stroke-width', 3).attr('opacity', 0);
+            enter(com, 160, BY, 100);
+            const lnk = svg.append('line').attr('x1', 285).attr('y1', BY).attr('x2', X0 - 14).attr('y2', BY)
+                .attr('stroke', SOFTER).attr('stroke-width', 2.5).attr('stroke-dasharray', '5 6');
+            fadeIn(lnk, 500, 400);
+            const dec = svg.append('circle').attr('r', 8).attr('fill', PRIMARY).attr('opacity', 0);
+
+            const bar = svg.append('g');
+            rbox(bar, X0, BY - 18, X1 - X0, 36, 18, { fill: PILLBG, stroke: BORDER, sw: 1.5 });
+            const fill = bar.append('rect').attr('x', X0).attr('y', BY - 18).attr('height', 36).attr('rx', 18).attr('width', 0).attr('fill', PRIMARY).attr('opacity', 0.85);
+            [X0, X1].forEach(x => {
+                bar.append('line').attr('x1', x).attr('y1', BY - 18).attr('x2', x).attr('y2', BY - 110).attr('stroke', TEXT).attr('stroke-width', 3);
+                bar.append('path').attr('d', 'M' + x + ',' + (BY - 110) + ' l34,12 l-34,12 Z').attr('fill', x === X0 ? ACCENT : PRIMARY);
+            });
+            [[X0, 'começo'], [(X0 + X1) / 2, 'meio'], [X1, 'fim']].forEach(d => {
+                bar.append('line').attr('x1', d[0]).attr('y1', BY + 22).attr('x2', d[0]).attr('y2', BY + 34).attr('stroke', SOFTER).attr('stroke-width', 2);
+                txt(bar, d[0], BY + 62, d[1], { size: 19, weight: 700, fill: SOFT });
+            });
+            fadeIn(bar, 600, 700);
+            txt(svg, 690, 170, 'Projeto em andamento', { size: 16, weight: 600, fill: SOFTER });
+            const nome = txt(svg, 690, 205, '', { size: 30, weight: 800 }).attr('opacity', 0);
+
+            const gem = svg.append('g').attr('opacity', 0);
+            gem.append('path').attr('d', 'M0,-46 L40,-23 L40,23 L0,46 L-40,23 L-40,-23 Z').attr('fill', ICONBG).attr('stroke', PRIMARY).attr('stroke-width', 3);
+            gem.append('path').attr('d', 'M-14,0 L-4,11 L16,-12').attr('fill', 'none').attr('stroke', PRIMARY).attr('stroke-width', 5).attr('stroke-linecap', 'round');
+            const gemTxt = txt(svg, 1140, BY + 82, 'resultado único', { size: 17, weight: 700, fill: PRIMARY }).attr('opacity', 0);
+            const valor = txt(svg, 1140, BY - 76, 'valor entregue', { size: 18, weight: 800, fill: ACCENT }).attr('opacity', 0);
+            const halo = svg.append('circle').attr('cx', 1140).attr('cy', BY).attr('r', 50).attr('fill', 'none').attr('stroke', ACCENT).attr('stroke-width', 2).attr('opacity', 0);
+
+            txt(svg, 120, 520, 'Concluídos:', { size: 18, weight: 700, fill: SOFTER, anchor: 'start' });
+            const chips = projs.map((p, j) => {
+                const g = svg.append('g').attr('transform', 'translate(' + (250 + j * 320) + ',494)').attr('opacity', 0);
+                rbox(g, 0, 0, 300, 42, 21, { fill: ICONBG, stroke: ICONBORDER, sw: 1.5 });
+                g.append('path').attr('d', 'M18,21 l7,7 l14,-15').attr('fill', 'none').attr('stroke', PRIMARY).attr('stroke-width', 3.5).attr('stroke-linecap', 'round');
+                txt(g, 50, 28, p, { size: 17, weight: 700, anchor: 'start' });
+                return g;
+            });
+            const nota = txt(svg, 640, 640, 'Temporário: tem data para acabar. Único: não se repete da mesma forma.', { size: 19, weight: 600, fill: SOFT }).attr('opacity', 0);
+            fadeIn(nota, 1400, 600);
+
+            c.frame(t => {
+                const local = t - S0;
+                if (local < 0) return;
+                const k = Math.floor(local / P), u = (local % P) / P;
+                const idx = k % 3;
+                nome.text(projs[idx]).attr('opacity', seg(u, 0.05, 0.12) * (1 - seg(u, 0.94, 1)));
+                comRing.attr('opacity', u < 0.14 ? tri(seg(u, 0, 0.14)) : 0);
+                dec.attr('cx', lerp(285, X0, eio(seg(u, 0, 0.12)))).attr('cy', BY).attr('opacity', u < 0.12 ? 1 : 0);
+                fill.attr('width', (X1 - X0) * eio(seg(u, 0.12, 0.7)) * (1 - seg(u, 0.95, 1)));
+                const g = seg(u, 0.7, 0.8);
+                gem.attr('transform', 'translate(1140,' + BY + ') scale(' + (0.2 + 0.8 * ebo(g)) + ')').attr('opacity', g * (1 - seg(u, 0.95, 1)));
+                gemTxt.attr('opacity', g * (1 - seg(u, 0.95, 1)));
+                const v = seg(u, 0.8, 0.86) * (1 - seg(u, 0.95, 1));
+                valor.attr('opacity', v);
+                const hp = seg(u, 0.8, 0.97);
+                halo.attr('r', 50 + 50 * hp).attr('opacity', u > 0.8 ? 0.7 * (1 - hp) : 0);
+                chips.forEach((ch, j) => ch.attr('opacity', j < idx || (j === idx && u > 0.9) ? 1 : 0));
+                pill(u < 0.12 ? 2 : u < 0.7 ? 0 : u < 0.85 ? 1 : 3);
+            });
+        }
+        window.MIRA_SLIDES.push({ id: 'projeto-stage', fn: animateProjeto, name: 'projeto' });
+
+        // ===== SLIDE 11: PMBOK 7, oito domínios simultâneos =====
+        // Loop: os oito domínios pulsam juntos (simultaneidade), partículas cruzam entre eles
+        // (inter-relação) e o anel do projeto enche do início ao fim, recomeçando a cada ciclo.
+        function animatePmbok() {
+            const c = makeCtx('pmbok', 'pmbok-stage'), svg = c.svg;
+            const pill = pillSync('pmbok', 8);
+            const CX = 640, CY = 385, RX = 400, RY = 235;
+            const doms = ['Partes interessadas', 'Equipe', 'Abordagem e ciclo de vida', 'Planejamento',
+                'Trabalho do projeto', 'Entrega', 'Medição', 'Incerteza'];
+            const pos = doms.map((d, i) => {
+                const a = (-90 + i * 45) * Math.PI / 180;
+                return { x: CX + RX * Math.cos(a), y: CY + RY * Math.sin(a) };
+            });
+
+            // Antes: processos em sequência, riscados
+            const old = svg.append('g').attr('transform', 'translate(40,40)');
+            txt(old, 0, 0, 'Edições anteriores: processos em sequência', { size: 16, weight: 600, fill: SOFTER, anchor: 'start' });
+            d3.range(4).forEach(i => {
+                rbox(old, i * 84, 14, 64, 30, 6, { fill: PILLBG, stroke: SOFTER, sw: 1.5 });
+                if (i < 3) arrow(old, i * 84 + 66, 29, i * 84 + 82, 29, { stroke: SOFTER, sw: 1.5, head: 6 });
+            });
+            const strike = old.append('line').attr('x1', -6).attr('y1', 29).attr('x2', -6).attr('y2', 29).attr('stroke', PRIMARY).attr('stroke-width', 3.5).attr('stroke-linecap', 'round');
+            fadeIn(old, 0, 600);
+            strike.transition().delay(1400).duration(500).attr('x2', 326);
+            old.transition().delay(2000).duration(600).attr('opacity', 0.45);
+
+            // Teia: raios e octógono
+            const web = svg.append('g').attr('opacity', 0);
+            pos.forEach((p, i) => {
+                web.append('line').attr('x1', CX).attr('y1', CY).attr('x2', p.x).attr('y2', p.y).attr('stroke', BORDER).attr('stroke-width', 2).attr('stroke-dasharray', '4 6');
+                const q = pos[(i + 1) % 8];
+                web.append('line').attr('x1', p.x).attr('y1', p.y).attr('x2', q.x).attr('y2', q.y).attr('stroke', ICONBORDER).attr('stroke-width', 1.5);
+            });
+            fadeIn(web, 1600, 700);
+
+            // Centro: o projeto e seu anel de tempo
+            const ctr = svg.append('g').attr('transform', 'translate(' + CX + ',' + CY + ')');
+            const RR = 108, circ = 2 * Math.PI * RR;
+            ctr.append('circle').attr('r', RR).attr('fill', 'none').attr('stroke', BORDER).attr('stroke-width', 6);
+            const ring = ctr.append('circle').attr('r', RR).attr('fill', 'none').attr('stroke', PRIMARY).attr('stroke-width', 6)
+                .attr('stroke-linecap', 'round').attr('transform', 'rotate(-90)').attr('stroke-dasharray', circ).attr('stroke-dashoffset', circ);
+            ctr.append('circle').attr('r', 92).attr('fill', CARD).attr('stroke', PRIMARY).attr('stroke-width', 2.5);
+            txt(ctr, 0, -8, 'Projeto', { size: 30, weight: 800 });
+            txt(ctr, 0, 20, 'todos os domínios,', { size: 15, weight: 600, fill: SOFT });
+            txt(ctr, 0, 39, 'o tempo todo', { size: 15, weight: 600, fill: SOFT });
+            fadeIn(ctr, 1200, 600);
+
+            const nodes = doms.map((d, i) => {
+                const g = svg.append('g');
+                const glow = rbox(g, -141, -33, 282, 66, 33, { fill: ICONBG, stroke: 'none', sw: 0 }).attr('opacity', 0);
+                const b = rbox(g, -135, -27, 270, 54, 27, { fill: CARD, stroke: PRIMARY, sw: 2 });
+                txt(g, 0, 7, d, { size: 18, weight: 700 });
+                enter(g, pos[i].x, pos[i].y, 1800 + i * 120);
+                return { b: b, glow: glow };
+            });
+
+            const parts = d3.range(6).map(j => svg.append('circle').attr('r', 6).attr('fill', j % 2 ? ACCENT : PRIMARY).attr('opacity', 0));
+
+            c.frame(t => {
+                if (t < 3000) return;
+                const tt = t - 3000;
+                const pulse = 0.5 + 0.5 * Math.sin(tt / 450);
+                nodes.forEach(n => { n.b.attr('stroke-width', 2 + 1.8 * pulse); n.glow.attr('opacity', 0.9 * pulse); });
+                ring.attr('stroke-dashoffset', circ * (1 - (tt % 8000) / 8000));
+                parts.forEach((p, j) => {
+                    const q = tt + j * 333;
+                    const k = Math.floor(q / 2000), u = (q % 2000) / 2000;
+                    const a = (k * 3 + j) % 8;
+                    const b = (a + 2 + (k + j) % 5) % 8;
+                    p.attr('cx', lerp(pos[a].x, pos[b].x, eio(u))).attr('cy', lerp(pos[a].y, pos[b].y, eio(u))).attr('opacity', 0.9 * tri(u));
+                });
+                pill('all');
+            });
+        }
+        window.MIRA_SLIDES.push({ id: 'pmbok-stage', fn: animatePmbok, name: 'pmbok' });
+
+        // ===== SLIDE 13: processos giram, projetos terminam =====
+        // Loop: o token gira no processo, a análise acha a ineficiência, o token atravessa a barra
+        // do projeto de redesenho e nasce um novo processo, que desliza para o lugar do antigo: v1, v2, v3...
+        function animateAlterna() {
+            const c = makeCtx('alterna', 'alterna-stage'), svg = c.svg;
+            const pill = pillSync('alterna', 4);
+            const AX = 280, BX = 1000, CY = 300, R = 115, P = 13000, S0 = 1800;
+            const B0 = AX + R + 20, B1 = BX - R - 20;
+
+            function ringGroup(x) {
+                const g = svg.append('g').attr('transform', 'translate(' + x + ',' + CY + ')');
+                g.append('circle').attr('r', R).attr('fill', PILLBG).attr('stroke', 'none');
+                const dash = g.append('circle').attr('r', R).attr('fill', 'none').attr('stroke', PRIMARY).attr('stroke-width', 3).attr('stroke-dasharray', '10 8');
+                txt(g, 0, -22, 'Processo', { size: 22, weight: 800 });
+                const ver = txt(g, 0, 18, 'v1', { size: 36, weight: 900, fill: PRIMARY });
+                const cnt = txt(g, 0, 50, '', { size: 15, weight: 600, fill: SOFTER });
+                return { g: g, dash: dash, ver: ver, cnt: cnt };
+            }
+            const A = ringGroup(AX), Bg = ringGroup(BX);
+            A.g.attr('opacity', 0);
+            A.g.transition().duration(700).attr('opacity', 1);
+            Bg.g.attr('opacity', 0);
+
+            const bar = svg.append('g').attr('opacity', 0);
+            rbox(bar, B0, CY - 14, B1 - B0, 28, 14, { fill: PILLBG, stroke: BORDER, sw: 1.5 });
+            const fill = bar.append('rect').attr('x', B0).attr('y', CY - 14).attr('height', 28).attr('rx', 14).attr('width', 0).attr('fill', ACCENT).attr('opacity', 0.8);
+            txt(bar, (B0 + B1) / 2, CY - 62, 'Projeto de redesenho', { size: 21, weight: 800 });
+            txt(bar, (B0 + B1) / 2, CY - 38, 'temporário e único', { size: 15, weight: 600, fill: SOFTER });
+            txt(bar, B0, CY + 44, 'início', { size: 16, weight: 700, fill: SOFT });
+            txt(bar, B1, CY + 44, 'fim', { size: 16, weight: 700, fill: SOFT });
+            bar.transition().delay(600).duration(600).attr('opacity', 1);
+
+            const alertG = svg.append('g').attr('transform', 'translate(' + AX + ',' + (CY - R - 52) + ')').attr('opacity', 0);
+            alertG.append('path').attr('d', 'M0,-18 L18,12 L-18,12 Z').attr('fill', PRIMARY);
+            txt(alertG, 0, 8, '!', { size: 20, weight: 900, fill: CARD });
+            txt(alertG, 30, 4, 'ineficiência identificada na análise', { size: 18, weight: 800, fill: PRIMARY, anchor: 'start' });
+
+            const m1 = txt(svg, AX, CY + R + 52, 'mede: tempo médio de atendimento', { size: 17, weight: 600, fill: SOFT });
+            const m2 = txt(svg, (B0 + B1) / 2, CY + R + 52, 'mede: prazo, escopo e orçamento', { size: 17, weight: 600, fill: SOFT });
+            fadeIn(m1, 900, 500); fadeIn(m2, 1100, 500);
+
+            const steps = [[290, '1 · processo ineficiente'], [640, '2 · projeto de redesenho'], [990, '3 · novo processo contínuo']]
+                .map(s => txt(svg, s[0], 620, s[1], { size: 20, weight: 700, fill: SOFTER }));
+            arrow(svg, 425, 614, 470, 614, { stroke: SOFTER, sw: 2, head: 8 });
+            arrow(svg, 810, 614, 855, 614, { stroke: SOFTER, sw: 2, head: 8 });
+
+            const token = svg.append('circle').attr('r', 12).attr('fill', PRIMARY).attr('opacity', 0)
+                .style('filter', 'drop-shadow(0 0 10px ' + PRIMARY + ')');
+            const fmt = n => n.toLocaleString('pt-BR') + ' execuções';
+
+            c.frame(t => {
+                A.dash.attr('stroke-dashoffset', -t * 0.03);
+                Bg.dash.attr('stroke-dashoffset', -t * 0.03);
+                const local = t - S0;
+                if (local < 0) return;
+                const k = Math.floor(local / P), u = local % P;
+                A.ver.text('v' + (k + 1));
+                Bg.ver.text('v' + (k + 2));
+                let tx, ty, step = 0, pl = 0;
+                // Processo A: três voltas
+                const countA = 933 + Math.floor(Math.min(u, 4500) / 4500 * 1200);
+                A.cnt.text(fmt(countA));
+                if (u < 4500) {
+                    const a = u / 1500 * 2 * Math.PI;
+                    tx = AX + R * Math.cos(a); ty = CY + R * Math.sin(a);
+                    pl = u < 2250 ? 0 : 1;
+                } else if (u < 5500) {
+                    tx = AX + R; ty = CY; pl = 1;
+                } else if (u < 8500) {
+                    tx = lerp(B0, B1, eio(seg(u, 5500, 8500))); ty = CY; step = 1;
+                    pl = u < 7000 ? 2 : 3;
+                } else if (u < 9500) {
+                    tx = lerp(B1, BX - R, seg(u, 8500, 9500)); ty = CY; step = 2; pl = 3;
+                } else {
+                    const a = Math.PI + (u - 9500) / 1500 * 2 * Math.PI;
+                    const bx = lerp(BX, AX, eio(seg(u, 12000, 13000)));
+                    tx = bx + R * Math.cos(a); ty = CY + R * Math.sin(a); step = 2; pl = 0;
+                }
+                token.attr('cx', tx).attr('cy', ty).attr('opacity', 1).attr('fill', u >= 4500 && u < 5500 ? ACCENT : PRIMARY);
+                alertG.attr('opacity', u >= 4400 && u < 6200 ? 0.6 + 0.4 * Math.sin(u / 90) : 0);
+                fill.attr('width', (B1 - B0) * eio(seg(u, 5500, 8500)));
+                const bs = ebo(seg(u, 8500, 9500));
+                const bx = lerp(BX, AX, eio(seg(u, 12000, 13000)));
+                Bg.g.attr('transform', 'translate(' + bx + ',' + CY + ') scale(' + Math.max(0.001, bs) + ')').attr('opacity', u >= 8500 ? 1 : 0);
+                Bg.cnt.text(fmt(Math.floor(Math.max(0, u - 9500) / 4500 * 1200)));
+                const fadeOut = 1 - seg(u, 12000, 12600);
+                A.g.attr('opacity', fadeOut);
+                bar.attr('opacity', Math.min(fadeOut, seg(u, 0, 400) + (k === 0 ? 1 : 0)));
+                steps.forEach((s, i) => s.attr('fill', i === step ? PRIMARY : SOFTER));
+                pill(pl);
+            });
+        }
+        window.MIRA_SLIDES.push({ id: 'alterna-stage', fn: animateAlterna, name: 'alterna' });
+
+        // ===== SLIDE 15: PMO entre o comitê e os projetos =====
+        // Loop: padrões descem e indicadores sobem sem parar; a cada ciclo um projeto perde o pressuposto,
+        // o PMO sinaliza o desvio ao comitê, volta a decisão de cancelar e um novo projeto ocupa o lugar.
+        function animatePmo() {
+            const c = makeCtx('pmo', 'pmo-stage'), svg = c.svg;
+            const pill = pillSync('pmo', 5);
+            const HUB = { x: 640, y: 320 }, TOPY = 90, PY = 570;
+            const PX = [250, 510, 770, 1030];
+            const P = 10000, S0 = 2400;
+
+            const com = svg.append('g');
+            const comBox = rbox(com, 410, TOPY - 40, 460, 80, 16, { fill: CARD, stroke: SOFT, sw: 2 });
+            txt(com, 640, TOPY - 6, 'Comitê de TI · alta administração', { size: 22, weight: 800 });
+            txt(com, 640, TOPY + 22, 'decide e prioriza', { size: 15, weight: 600, fill: SOFTER });
+            enter(com, 0, 0, 100);
+
+            const links = svg.append('g').attr('opacity', 0);
+            links.append('line').attr('x1', 622).attr('y1', TOPY + 40).attr('x2', 622).attr('y2', HUB.y - 64).attr('stroke', PRIMARY).attr('stroke-width', 2).attr('stroke-dasharray', '5 6');
+            links.append('line').attr('x1', 658).attr('y1', TOPY + 40).attr('x2', 658).attr('y2', HUB.y - 64).attr('stroke', ACCENT).attr('stroke-width', 2).attr('stroke-dasharray', '5 6');
+            txt(links, 606, 196, 'projetos aprovados ↓', { size: 16, weight: 700, fill: PRIMARY, anchor: 'end' });
+            txt(links, 674, 196, '↑ indicadores do portfólio', { size: 16, weight: 700, fill: ACCENT, anchor: 'start' });
+            const curves = PX.map(x => links.append('path')
+                .attr('d', 'M640,' + (HUB.y + 64) + ' C640,' + (HUB.y + 140) + ' ' + x + ',' + (PY - 140) + ' ' + x + ',' + (PY - 56))
+                .attr('fill', 'none').attr('stroke', BORDER).attr('stroke-width', 2.5));
+            fadeIn(links, 700, 600);
+
+            const hub = svg.append('g');
+            const hex = d3.range(6).map(i => { const a = (i * 60 - 90) * Math.PI / 180; return (Math.cos(a) * 72) + ',' + (Math.sin(a) * 72); });
+            const hubShape = hub.append('path').attr('d', 'M' + hex.join(' L') + ' Z').attr('fill', ICONBG).attr('stroke', PRIMARY).attr('stroke-width', 3);
+            txt(hub, 0, 12, 'PMO', { size: 34, weight: 900, fill: PRIMARY });
+            txt(hub, 0, 98, 'escritório de projetos', { size: 16, weight: 600, fill: SOFT });
+            enter(hub, HUB.x, HUB.y, 400);
+
+            const cards = PX.map((x, i) => {
+                const g = svg.append('g');
+                const box = rbox(g, -105, -55, 210, 110, 14, { fill: CARD, stroke: SOFT, sw: 2 });
+                const nm = txt(g, 0, -20, 'Projeto ' + String.fromCharCode(65 + i), { size: 20, weight: 800 });
+                const st = txt(g, 0, 6, 'em andamento', { size: 14, weight: 600, fill: SOFTER });
+                rbox(g, -85, 22, 170, 12, 6, { fill: PILLBG, stroke: BORDER, sw: 1 });
+                const pr = g.append('rect').attr('x', -85).attr('y', 22).attr('height', 12).attr('rx', 6).attr('width', 0).attr('fill', ACCENT);
+                const xx = g.append('path').attr('d', 'M-40,-40 L40,40 M40,-40 L-40,40').attr('stroke', PRIMARY).attr('stroke-width', 6).attr('stroke-linecap', 'round').attr('opacity', 0);
+                const inner = g.append('g');
+                enter(g, x, PY, 900 + i * 150);
+                return { g: g, box: box, nm: nm, st: st, pr: pr, xx: xx, inner: inner, x: x };
+            });
+
+            // Grau de autoridade: consultivo a diretivo
+            const sl = svg.append('g').attr('opacity', 0);
+            txt(sl, 1060, 262, 'Grau de autoridade do PMO', { size: 16, weight: 700, fill: SOFT });
+            sl.append('line').attr('x1', 940).attr('y1', 292).attr('x2', 1180).attr('y2', 292).attr('stroke', BORDER).attr('stroke-width', 6).attr('stroke-linecap', 'round');
+            txt(sl, 940, 324, 'consultivo', { size: 15, weight: 700, fill: SOFTER });
+            txt(sl, 1180, 324, 'diretivo', { size: 15, weight: 700, fill: SOFTER });
+            const knob = sl.append('circle').attr('cy', 292).attr('r', 12).attr('fill', PRIMARY);
+            fadeIn(sl, 1300, 600);
+
+            // Quadro de desvio
+            const dv = svg.append('g').attr('opacity', 0);
+            rbox(dv, 60, 250, 300, 104, 14, { fill: ICONBG, stroke: PRIMARY, sw: 2 });
+            const dv1 = txt(dv, 210, 288, 'Desvio detectado', { size: 19, weight: 800, fill: PRIMARY });
+            const dv2 = txt(dv, 210, 318, 'pressuposto de negócio', { size: 15, weight: 600, fill: SOFT });
+            const dv3 = txt(dv, 210, 338, 'deixou de valer', { size: 15, weight: 600, fill: SOFT });
+
+            const flow = d3.range(8).map(s => svg.append('circle').attr('r', 6).attr('fill', s % 2 ? ACCENT : PRIMARY).attr('opacity', 0));
+            const red = svg.append('circle').attr('r', 9).attr('fill', PRIMARY).attr('opacity', 0)
+                .style('filter', 'drop-shadow(0 0 10px ' + PRIMARY + ')');
+
+            const lin = (a, b, u) => ({ x: lerp(a.x, b.x, u), y: lerp(a.y, b.y, u) });
+            const TOPL = { x: 622, y: TOPY + 40 }, HUBL = { x: 622, y: HUB.y - 64 };
+            const TOPR = { x: 658, y: TOPY + 40 }, HUBR = { x: 658, y: HUB.y - 64 };
+
+            c.frame(t => {
+                knob.attr('cx', lerp(940, 1180, 0.5 + 0.5 * Math.sin(t / 2200)));
+                const local = t - S0;
+                const k = local >= 0 ? Math.floor(local / P) : -1, u = local >= 0 ? local % P : -1;
+                const d = k >= 0 ? k % 4 : -1;
+
+                cards.forEach((cd, i) => {
+                    let rep = k > i ? Math.floor((k - 1 - i) / 4) + 1 : 0;
+                    if (d === i && u >= 8000) rep += 1;
+                    cd.nm.text('Projeto ' + String.fromCharCode(65 + ((i + 4 * rep) % 26)));
+                    const dev = d === i && u >= 3000 && u < 8000;
+                    const prog = ((t + i * 2300) / (6000 + i * 1700)) % 1;
+                    if (!dev) cd.pr.attr('width', 170 * prog);
+                    cd.box.attr('stroke', dev ? PRIMARY : SOFT).attr('stroke-width', dev ? 3 : 2);
+                    cd.st.text(dev ? (u < 6500 ? 'pressuposto inválido' : 'cancelado') : 'em andamento').attr('fill', dev ? PRIMARY : SOFTER);
+                    const cancel = d === i ? seg(u, 6500, 7200) * (1 - seg(u, 7800, 8000)) : 0;
+                    cd.xx.attr('opacity', cancel);
+                    cd.g.attr('opacity', d === i && u >= 7800 ? seg(u, 8000, 8800) : (1 - 0.6 * cancel));
+                });
+
+                // Fluxo contínuo: padrões descem, indicadores sobem
+                flow.forEach((f, s) => {
+                    const q = t + s * 325, uu = (q % 2600) / 2600;
+                    const pj = Math.floor(s / 2) % 4;
+                    const curve = curves[pj].node();
+                    let p;
+                    if (s % 2 === 0) p = uu < 0.4 ? lin(TOPL, HUBL, uu / 0.4) : pointOn(curve, (uu - 0.4) / 0.6);
+                    else p = uu < 0.6 ? pointOn(curve, 1 - uu / 0.6) : lin(HUBR, TOPR, (uu - 0.6) / 0.4);
+                    f.attr('cx', p.x).attr('cy', p.y).attr('opacity', t > 1500 ? 0.85 * Math.sin(uu * Math.PI) : 0);
+                });
+
+                // Ciclo do desvio
+                let rp = null, pl = Math.floor(t / 1000) % 3;
+                if (d >= 0 && u >= 3000 && u < 7500) {
+                    const curve = curves[d].node();
+                    if (u < 4000) { rp = pointOn(curve, 1 - seg(u, 3000, 4000)); pl = 4; }
+                    else if (u < 5000) { rp = lin(HUBR, TOPR, seg(u, 4000, 5000)); pl = 3; }
+                    else if (u < 6500) { rp = null; pl = 3; }
+                    else { const w = seg(u, 6500, 7500); rp = w < 0.4 ? lin(TOPL, HUBL, w / 0.4) : pointOn(curve, (w - 0.4) / 0.6); pl = 2; }
+                }
+                red.attr('opacity', rp ? 1 : 0);
+                if (rp) red.attr('cx', rp.x).attr('cy', rp.y);
+                const dvOn = d >= 0 && u >= 3000 && u < 7800;
+                dv.attr('opacity', dvOn ? seg(u, 3000, 3300) : 0);
+                const decided = u >= 5000;
+                dv1.text(decided ? 'Nova decisão' : 'Desvio detectado');
+                dv2.text(decided ? 'comitê decide' : 'pressuposto de negócio');
+                dv3.text(decided ? 'cancelar o projeto' : 'deixou de valer');
+                hubShape.attr('stroke-width', d >= 0 && u >= 3800 && u < 4300 ? 6 : 3);
+                comBox.attr('stroke', d >= 0 && u >= 4900 && u < 6500 ? PRIMARY : SOFT).attr('stroke-width', d >= 0 && u >= 4900 && u < 6500 ? 3.5 : 2);
+                pill(pl);
+            });
+        }
+        window.MIRA_SLIDES.push({ id: 'pmo-stage', fn: animatePmo, name: 'pmo' });
+
+        // ===== SLIDE 17: matrícula de calouros, a corrida de 12 dias contra 3 =====
+        // Loop: o aluno do processo antigo ziguezagueia por 14 etapas em papel entre 3 departamentos
+        // (12 dias), enquanto o do processo novo atravessa 6 etapas digitais em 3 dias, de novo e de novo.
+        function animateMatricula() {
+            const c = makeCtx('matricula', 'matricula-stage'), svg = c.svg;
+            const pill = pillSync('matricula', 4);
+            const S0 = 3800;
+            const lanesY = [115, 180, 245];
+            const pattern = [0, 1, 0, 2, 1, 0, 2, 1, 2, 0, 1, 2, 0, 1];
+            const xs = d3.range(14).map(i => 260 + i * 62);
+            const ptsTop = xs.map((x, i) => [x, lanesY[pattern[i]]]);
+            const xb = d3.range(6).map(i => 260 + i * 160);
+            const LB = 520;
+
+            // Como está
+            const top = svg.append('g');
+            const topHi = top.append('rect').attr('x', 30).attr('y', 40).attr('width', 1220).attr('height', 238).attr('rx', 16).attr('fill', PILLBG).attr('opacity', 0);
+            txt(top, 40, 70, 'Como está', { size: 22, weight: 800, anchor: 'start' });
+            txt(top, 170, 70, '14 etapas manuais, papel circulando', { size: 16, weight: 600, fill: SOFTER, anchor: 'start' });
+            ['Depto. A', 'Depto. B', 'Depto. C'].forEach((d, i) => {
+                txt(top, 225, lanesY[i] + 6, d, { size: 15, weight: 700, fill: SOFT, anchor: 'end' });
+                top.append('line').attr('x1', 238).attr('y1', lanesY[i]).attr('x2', 1090).attr('y2', lanesY[i]).attr('stroke', BORDER).attr('stroke-dasharray', '3 6');
+            });
+            top.append('path').attr('d', 'M' + ptsTop.map(p => p.join(',')).join(' L')).attr('fill', 'none').attr('stroke', SOFTER).attr('stroke-width', 1.5).attr('opacity', 0.6);
+            ptsTop.forEach(p => {
+                top.append('path').attr('d', 'M' + (p[0] - 13) + ',' + (p[1] - 16) + ' h18 l8,8 v24 h-26 Z').attr('fill', CARD).attr('stroke', SOFT).attr('stroke-width', 1.8);
+            });
+            const dayTop = txt(top, 1180, 178, '0', { size: 48, weight: 900, fill: SOFT });
+            txt(top, 1180, 206, 'de 12 dias', { size: 15, weight: 700, fill: SOFTER });
+            fadeIn(top, 0, 900);
+
+            // Projeto de TI
+            const band = svg.append('g').attr('opacity', 0);
+            arrow(band, 640, 270, 640, 302, { stroke: PRIMARY, sw: 2.5, head: 9 });
+            const bandBox = rbox(band, 230, 306, 820, 64, 32, { fill: ICONBG, stroke: PRIMARY, sw: 2 });
+            txt(band, 262, 345, 'Projeto de TI (PMBOK 7):', { size: 19, weight: 800, fill: PRIMARY, anchor: 'start' });
+            [[620, 190, 'partes interessadas'], [790, 110, 'entrega'], [920, 120, 'incerteza']].forEach(ch => {
+                rbox(band, ch[0] - ch[1] / 2, 322, ch[1], 32, 16, { fill: CARD, stroke: ICONBORDER, sw: 1.5 });
+                txt(band, ch[0], 344, ch[2], { size: 15, weight: 700 });
+            });
+            arrow(band, 640, 374, 640, 410, { stroke: PRIMARY, sw: 2.5, head: 9 });
+            const bandNote = txt(band, 1060, 400, 'projeto encerrado; o processo segue', { size: 15, weight: 700, fill: ACCENT, anchor: 'end' }).attr('opacity', 0);
+            band.transition().delay(1500).duration(800).attr('opacity', 1);
+
+            // Como deveria ser
+            const bot = svg.append('g').attr('opacity', 0);
+            const botHi = bot.append('rect').attr('x', 30).attr('y', 420).attr('width', 1220).attr('height', 160).attr('rx', 16).attr('fill', ICONBG).attr('opacity', 0);
+            txt(bot, 40, 450, 'Como deveria ser', { size: 22, weight: 800, fill: PRIMARY, anchor: 'start' });
+            txt(bot, 236, 450, '6 etapas digitais, formulário eletrônico único', { size: 16, weight: 600, fill: SOFTER, anchor: 'start' });
+            bot.append('line').attr('x1', 238).attr('y1', LB).attr('x2', 1090).attr('y2', LB).attr('stroke', PRIMARY).attr('stroke-width', 2).attr('opacity', 0.4);
+            xb.forEach(x => {
+                rbox(bot, x - 22, LB - 16, 44, 32, 6, { fill: ICONBG, stroke: PRIMARY, sw: 2 });
+                bot.append('line').attr('x1', x - 12).attr('y1', LB).attr('x2', x + 12).attr('y2', LB).attr('stroke', PRIMARY).attr('stroke-width', 2.5);
+            });
+            const dayBot = txt(bot, 1180, 520, '0', { size: 48, weight: 900, fill: PRIMARY });
+            const metaTxt = txt(bot, 1180, 548, 'meta: até 3 dias', { size: 15, weight: 700, fill: SOFTER });
+            bot.transition().delay(2500).duration(800).attr('opacity', 1);
+
+            const nota = txt(svg, 640, 650, 'Na meta do projeto, cabem 4 matrículas novas no tempo de 1 antiga.', { size: 19, weight: 700, fill: SOFT }).attr('opacity', 0);
+            fadeIn(nota, 3600, 600);
+
+            const pTop = svg.append('path').attr('d', 'M' + ptsTop.map(p => p.join(',')).join(' L')).attr('fill', 'none').attr('stroke', 'none');
+            const tokTop = svg.append('circle').attr('r', 11).attr('fill', SOFT).attr('opacity', 0);
+            const tokBot = svg.append('circle').attr('r', 11).attr('fill', PRIMARY).attr('opacity', 0)
+                .style('filter', 'drop-shadow(0 0 10px ' + PRIMARY + ')');
+
+            c.frame(t => {
+                const local = t - S0;
+                if (local < 0) return;
+                const ut = (local % 12000) / 12000, ub = (local % 3000) / 3000;
+                const p = pointOn(pTop.node(), ut);
+                tokTop.attr('cx', p.x).attr('cy', p.y).attr('opacity', 1);
+                tokBot.attr('cx', lerp(xb[0], xb[5], ub)).attr('cy', LB).attr('opacity', 1);
+                dayTop.text(String(Math.floor(local % 12000 / 1000) + 1));
+                dayBot.text(String(Math.floor(local % 3000 / 1000) + 1));
+                const ph = Math.floor(local / 3000) % 4;
+                topHi.attr('opacity', ph === 0 ? 1 : 0);
+                botHi.attr('opacity', ph === 1 ? 0.8 : 0);
+                metaTxt.attr('fill', ph === 2 ? PRIMARY : SOFTER);
+                dayBot.attr('font-size', ph === 2 ? 56 : 48);
+                bandBox.attr('stroke-width', ph === 3 ? 4 : 2);
+                bandNote.attr('opacity', ph === 3 ? 1 : 0);
+                pill(ph);
+            });
+        }
+        window.MIRA_SLIDES.push({ id: 'matricula-stage', fn: animateMatricula, name: 'matricula' });
+
+        // ===== SLIDE 19: mapa do capítulo =====
+        // Loop: decisões descem da governança ao PMO e aos projetos e indicadores sobem; entre processos
+        // e projetos, uma partícula gira no laço da alternância; a ideia em destaque muda a cada 2 segundos.
+        function animateSintese() {
+            const c = makeCtx('sintese', 'sintese-stage'), svg = c.svg;
+            const pill = pillSync('sintese', 5);
+            const GOV = { x: 640, y: 80 }, PMO = { x: 640, y: 270 }, PROC = { x: 330, y: 470 }, PROJ = { x: 950, y: 470 };
+
+            const gov = svg.append('g');
+            const govBox = rbox(gov, -230, -42, 460, 84, 18, { fill: CARD, stroke: SOFT, sw: 2 });
+            txt(gov, 0, -6, 'Governança de TI', { size: 24, weight: 800 });
+            txt(gov, 0, 22, 'decide e prioriza (Cap. 3)', { size: 15, weight: 600, fill: SOFTER });
+            enter(gov, GOV.x, GOV.y, 100);
+
+            const lk = svg.append('g').attr('opacity', 0);
+            lk.append('line').attr('x1', 640).attr('y1', 122).attr('x2', 640).attr('y2', 212).attr('stroke', BORDER).attr('stroke-width', 3);
+            txt(lk, 625, 175, 'decisões', { size: 15, weight: 700, fill: PRIMARY, anchor: 'end' });
+            txt(lk, 655, 175, 'indicadores', { size: 15, weight: 700, fill: ACCENT, anchor: 'start' });
+            const pmoProj = lk.append('path').attr('d', 'M690,300 C780,330 860,380 900,425').attr('fill', 'none').attr('stroke', BORDER).attr('stroke-width', 3);
+            txt(lk, 860, 330, 'acompanha o portfólio', { size: 15, weight: 700, fill: SOFT, anchor: 'start' });
+            const arcUp = lk.append('path').attr('d', 'M430,445 Q620,380 810,445').attr('fill', 'none').attr('stroke', ICONBORDER).attr('stroke-width', 3);
+            const arcDn = lk.append('path').attr('d', 'M810,500 Q620,585 430,500').attr('fill', 'none').attr('stroke', ICONBORDER).attr('stroke-width', 3);
+            txt(lk, 620, 398, 'ineficiência vira projeto', { size: 15, weight: 700, fill: SOFT });
+            txt(lk, 620, 578, 'nasce um novo processo', { size: 15, weight: 700, fill: SOFT });
+            fadeIn(lk, 900, 700);
+
+            const pmo = svg.append('g');
+            const hex = d3.range(6).map(i => { const a = (i * 60 - 90) * Math.PI / 180; return (Math.cos(a) * 58) + ',' + (Math.sin(a) * 58); });
+            const pmoShape = pmo.append('path').attr('d', 'M' + hex.join(' L') + ' Z').attr('fill', ICONBG).attr('stroke', PRIMARY).attr('stroke-width', 3);
+            txt(pmo, 0, 11, 'PMO', { size: 28, weight: 900, fill: PRIMARY });
+            enter(pmo, PMO.x, PMO.y, 300);
+
+            const proc = svg.append('g');
+            proc.append('circle').attr('r', 100).attr('fill', PILLBG);
+            const procRing = proc.append('circle').attr('r', 100).attr('fill', 'none').attr('stroke', PRIMARY).attr('stroke-width', 3).attr('stroke-dasharray', '10 8');
+            txt(proc, 0, -8, 'Processos', { size: 24, weight: 800 });
+            txt(proc, 0, 20, 'BPM · contínuos', { size: 15, weight: 600, fill: SOFTER });
+            const procTag = txt(proc, 0, 140, 'ciclo de 6 fases · BPMN', { size: 16, weight: 700, fill: SOFT });
+            enter(proc, PROC.x, PROC.y, 500);
+
+            const proj = svg.append('g');
+            const projBox = rbox(proj, -140, -45, 280, 90, 45, { fill: CARD, stroke: ACCENT, sw: 2.5 });
+            txt(proj, 0, -8, 'Projetos', { size: 24, weight: 800 });
+            txt(proj, 0, 18, 'PMBOK 7 · temporários', { size: 15, weight: 600, fill: SOFTER });
+            const projFill = proj.append('rect').attr('x', -100).attr('y', 28).attr('height', 6).attr('rx', 3).attr('fill', ACCENT);
+            const projTag = txt(proj, 0, 140, 'princípios · 8 domínios', { size: 16, weight: 700, fill: SOFT });
+            enter(proj, PROJ.x, PROJ.y, 650);
+
+            txt(svg, 640, 690, 'Próximo capítulo: COBIT 2019, ITIL 4, PRINCE2 e Scrum', { size: 18, weight: 700, fill: SOFTER });
+
+            const loopDot = svg.append('circle').attr('r', 9).attr('fill', PRIMARY).attr('opacity', 0)
+                .style('filter', 'drop-shadow(0 0 8px ' + PRIMARY + ')');
+            const down = svg.append('circle').attr('r', 7).attr('fill', PRIMARY).attr('opacity', 0);
+            const up = svg.append('circle').attr('r', 7).attr('fill', ACCENT).attr('opacity', 0);
+            const lin = (a, b, u) => ({ x: lerp(a.x, b.x, u), y: lerp(a.y, b.y, u) });
+            const G1 = { x: 640, y: 122 }, G2 = { x: 640, y: 212 };
+
+            c.frame(t => {
+                procRing.attr('stroke-dashoffset', -t * 0.03);
+                projFill.attr('width', 200 * ((t % 4000) / 4000));
+                if (t < 1800) return;
+                const tt = t - 1800;
+                const u1 = (tt % 5000) / 5000;
+                const p1 = u1 < 0.5 ? pointOn(arcUp.node(), u1 / 0.5) : pointOn(arcDn.node(), (u1 - 0.5) / 0.5);
+                loopDot.attr('cx', p1.x).attr('cy', p1.y).attr('opacity', 1);
+                const u2 = (tt % 4000) / 4000;
+                const pd = u2 < 0.4 ? lin(G1, G2, u2 / 0.4) : pointOn(pmoProj.node(), (u2 - 0.4) / 0.6);
+                down.attr('cx', pd.x).attr('cy', pd.y).attr('opacity', Math.sin(u2 * Math.PI));
+                const u3 = ((tt + 2000) % 4000) / 4000;
+                const pu = u3 < 0.6 ? pointOn(pmoProj.node(), 1 - u3 / 0.6) : lin(G2, G1, (u3 - 0.6) / 0.4);
+                up.attr('cx', pu.x + 0).attr('cy', pu.y).attr('opacity', Math.sin(u3 * Math.PI));
+                const k = Math.floor(tt / 2000) % 5;
+                procRing.attr('stroke-width', k === 0 ? 6 : 3);
+                procTag.attr('fill', k === 1 ? PRIMARY : SOFT);
+                projBox.attr('stroke-width', k === 2 ? 5 : 2.5);
+                projTag.attr('fill', k === 2 ? PRIMARY : SOFT);
+                arcUp.attr('stroke', k === 3 ? PRIMARY : ICONBORDER);
+                arcDn.attr('stroke', k === 3 ? PRIMARY : ICONBORDER);
+                pmoShape.attr('stroke-width', k === 4 ? 6 : 3);
+                govBox.attr('stroke', k === 4 ? PRIMARY : SOFT);
+                pill(k);
+            });
+        }
+        window.MIRA_SLIDES.push({ id: 'sintese-stage', fn: animateSintese, name: 'sintese' });
+
+
+        // === Gatilhos: dispara ao entrar no viewport, rearma ao sair ===
+        function setPauseBtn(name, paused) {
+            const b = document.getElementById('pause-' + name);
+            if (!b) return;
+            b.classList.toggle('paused', paused);
+            b.innerHTML = paused
+                ? '<i data-lucide="play" class="w-4 h-4"></i>Continuar'
+                : '<i data-lucide="pause" class="w-4 h-4"></i>Pausar';
+            lucide.createIcons();
+        }
+
+        function setupAnimationTriggers() {
+            const stages = window.MIRA_SLIDES.map(function (s) {
+                return Object.assign({}, s, { stage: document.getElementById(s.id) });
+            }).filter(function (s) { return s.stage; });
+
+            const obs = new IntersectionObserver(function (entries) {
+                entries.forEach(function (entry) {
+                    const item = stages.find(function (s) { return s.stage === entry.target; });
+                    if (!item) { return; }
+                    if (entry.isIntersecting && !item.rodando) {
+                        item.rodando = true;
+                        window.__paused[item.name] = false;
+                        setPauseBtn(item.name, false);
+                        item.fn();
+                    } else if (!entry.isIntersecting && item.rodando) {
+                        item.rodando = false;
+                        window.__gen[item.name] = (window.__gen[item.name] || 0) + 1;
+                    }
+                });
+            }, { threshold: 0.3 });
+
+            stages.forEach(function (item) {
+                obs.observe(item.stage);
+                setPauseBtn(item.name, false);
+                const rb = document.getElementById('replay-' + item.name);
+                if (rb) {
+                    rb.addEventListener('click', function () {
+                        window.__paused[item.name] = false;
+                        setPauseBtn(item.name, false);
+                        item.fn();
+                    });
+                }
+                const pb = document.getElementById('pause-' + item.name);
+                if (pb) {
+                    pb.addEventListener('click', function () {
+                        window.__paused[item.name] = !window.__paused[item.name];
+                        setPauseBtn(item.name, window.__paused[item.name]);
+                    });
+                }
+            });
+        }
+
+        setupAnimationTriggers();
+        lucide.createIcons();
+
+        // === CONTROLES DE SLIDE: navegação card-a-card (progresso + botão + teclado) ===
+        (function () {
+            const cardSections = Array.from(document.querySelectorAll('body > section'));
+            if (cardSections.length === 0) return;
+
+            const progress = document.getElementById('mira-progress');
+            const nextBtn = document.getElementById('mira-next');
+            const nextIcon = document.getElementById('mira-next-icon');
+
+            const atBottom = () =>
+                (window.scrollY + window.innerHeight) >= (document.documentElement.scrollHeight - 100);
+
+            function currentIndex() {
+                const y = window.scrollY + window.innerHeight * 0.3;
+                let idx = -1;
+                for (let i = 0; i < cardSections.length; i++) {
+                    if (cardSections[i].offsetTop <= y) idx = i;
+                }
+                return idx;
+            }
+
+            function goTo(i) {
+                const idx = Math.max(0, Math.min(cardSections.length - 1, i));
+                cardSections[idx].scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }
+
+            window.addEventListener('scroll', () => {
+                const docH = document.documentElement.scrollHeight - window.innerHeight;
+                progress.style.width = (docH > 0 ? (window.scrollY / docH) * 100 : 0) + '%';
+                nextBtn.classList.toggle('visible', window.scrollY > 300);
+                nextIcon.setAttribute('data-lucide', atBottom() ? 'chevron-up' : 'chevron-down');
+                lucide.createIcons();
+            });
+
+            nextBtn.addEventListener('click', () => {
+                if (atBottom()) { window.scrollTo({ top: 0, behavior: 'smooth' }); return; }
+                goTo(currentIndex() + 1);
+            });
+
+            document.addEventListener('keydown', (e) => {
+                if (['ArrowRight', 'ArrowDown', 'PageDown'].includes(e.key)) {
+                    e.preventDefault();
+                    goTo(currentIndex() + 1);
+                } else if (['ArrowLeft', 'ArrowUp', 'PageUp'].includes(e.key)) {
+                    e.preventDefault();
+                    const idx = currentIndex();
+                    if (idx <= 0) window.scrollTo({ top: 0, behavior: 'smooth' });
+                    else goTo(idx - 1);
+                } else if (e.key === 'Home') {
+                    e.preventDefault();
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                } else if (e.key === 'End') {
+                    e.preventDefault();
+                    goTo(cardSections.length - 1);
+                } else if (e.key.toLowerCase() === 'f') {
+                    if (!document.fullscreenElement) document.documentElement.requestFullscreen();
+                    else document.exitFullscreen();
+                }
+            });
+        })();
+    </script>
+</body>
+
+</html>
