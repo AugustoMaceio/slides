@@ -1,0 +1,2812 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GOTI · BPM e Governança de TI</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
+    <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;900&display=swap" rel="stylesheet">
+    <style>
+        /* @MIRA:THEME:START */
+/* MIRA THEME: light-minimal
+   Fundo claro, tipografia escura, laranja como acento pontual.
+   Para ambientes corporativos com projetor fraco ou impressão. */
+:root {
+    --mira-primary: #E8722A;
+    --mira-bg: #FAFAF7;
+    --mira-text: #1A1A1A;
+    --mira-text-soft: rgba(26, 26, 26, 0.72);
+    --mira-text-softer: rgba(26, 26, 26, 0.50);
+    --mira-card-bg: rgba(255, 255, 255, 0.85);
+    --mira-card-border: rgba(0, 0, 0, 0.08);
+    --mira-glow-soft: rgba(232, 114, 42, 0.10);
+    --mira-glow-strong: rgba(232, 114, 42, 0.18);
+    --mira-icon-bg: rgba(232, 114, 42, 0.12);
+    --mira-icon-border: rgba(232, 114, 42, 0.30);
+    --mira-pill-bg: rgba(0, 0, 0, 0.03);
+    --mira-pill-border: rgba(0, 0, 0, 0.08);
+    --mira-stage-glow: rgba(232, 114, 42, 0.05);
+    --mira-accent-2: #2A6FE8;
+}
+
+/* ============================================================
+   MIRA - base.css
+   Estrutura compartilhada por todos os temas.
+   ============================================================ */
+
+body {
+    background: var(--mira-bg);
+    min-height: 100vh;
+    color: var(--mira-text);
+    font-family: 'Inter', sans-serif;
+    font-size: 1.15rem;
+    line-height: 1.6;
+}
+
+.primary-color { color: var(--mira-primary); }
+.primary-bg { background: var(--mira-primary); }
+
+.glass-card {
+    background: var(--mira-card-bg);
+    backdrop-filter: blur(10px);
+    border: 1px solid var(--mira-card-border);
+    box-shadow: 0 12px 36px var(--mira-glow-soft);
+    transition: all 0.3s ease;
+    border-radius: 1rem;
+}
+
+.glass-card:hover {
+    box-shadow: 0 24px 48px var(--mira-glow-strong);
+}
+
+.icon-hero {
+    width: 56px;
+    height: 56px;
+    border-radius: 16px;
+    display: flex;
+    flex: 0 0 auto;
+    align-items: center;
+    justify-content: center;
+    background: var(--mira-icon-bg);
+    border: 1px solid var(--mira-icon-border);
+}
+
+.attribute-pill {
+    background: var(--mira-pill-bg);
+    border: 1px solid var(--mira-pill-border);
+    transition: all 0.25s ease;
+    border-radius: 9999px;
+    padding: 8px 16px;
+    font-size: 1.05rem;
+}
+
+.attribute-pill:hover {
+    background: var(--mira-icon-bg);
+    border-color: var(--mira-icon-border);
+    transform: translateY(-3px);
+}
+
+/* Palco de animação D3, tamanho padrão do canvas */
+.anim-stage {
+    width: 100%;
+    height: clamp(400px, 60vh, 620px);
+    background: radial-gradient(circle at 50% 50%, var(--mira-stage-glow), transparent 70%);
+    border-radius: 8px;
+    overflow: hidden;
+    position: relative;
+}
+
+.anim-stage svg {
+    display: block;
+    width: 100%;
+    height: 100%;
+}
+
+.replay-btn, .pause-btn {
+    position: absolute;
+    top: 12px;
+    z-index: 10;
+    background: var(--mira-pill-bg);
+    border: 1px solid var(--mira-pill-border);
+    color: var(--mira-text-soft);
+    border-radius: 9999px;
+    padding: 6px 14px;
+    font-size: 12px;
+    cursor: pointer;
+    transition: all 0.25s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+.replay-btn { right: 12px; }
+.pause-btn { right: 112px; }
+
+.replay-btn:hover, .pause-btn:hover {
+    background: var(--mira-icon-bg);
+    color: var(--mira-primary);
+}
+.pause-btn.paused {
+    background: var(--mira-icon-bg);
+    border-color: var(--mira-icon-border);
+    color: var(--mira-primary);
+}
+
+.text-soft { color: var(--mira-text-soft); }
+.text-softer { color: var(--mira-text-softer); }
+
+@keyframes mira-pulse {
+    0%, 100% { transform: scale(1); opacity: 1; }
+    50% { transform: scale(1.08); opacity: 0.85; }
+}
+
+@keyframes mira-float {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-10px); }
+}
+        /* @MIRA:THEME:END */
+
+        /* === CONTROLES DE SLIDE (passagem card-a-card) === */
+        html { scroll-behavior: smooth; }
+
+        #mira-progress {
+            position: fixed; top: 0; left: 0; height: 3px; width: 0%;
+            background: linear-gradient(90deg, var(--mira-primary), var(--mira-accent-2), var(--mira-primary));
+            background-size: 200% 100%;
+            animation: mira-shimmer 2s linear infinite;
+            z-index: 9999; transition: width 0.1s linear;
+            box-shadow: 0 0 10px var(--mira-glow-strong);
+        }
+
+        @keyframes mira-shimmer {
+            0% { background-position: -200% center; }
+            100% { background-position: 200% center; }
+        }
+
+        #mira-next {
+            position: fixed; bottom: 32px; right: 32px;
+            width: 48px; height: 48px; border-radius: 50%;
+            background: var(--mira-primary); color: var(--mira-bg);
+            display: flex; align-items: center; justify-content: center;
+            cursor: pointer; border: none;
+            opacity: 0; transform: translateY(20px);
+            transition: all 0.3s ease; z-index: 9998;
+            box-shadow: 0 4px 20px var(--mira-glow-strong);
+        }
+        #mira-next.visible { opacity: 1; transform: translateY(0); }
+        #mira-next:hover { transform: translateY(-3px) scale(1.1); }
+
+        /* === Capa === */
+        #capa-stage { position: absolute; inset: 0; pointer-events: none; }
+        #capa-stage svg { width: 100%; height: 100%; display: block; }
+
+        /* === Trilha de navegação (nível top-down) === */
+        .nivel-chip {
+            display: inline-flex; align-items: center; gap: 8px;
+            font-size: 13px; letter-spacing: 2px; text-transform: uppercase; font-weight: 800;
+            color: var(--mira-primary);
+            background: var(--mira-icon-bg);
+            border: 1px solid var(--mira-icon-border);
+            border-radius: 9999px; padding: 5px 14px;
+        }
+        .nivel-dots { display: inline-flex; gap: 5px; margin-left: 6px; }
+        .nivel-dots i { width: 7px; height: 7px; border-radius: 50%; background: var(--mira-icon-border); display: block; }
+        .nivel-dots i.on { background: var(--mira-primary); }
+
+        .tag-ilustrativo {
+            font-size: 12px; letter-spacing: 1.5px; text-transform: uppercase; font-weight: 700;
+            color: var(--mira-accent-2);
+            border: 1.5px dashed var(--mira-accent-2);
+            border-radius: 9999px; padding: 4px 10px; margin-left: 8px;
+        }
+        .tag-conceitual {
+            font-size: 12px; letter-spacing: 1.5px; text-transform: uppercase; font-weight: 700;
+            color: var(--mira-primary);
+            border: 1.5px solid var(--mira-icon-border);
+            background: var(--mira-icon-bg);
+            border-radius: 9999px; padding: 4px 12px; margin-left: 8px;
+        }
+
+        .fonte-linha { font-size: 13px; color: var(--mira-text-softer); text-align: center; margin-top: 4px; font-weight: 500; }
+
+        /* Pílula acesa pela animação (sincronizada com o palco) */
+        .attribute-pill.pill-on {
+            background: var(--mira-icon-bg);
+            border-color: var(--mira-primary);
+            box-shadow: 0 6px 18px var(--mira-glow-strong);
+            transform: translateY(-3px);
+        }
+
+        /* Slides com oito pílulas: palco um pouco mais baixo para caber na tela */
+        #metodo-stage, #hier-stage, #roadmap-stage { height: clamp(340px, 52vh, 540px); }
+
+        /* Questões de fixação */
+        .bloom {
+            display: inline-block; min-width: 92px; text-align: center;
+            font-size: 11px; letter-spacing: 1.5px; text-transform: uppercase; font-weight: 800;
+            color: var(--mira-primary); background: var(--mira-icon-bg);
+            border: 1px solid var(--mira-icon-border); border-radius: 9999px; padding: 3px 10px;
+        }
+
+        /* Matriz e síntese: palco padrão; slides de 6 a 7 pílulas usam palco mais baixo (acima) */
+    </style>
+</head>
+
+<body>
+    <!-- Controles de slide: barra de progresso + botão flutuante "próximo" -->
+    <div id="mira-progress"></div>
+    <button id="mira-next" aria-label="Próximo slide">
+        <i data-lucide="chevron-down" class="w-6 h-6" id="mira-next-icon"></i>
+    </button>
+
+    <!-- ============ SLIDE 1: CAPA ============ -->
+    <section id="s1" class="min-h-screen flex flex-col items-center justify-center relative overflow-hidden px-6">
+        <!-- @MIRA:SIZE 3/10 -->
+        <div id="capa-stage"><svg viewBox="0 0 1280 720" preserveAspectRatio="xMidYMid slice"></svg></div>
+        <div class="relative z-10 text-center max-w-4xl" data-aos="fade-up">
+            <p class="attribute-pill inline-block px-5 py-2 text-sm tracking-widest uppercase text-soft mb-8">GOTI · Gestão por processos (BPM)</p>
+            <h1 class="text-6xl md:text-7xl font-black leading-tight mb-6">
+                Gestão por Processos<br>
+                <span class="primary-color">e Governança de TI</span>
+            </h1>
+            <p class="text-xl text-soft max-w-2xl mx-auto mb-10">A governança decide o que importa. Processos mapeados, redesenhados e medidos fazem a decisão virar resultado.</p>
+            <div class="flex items-center justify-center gap-3 text-softer text-sm">
+                <i data-lucide="user" class="w-4 h-4 primary-color"></i> Prof. Augusto
+                <span class="opacity-40">|</span>
+                <i data-lucide="school" class="w-4 h-4 primary-color"></i> IFAL · Bacharelado em Sistemas de Informação
+            </div>
+        </div>
+        <div class="absolute bottom-10 left-1/2 -translate-x-1/2 text-softer text-xs tracking-widest uppercase z-10">
+            Use as setas para avançar
+        </div>
+    </section>
+
+    <!-- ============ SLIDE 2: SUMÁRIO ============ -->
+    <section id="sumario" class="min-h-screen flex flex-col items-center justify-center px-6 pt-3 pb-6">
+        <div class="w-full max-w-6xl" data-aos="fade-up" data-aos-delay="100">
+            <div class="text-center mb-2">
+                <h2 class="text-4xl md:text-5xl font-bold mb-2">Trilha da <span class="primary-color italic">aula</span></h2>
+                <p class="text-softer italic text-xl md:text-2xl font-medium">Quatro paradas: fundamentos, metodologia, governança e prática.</p>
+            </div>
+            <div class="glass-card rounded-2xl p-1 md:p-2 relative">
+                <div class="flex items-center justify-between mb-2 px-1">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-lg flex items-center justify-center" style="background: var(--mira-icon-bg);">
+                            <i data-lucide="compass" class="w-5 h-5 primary-color"></i>
+                        </div>
+                        <div>
+                            <p class="mb-1"><span class="nivel-chip">Visão geral · Roteiro<span class="nivel-dots"><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i></span></span></p>
+                            <p class="font-bold text-base md:text-lg">Sumário e trilha de aprendizagem</p>
+                            <p class="text-softer text-sm md:text-base italic font-medium">Do processo como transformação ao processo bem governado.</p>
+                        </div>
+                    </div>
+                    <button id="pause-sumario" class="pause-btn" type="button" aria-label="Pausar animação"></button>
+                    <button id="replay-sumario" class="replay-btn" type="button"><i data-lucide="rotate-cw" class="w-4 h-4"></i>Replay</button>
+                </div>
+                <!-- @MIRA:SIZE 3/10 -->
+                <div class="anim-stage" id="sumario-stage">
+                    <svg id="sumario-svg" viewBox="0 0 1280 720" preserveAspectRatio="xMidYMid meet"></svg>
+                </div>
+                <div class="border-t pt-1 mt-1 mb-1" style="border-color: var(--mira-card-border);">
+                    <p class="text-sm uppercase tracking-[3px] text-softer text-center font-bold mb-2">Os quatro objetivos da aula · clique para saltar</p>
+                    <div class="grid grid-cols-2 md:grid-cols-4 gap-2">
+                        <a href="#s3" class="attribute-pill text-center p-2 rounded-xl block cursor-pointer" id="sumario-pill-0">
+                            <i data-lucide="box" class="w-4 h-4 primary-color mx-auto mb-1"></i>
+                            <p class="text-base font-bold tracking-wide">N1 · Fundamentos</p>
+                            <p class="text-xs text-softer mt-0.5">Explicar processo, cadeia de valor e hierarquia</p>
+                        </a>
+                        <a href="#s7" class="attribute-pill text-center p-2 rounded-xl block cursor-pointer" id="sumario-pill-1">
+                            <i data-lucide="refresh-cw" class="w-4 h-4 primary-color mx-auto mb-1"></i>
+                            <p class="text-base font-bold tracking-wide">N2 · Metodologia</p>
+                            <p class="text-xs text-softer mt-0.5">Aplicar as sete etapas, da priorização ao monitoramento</p>
+                        </a>
+                        <a href="#s12" class="attribute-pill text-center p-2 rounded-xl block cursor-pointer" id="sumario-pill-2">
+                            <i data-lucide="landmark" class="w-4 h-4 primary-color mx-auto mb-1"></i>
+                            <p class="text-base font-bold tracking-wide">N3 · Governança</p>
+                            <p class="text-xs text-softer mt-0.5">Relacionar BPM ao avaliar, dirigir e monitorar</p>
+                        </a>
+                        <a href="#s16" class="attribute-pill text-center p-2 rounded-xl block cursor-pointer" id="sumario-pill-3">
+                            <i data-lucide="graduation-cap" class="w-4 h-4 primary-color mx-auto mb-1"></i>
+                            <p class="text-base font-bold tracking-wide">N4 · Na prática</p>
+                            <p class="text-xs text-softer mt-0.5">Mudança, casos da Sefaz-SP, síntese e questões</p>
+                        </a>
+                    </div>
+                    <p class="fonte-linha">Fonte: Seger (2017); Morandi (2019); e-book GOTI, Cap. 3, 4 e 6.3.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ============ S3: Elementos de um processo ============ -->
+    <section id="s3" class="min-h-screen flex flex-col items-center justify-center px-6 pt-3 pb-6">
+        <div class="w-full max-w-6xl" data-aos="fade-up" data-aos-delay="100">
+            <div class="text-center mb-2">
+                <h2 class="text-4xl md:text-5xl font-bold mb-2">Processo: entradas que viram <span class="primary-color italic">saídas</span></h2>
+                <p class="text-softer italic text-xl md:text-2xl font-medium">Todo processo transforma algo, sob regras e com recursos.</p>
+            </div>
+            <div class="glass-card rounded-2xl p-1 md:p-2 relative">
+                <div class="flex items-center justify-between mb-2 px-1">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-lg flex items-center justify-center" style="background: var(--mira-icon-bg);">
+                            <i data-lucide="box" class="w-5 h-5 primary-color"></i>
+                        </div>
+                        <div>
+                            <p class="mb-1"><span class="nivel-chip">N1 · Fundamentos<span class="nivel-dots"><i class="on"></i><i></i><i></i><i></i></span></span></p>
+                            <p class="font-bold text-base md:text-lg">Elementos de um processo</p>
+                            <p class="text-softer text-sm md:text-base italic font-medium">Até a infraestrutura de TI entra como recurso.</p>
+                        </div>
+                    </div>
+                    <button id="pause-elem" class="pause-btn" type="button" aria-label="Pausar animação"></button>
+                    <button id="replay-elem" class="replay-btn" type="button"><i data-lucide="rotate-cw" class="w-4 h-4"></i>Replay</button>
+                </div>
+                <!-- @MIRA:SIZE 3/10 -->
+                <div class="anim-stage" id="elem-stage">
+                    <svg id="elem-svg" viewBox="0 0 1280 720" preserveAspectRatio="xMidYMid meet"></svg>
+                </div>
+                <div class="border-t pt-1 mt-1 mb-1" style="border-color: var(--mira-card-border);">
+                    <p class="text-sm uppercase tracking-[3px] text-softer text-center font-bold mb-2">Os quatro elementos de qualquer processo</p>
+                    <div class="grid grid-cols-2 md:grid-cols-4 gap-2">
+                        <div class="attribute-pill text-center p-2 rounded-xl" id="elem-pill-0">
+                            <i data-lucide="log-in" class="w-4 h-4 primary-color mx-auto mb-1"></i>
+                            <p class="text-base font-bold tracking-wide">Entradas</p>
+                            <p class="text-xs text-softer mt-0.5">insumo a transformar</p>
+                        </div>
+                        <div class="attribute-pill text-center p-2 rounded-xl" id="elem-pill-1">
+                            <i data-lucide="scale" class="w-4 h-4 primary-color mx-auto mb-1"></i>
+                            <p class="text-base font-bold tracking-wide">Regras</p>
+                            <p class="text-xs text-softer mt-0.5">políticas e procedimentos</p>
+                        </div>
+                        <div class="attribute-pill text-center p-2 rounded-xl" id="elem-pill-2">
+                            <i data-lucide="server" class="w-4 h-4 primary-color mx-auto mb-1"></i>
+                            <p class="text-base font-bold tracking-wide">Recursos</p>
+                            <p class="text-xs text-softer mt-0.5">pessoas, dinheiro, TI</p>
+                        </div>
+                        <div class="attribute-pill text-center p-2 rounded-xl" id="elem-pill-3">
+                            <i data-lucide="log-out" class="w-4 h-4 primary-color mx-auto mb-1"></i>
+                            <p class="text-base font-bold tracking-wide">Saídas</p>
+                            <p class="text-xs text-softer mt-0.5">produto ou serviço</p>
+                        </div>
+                    </div>
+                    <p class="fonte-linha">Fonte: Morandi (2019), Sefaz-SP/DGEP, I Encontro de Benchmarking em Gestão de Processos, elementos de processo; Seger (2017), Metodologia de Gestão Estratégica de Processos, v2.0, seção 1.1.2.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ============ S4: fundamentação ============ -->
+    <section id="s4" class="min-h-screen flex flex-col items-center justify-center px-6 pt-4 pb-8">
+        <div class="w-full max-w-6xl" data-aos="fade-up" data-aos-delay="100">
+            <div class="text-center mb-4">
+                <h2 class="text-4xl md:text-5xl font-black mb-2">Conceito: <span class="primary-color italic">gestão por processos</span></h2>
+                <p class="text-softer text-xl md:text-2xl font-medium">BPM, Business Process Management.</p>
+            </div>
+            <div class="glass-card rounded-2xl p-6 md:p-8 relative">
+                <div class="flex items-center justify-between mb-6 pb-4 border-b border-black/10">
+                    <div class="flex items-center gap-4">
+                        <div class="w-12 h-12 rounded-xl flex items-center justify-center" style="background: var(--mira-icon-bg);">
+                            <i data-lucide="book-open" class="w-6 h-6 primary-color"></i>
+                        </div>
+                        <div>
+                            <span class="nivel-chip">N1 · Fundamentos<span class="nivel-dots"><i class="on"></i><i></i><i></i><i></i></span></span>
+                            <span class="tag-conceitual">Conceitos e definições</span>
+                            <h3 class="font-bold text-xl md:text-2xl mt-1">O que é, o que é um processo e por que a TI se importa</h3>
+                        </div>
+                    </div>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+                    <div class="p-5 rounded-2xl border flex flex-col justify-between" style="background: var(--mira-pill-bg); border-color: var(--mira-card-border);">
+                        <div>
+                            <div class="flex items-center gap-2 mb-3">
+                                <i data-lucide="layers" class="w-5 h-5 primary-color"></i>
+                                <h4 class="font-bold text-lg">Uma abordagem disciplinar</h4>
+                            </div>
+                            <p class="text-base text-soft leading-relaxed">Abordagem para <strong>identificar, desenhar, executar, documentar, medir, monitorar, controlar e melhorar</strong> processos de negócio, automatizados ou não, para alcançar resultados consistentes e alinhados aos objetivos estratégicos da organização.</p>
+                        </div>
+                        <p class="text-xs font-semibold text-softer mt-4 pt-2 border-t border-black/5">Seger (2017), seção 1.1.1</p>
+                    </div>
+                    <div class="p-5 rounded-2xl border flex flex-col justify-between" style="background: var(--mira-pill-bg); border-color: var(--mira-card-border);">
+                        <div>
+                            <div class="flex items-center gap-2 mb-3">
+                                <i data-lucide="workflow" class="w-5 h-5 primary-color"></i>
+                                <h4 class="font-bold text-lg">O que é um processo</h4>
+                            </div>
+                            <p class="text-base text-soft leading-relaxed">Conjunto definido de atividades ou comportamentos executados por <strong>humanos ou máquinas</strong> para alcançar um ou mais resultados. Transforma insumos em produtos ou serviços, com <strong>início e fim bem determinados</strong>.</p>
+                        </div>
+                        <p class="text-xs font-semibold text-softer mt-4 pt-2 border-t border-black/5">BPM CBOK, apud Seger (2017), 1.1.2</p>
+                    </div>
+                    <div class="p-5 rounded-2xl border flex flex-col justify-between" style="background: var(--mira-pill-bg); border-color: var(--mira-card-border);">
+                        <div>
+                            <div class="flex items-center gap-2 mb-3">
+                                <i data-lucide="cpu" class="w-5 h-5 primary-color"></i>
+                                <h4 class="font-bold text-lg">Negócio e TI juntos</h4>
+                            </div>
+                            <p class="text-base text-soft leading-relaxed">O BPM <strong>une gestão de negócios e tecnologia da informação</strong>, com foco na otimização dos resultados pela melhoria dos processos. Muitos projetos de TI são, na verdade, projetos de automação ou redesenho de processos.</p>
+                        </div>
+                        <p class="text-xs font-semibold text-softer mt-4 pt-2 border-t border-black/5">Morandi (2019); e-book, seção 4.1</p>
+                    </div>
+                </div>
+                <p class="text-sm uppercase tracking-[3px] text-softer font-bold mb-2">A gestão por processos permanente contribui para</p>
+                <div class="flex flex-wrap gap-2 mb-6">
+                    <span class="attribute-pill text-sm font-semibold">Visão sistêmica e integrada</span>
+                    <span class="attribute-pill text-sm font-semibold">Conhecimento institucional difundido</span>
+                    <span class="attribute-pill text-sm font-semibold">Recursos otimizados</span>
+                    <span class="attribute-pill text-sm font-semibold">Competências identificadas</span>
+                    <span class="attribute-pill text-sm font-semibold">Estrutura organizacional revista</span>
+                </div>
+                <div class="p-4 rounded-xl border flex items-center gap-4" style="background: var(--mira-icon-bg); border-color: var(--mira-icon-border);">
+                    <i data-lucide="quote" class="w-8 h-8 primary-color shrink-0"></i>
+                    <p class="text-base md:text-lg font-medium"><strong>Regra das organizações maduras em governança de TI:</strong> iniciativas de TI são precedidas, ou acompanhadas, de um esforço explícito de modelagem e análise de processos, e não apenas de especificação de requisitos de sistema.</p>
+                </div>
+                <p class="fonte-linha mt-4">Fonte: Seger (2017), Metodologia de Gestão Estratégica de Processos, v2.0, seções 1.1.1 e 1.1.2; Morandi (2019), Sefaz-SP/DGEP, I Encontro de Benchmarking em Gestão de Processos; e-book GOTI, seção 4.1.</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- ============ S5: Cadeia de valor e categorias de processos ============ -->
+    <section id="s5" class="min-h-screen flex flex-col items-center justify-center px-6 pt-3 pb-6">
+        <div class="w-full max-w-6xl" data-aos="fade-up" data-aos-delay="100">
+            <div class="text-center mb-2">
+                <h2 class="text-4xl md:text-5xl font-bold mb-2">Três categorias, uma <span class="primary-color italic">cadeia de valor</span></h2>
+                <p class="text-softer italic text-xl md:text-2xl font-medium">Uns entregam ao cidadão, outros dirigem, outros sustentam.</p>
+            </div>
+            <div class="glass-card rounded-2xl p-1 md:p-2 relative">
+                <div class="flex items-center justify-between mb-2 px-1">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-lg flex items-center justify-center" style="background: var(--mira-icon-bg);">
+                            <i data-lucide="link" class="w-5 h-5 primary-color"></i>
+                        </div>
+                        <div>
+                            <p class="mb-1"><span class="nivel-chip">N1 · Fundamentos<span class="nivel-dots"><i class="on"></i><i></i><i></i><i></i></span></span></p>
+                            <p class="font-bold text-base md:text-lg">Cadeia de valor e categorias de processos</p>
+                            <p class="text-softer text-sm md:text-base italic font-medium">A cadeia de valor é a macrovisão do encadeamento dos processos.</p>
+                        </div>
+                    </div>
+                    <button id="pause-cadeia" class="pause-btn" type="button" aria-label="Pausar animação"></button>
+                    <button id="replay-cadeia" class="replay-btn" type="button"><i data-lucide="rotate-cw" class="w-4 h-4"></i>Replay</button>
+                </div>
+                <!-- @MIRA:SIZE 3/10 -->
+                <div class="anim-stage" id="cadeia-stage">
+                    <svg id="cadeia-svg" viewBox="0 0 1280 720" preserveAspectRatio="xMidYMid meet"></svg>
+                </div>
+                <div class="border-t pt-1 mt-1 mb-1" style="border-color: var(--mira-card-border);">
+                    <p class="text-sm uppercase tracking-[3px] text-softer text-center font-bold mb-2">Como a cadeia de valor agrupa os macroprocessos</p>
+                    <div class="grid grid-cols-2 md:grid-cols-3 gap-2">
+                        <div class="attribute-pill text-center p-2 rounded-xl" id="cadeia-pill-0">
+                            <i data-lucide="target" class="w-4 h-4 primary-color mx-auto mb-1"></i>
+                            <p class="text-base font-bold tracking-wide">Finalísticos</p>
+                            <p class="text-xs text-softer mt-0.5">primários: valor direto ao cliente</p>
+                        </div>
+                        <div class="attribute-pill text-center p-2 rounded-xl" id="cadeia-pill-1">
+                            <i data-lucide="compass" class="w-4 h-4 primary-color mx-auto mb-1"></i>
+                            <p class="text-base font-bold tracking-wide">Estratégicos</p>
+                            <p class="text-xs text-softer mt-0.5">gestão: diretrizes, medir, controlar</p>
+                        </div>
+                        <div class="attribute-pill text-center p-2 rounded-xl" id="cadeia-pill-2">
+                            <i data-lucide="life-buoy" class="w-4 h-4 primary-color mx-auto mb-1"></i>
+                            <p class="text-base font-bold tracking-wide">Suporte</p>
+                            <p class="text-xs text-softer mt-0.5">entregam valor a outros processos</p>
+                        </div>
+                    </div>
+                    <p class="fonte-linha">Fonte: Seger (2017), Metodologia de Gestão Estratégica de Processos, v2.0, seções 1.1.3 e 2.1.1.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ============ S6: Hierarquia (arquitetura) de processos ============ -->
+    <section id="s6" class="min-h-screen flex flex-col items-center justify-center px-6 pt-3 pb-6">
+        <div class="w-full max-w-6xl" data-aos="fade-up" data-aos-delay="100">
+            <div class="text-center mb-2">
+                <h2 class="text-4xl md:text-5xl font-bold mb-2">Da cadeia de valor à <span class="primary-color italic">tarefa</span></h2>
+                <p class="text-softer italic text-xl md:text-2xl font-medium">O desdobramento vai da estratégia ao nível operacional.</p>
+            </div>
+            <div class="glass-card rounded-2xl p-1 md:p-2 relative">
+                <div class="flex items-center justify-between mb-2 px-1">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-lg flex items-center justify-center" style="background: var(--mira-icon-bg);">
+                            <i data-lucide="list-tree" class="w-5 h-5 primary-color"></i>
+                        </div>
+                        <div>
+                            <p class="mb-1"><span class="nivel-chip">N1 · Fundamentos<span class="nivel-dots"><i class="on"></i><i></i><i></i><i></i></span></span></p>
+                            <p class="font-bold text-base md:text-lg">Hierarquia (arquitetura) de processos</p>
+                            <p class="text-softer text-sm md:text-base italic font-medium">Exemplos reais da Secretaria da Fazenda de São Paulo.</p>
+                        </div>
+                    </div>
+                    <button id="pause-hier" class="pause-btn" type="button" aria-label="Pausar animação"></button>
+                    <button id="replay-hier" class="replay-btn" type="button"><i data-lucide="rotate-cw" class="w-4 h-4"></i>Replay</button>
+                </div>
+                <!-- @MIRA:SIZE 3/10 -->
+                <div class="anim-stage" id="hier-stage">
+                    <svg id="hier-svg" viewBox="0 0 1280 720" preserveAspectRatio="xMidYMid meet"></svg>
+                </div>
+                <div class="border-t pt-1 mt-1 mb-1" style="border-color: var(--mira-card-border);">
+                    <p class="text-sm uppercase tracking-[3px] text-softer text-center font-bold mb-2">Seis níveis de detalhamento</p>
+                    <div class="grid grid-cols-2 md:grid-cols-6 gap-2">
+                        <div class="attribute-pill text-center p-2 rounded-xl" id="hier-pill-0">
+                            <i data-lucide="network" class="w-4 h-4 primary-color mx-auto mb-1"></i>
+                            <p class="text-base font-bold tracking-wide">Cadeia de valor</p>
+                        </div>
+                        <div class="attribute-pill text-center p-2 rounded-xl" id="hier-pill-1">
+                            <i data-lucide="boxes" class="w-4 h-4 primary-color mx-auto mb-1"></i>
+                            <p class="text-base font-bold tracking-wide">Macroprocesso</p>
+                        </div>
+                        <div class="attribute-pill text-center p-2 rounded-xl" id="hier-pill-2">
+                            <i data-lucide="workflow" class="w-4 h-4 primary-color mx-auto mb-1"></i>
+                            <p class="text-base font-bold tracking-wide">Processo</p>
+                        </div>
+                        <div class="attribute-pill text-center p-2 rounded-xl" id="hier-pill-3">
+                            <i data-lucide="git-branch" class="w-4 h-4 primary-color mx-auto mb-1"></i>
+                            <p class="text-base font-bold tracking-wide">Subprocesso</p>
+                        </div>
+                        <div class="attribute-pill text-center p-2 rounded-xl" id="hier-pill-4">
+                            <i data-lucide="square-check" class="w-4 h-4 primary-color mx-auto mb-1"></i>
+                            <p class="text-base font-bold tracking-wide">Atividade</p>
+                        </div>
+                        <div class="attribute-pill text-center p-2 rounded-xl" id="hier-pill-5">
+                            <i data-lucide="list-checks" class="w-4 h-4 primary-color mx-auto mb-1"></i>
+                            <p class="text-base font-bold tracking-wide">Tarefa</p>
+                        </div>
+                    </div>
+                    <p class="fonte-linha">Fonte: Seger (2017), Metodologia de Gestão Estratégica de Processos, v2.0, seção 1.1.5; exemplos: Morandi (2019), Sefaz-SP/DGEP, I Encontro de Benchmarking em Gestão de Processos, hierarquia de processos.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ============ S7: Metodologia de Gestão Estratégica de Processos ============ -->
+    <section id="s7" class="min-h-screen flex flex-col items-center justify-center px-6 pt-3 pb-6">
+        <div class="w-full max-w-6xl" data-aos="fade-up" data-aos-delay="100">
+            <div class="text-center mb-2">
+                <h2 class="text-4xl md:text-5xl font-bold mb-2">Sete etapas, um <span class="primary-color italic">ciclo permanente</span></h2>
+                <p class="text-softer italic text-xl md:text-2xl font-medium">A metodologia não termina: o monitoramento reabre o ciclo.</p>
+            </div>
+            <div class="glass-card rounded-2xl p-1 md:p-2 relative">
+                <div class="flex items-center justify-between mb-2 px-1">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-lg flex items-center justify-center" style="background: var(--mira-icon-bg);">
+                            <i data-lucide="refresh-cw" class="w-5 h-5 primary-color"></i>
+                        </div>
+                        <div>
+                            <p class="mb-1"><span class="nivel-chip">N2 · Metodologia<span class="nivel-dots"><i class="on"></i><i class="on"></i><i></i><i></i></span></span></p>
+                            <p class="font-bold text-base md:text-lg">Metodologia de Gestão Estratégica de Processos</p>
+                            <p class="text-softer text-sm md:text-base italic font-medium">Pode-se aplicar todas as etapas ou parte delas.</p>
+                        </div>
+                    </div>
+                    <button id="pause-metodo" class="pause-btn" type="button" aria-label="Pausar animação"></button>
+                    <button id="replay-metodo" class="replay-btn" type="button"><i data-lucide="rotate-cw" class="w-4 h-4"></i>Replay</button>
+                </div>
+                <!-- @MIRA:SIZE 3/10 -->
+                <div class="anim-stage" id="metodo-stage">
+                    <svg id="metodo-svg" viewBox="0 0 1280 720" preserveAspectRatio="xMidYMid meet"></svg>
+                </div>
+                <div class="border-t pt-1 mt-1 mb-1" style="border-color: var(--mira-card-border);">
+                    <p class="text-sm uppercase tracking-[3px] text-softer text-center font-bold mb-2">As sete etapas da metodologia</p>
+                    <div class="grid grid-cols-2 md:grid-cols-7 gap-2">
+                        <div class="attribute-pill text-center p-2 rounded-xl" id="metodo-pill-0">
+                            <i data-lucide="flag" class="w-4 h-4 primary-color mx-auto mb-1"></i>
+                            <p class="text-base font-bold tracking-wide">Partida</p>
+                        </div>
+                        <div class="attribute-pill text-center p-2 rounded-xl" id="metodo-pill-1">
+                            <i data-lucide="list-ordered" class="w-4 h-4 primary-color mx-auto mb-1"></i>
+                            <p class="text-base font-bold tracking-wide">Priorização</p>
+                        </div>
+                        <div class="attribute-pill text-center p-2 rounded-xl" id="metodo-pill-2">
+                            <i data-lucide="pen-tool" class="w-4 h-4 primary-color mx-auto mb-1"></i>
+                            <p class="text-base font-bold tracking-wide">AS IS</p>
+                        </div>
+                        <div class="attribute-pill text-center p-2 rounded-xl" id="metodo-pill-3">
+                            <i data-lucide="search" class="w-4 h-4 primary-color mx-auto mb-1"></i>
+                            <p class="text-base font-bold tracking-wide">Análise</p>
+                        </div>
+                        <div class="attribute-pill text-center p-2 rounded-xl" id="metodo-pill-4">
+                            <i data-lucide="sparkles" class="w-4 h-4 primary-color mx-auto mb-1"></i>
+                            <p class="text-base font-bold tracking-wide">TO BE</p>
+                        </div>
+                        <div class="attribute-pill text-center p-2 rounded-xl" id="metodo-pill-5">
+                            <i data-lucide="rocket" class="w-4 h-4 primary-color mx-auto mb-1"></i>
+                            <p class="text-base font-bold tracking-wide">Implementação</p>
+                        </div>
+                        <div class="attribute-pill text-center p-2 rounded-xl" id="metodo-pill-6">
+                            <i data-lucide="activity" class="w-4 h-4 primary-color mx-auto mb-1"></i>
+                            <p class="text-base font-bold tracking-wide">Monitoramento</p>
+                        </div>
+                    </div>
+                    <p class="fonte-linha">Fonte: Seger (2017), Metodologia de Gestão Estratégica de Processos, v2.0, capítulo 2.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ============ S8: Matriz de priorização de processos ============ -->
+    <section id="s8" class="min-h-screen flex flex-col items-center justify-center px-6 pt-3 pb-6">
+        <div class="w-full max-w-6xl" data-aos="fade-up" data-aos-delay="100">
+            <div class="text-center mb-2">
+                <h2 class="text-4xl md:text-5xl font-bold mb-2">Priorizar é decidir <span class="primary-color italic">onde investir</span></h2>
+                <p class="text-softer italic text-xl md:text-2xl font-medium">Critérios ponderados apontam os processos mais relevantes.</p>
+            </div>
+            <div class="glass-card rounded-2xl p-1 md:p-2 relative">
+                <div class="flex items-center justify-between mb-2 px-1">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-lg flex items-center justify-center" style="background: var(--mira-icon-bg);">
+                            <i data-lucide="list-ordered" class="w-5 h-5 primary-color"></i>
+                        </div>
+                        <div>
+                            <p class="mb-1"><span class="nivel-chip">N2 · Metodologia<span class="nivel-dots"><i class="on"></i><i class="on"></i><i></i><i></i></span></span> <span class="tag-ilustrativo">valores ilustrativos</span></p>
+                            <p class="font-bold text-base md:text-lg">Matriz de priorização de processos</p>
+                            <p class="text-softer text-sm md:text-base italic font-medium">Alternativa usada pela Sefaz-SP: matriz GUT (gravidade, urgência, tendência).</p>
+                        </div>
+                    </div>
+                    <button id="pause-prior" class="pause-btn" type="button" aria-label="Pausar animação"></button>
+                    <button id="replay-prior" class="replay-btn" type="button"><i data-lucide="rotate-cw" class="w-4 h-4"></i>Replay</button>
+                </div>
+                <!-- @MIRA:SIZE 3/10 -->
+                <div class="anim-stage" id="prior-stage">
+                    <svg id="prior-svg" viewBox="0 0 1280 720" preserveAspectRatio="xMidYMid meet"></svg>
+                </div>
+                <div class="border-t pt-1 mt-1 mb-1" style="border-color: var(--mira-card-border);">
+                    <p class="text-sm uppercase tracking-[3px] text-softer text-center font-bold mb-2">Os elementos da matriz de priorização</p>
+                    <div class="grid grid-cols-2 md:grid-cols-4 gap-2">
+                        <div class="attribute-pill text-center p-2 rounded-xl" id="prior-pill-0">
+                            <i data-lucide="list" class="w-4 h-4 primary-color mx-auto mb-1"></i>
+                            <p class="text-base font-bold tracking-wide">Lista de processos</p>
+                            <p class="text-xs text-softer mt-0.5">da cadeia de valor ou das áreas</p>
+                        </div>
+                        <div class="attribute-pill text-center p-2 rounded-xl" id="prior-pill-1">
+                            <i data-lucide="sliders-horizontal" class="w-4 h-4 primary-color mx-auto mb-1"></i>
+                            <p class="text-base font-bold tracking-wide">Critérios</p>
+                            <p class="text-xs text-softer mt-0.5">alinhamento, impacto, abrangência, custo</p>
+                        </div>
+                        <div class="attribute-pill text-center p-2 rounded-xl" id="prior-pill-2">
+                            <i data-lucide="weight" class="w-4 h-4 primary-color mx-auto mb-1"></i>
+                            <p class="text-base font-bold tracking-wide">Ponderação 1 a 5</p>
+                            <p class="text-xs text-softer mt-0.5">5 é o critério mais importante</p>
+                        </div>
+                        <div class="attribute-pill text-center p-2 rounded-xl" id="prior-pill-3">
+                            <i data-lucide="bar-chart-3" class="w-4 h-4 primary-color mx-auto mb-1"></i>
+                            <p class="text-base font-bold tracking-wide">Média ponderada</p>
+                            <p class="text-xs text-softer mt-0.5">revela os mais importantes</p>
+                        </div>
+                    </div>
+                    <p class="fonte-linha">Fonte: Seger (2017), Metodologia de Gestão Estratégica de Processos, v2.0, seção 2.2; Morandi (2019), Sefaz-SP/DGEP, I Encontro de Benchmarking em Gestão de Processos, matriz GUT.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ============ S9: Modelagem, análise e redesenho ============ -->
+    <section id="s9" class="min-h-screen flex flex-col items-center justify-center px-6 pt-3 pb-6">
+        <div class="w-full max-w-6xl" data-aos="fade-up" data-aos-delay="100">
+            <div class="text-center mb-2">
+                <h2 class="text-4xl md:text-5xl font-bold mb-2">Do AS IS ao <span class="primary-color italic">TO BE</span></h2>
+                <p class="text-softer italic text-xl md:text-2xl font-medium">No redesenho, nenhuma atividade fica fora de questionamento.</p>
+            </div>
+            <div class="glass-card rounded-2xl p-1 md:p-2 relative">
+                <div class="flex items-center justify-between mb-2 px-1">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-lg flex items-center justify-center" style="background: var(--mira-icon-bg);">
+                            <i data-lucide="pen-tool" class="w-5 h-5 primary-color"></i>
+                        </div>
+                        <div>
+                            <p class="mb-1"><span class="nivel-chip">N2 · Metodologia<span class="nivel-dots"><i class="on"></i><i class="on"></i><i></i><i></i></span></span> <span class="tag-ilustrativo">fluxo ilustrativo</span></p>
+                            <p class="font-bold text-base md:text-lg">Modelagem, análise e redesenho</p>
+                            <p class="text-softer text-sm md:text-base italic font-medium">Inspirado no ITCMD da Sefaz-SP: 30% menos atividades.</p>
+                        </div>
+                    </div>
+                    <button id="pause-redes" class="pause-btn" type="button" aria-label="Pausar animação"></button>
+                    <button id="replay-redes" class="replay-btn" type="button"><i data-lucide="rotate-cw" class="w-4 h-4"></i>Replay</button>
+                </div>
+                <!-- @MIRA:SIZE 3/10 -->
+                <div class="anim-stage" id="redes-stage">
+                    <svg id="redes-svg" viewBox="0 0 1280 720" preserveAspectRatio="xMidYMid meet"></svg>
+                </div>
+                <div class="border-t pt-1 mt-1 mb-1" style="border-color: var(--mira-card-border);">
+                    <p class="text-sm uppercase tracking-[3px] text-softer text-center font-bold mb-2">O que o redesenho procura eliminar</p>
+                    <div class="grid grid-cols-2 md:grid-cols-5 gap-2">
+                        <div class="attribute-pill text-center p-2 rounded-xl" id="redes-pill-0">
+                            <i data-lucide="traffic-cone" class="w-4 h-4 primary-color mx-auto mb-1"></i>
+                            <p class="text-base font-bold tracking-wide">Gargalos</p>
+                        </div>
+                        <div class="attribute-pill text-center p-2 rounded-xl" id="redes-pill-1">
+                            <i data-lucide="rotate-ccw" class="w-4 h-4 primary-color mx-auto mb-1"></i>
+                            <p class="text-base font-bold tracking-wide">Reprocesso</p>
+                        </div>
+                        <div class="attribute-pill text-center p-2 rounded-xl" id="redes-pill-2">
+                            <i data-lucide="copy" class="w-4 h-4 primary-color mx-auto mb-1"></i>
+                            <p class="text-base font-bold tracking-wide">Atividades repetidas</p>
+                        </div>
+                        <div class="attribute-pill text-center p-2 rounded-xl" id="redes-pill-3">
+                            <i data-lucide="circle-off" class="w-4 h-4 primary-color mx-auto mb-1"></i>
+                            <p class="text-base font-bold tracking-wide">Sem valor agregado</p>
+                        </div>
+                        <div class="attribute-pill text-center p-2 rounded-xl" id="redes-pill-4">
+                            <i data-lucide="stamp" class="w-4 h-4 primary-color mx-auto mb-1"></i>
+                            <p class="text-base font-bold tracking-wide">Burocratização</p>
+                        </div>
+                    </div>
+                    <p class="fonte-linha">Fonte: Seger (2017), Metodologia de Gestão Estratégica de Processos, v2.0, seções 2.3 a 2.5; Morandi (2019), Sefaz-SP/DGEP, I Encontro de Benchmarking em Gestão de Processos, caso ITCMD.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ============ S10: Matriz de melhorias e indicadores ============ -->
+    <section id="s10" class="min-h-screen flex flex-col items-center justify-center px-6 pt-3 pb-6">
+        <div class="w-full max-w-6xl" data-aos="fade-up" data-aos-delay="100">
+            <div class="text-center mb-2">
+                <h2 class="text-4xl md:text-5xl font-bold mb-2">Impacto x desempenho: <span class="primary-color italic">o que melhorar</span></h2>
+                <p class="text-softer italic text-xl md:text-2xl font-medium">O plano de melhorias cruza estratégia e desempenho do processo.</p>
+            </div>
+            <div class="glass-card rounded-2xl p-1 md:p-2 relative">
+                <div class="flex items-center justify-between mb-2 px-1">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-lg flex items-center justify-center" style="background: var(--mira-icon-bg);">
+                            <i data-lucide="grid-2x2" class="w-5 h-5 primary-color"></i>
+                        </div>
+                        <div>
+                            <p class="mb-1"><span class="nivel-chip">N2 · Metodologia<span class="nivel-dots"><i class="on"></i><i class="on"></i><i></i><i></i></span></span> <span class="tag-ilustrativo">posições ilustrativas</span></p>
+                            <p class="font-bold text-base md:text-lg">Matriz de melhorias e indicadores</p>
+                            <p class="text-softer text-sm md:text-base italic font-medium">Cada melhoria registra impacto, esforço e como será medida.</p>
+                        </div>
+                    </div>
+                    <button id="pause-matriz" class="pause-btn" type="button" aria-label="Pausar animação"></button>
+                    <button id="replay-matriz" class="replay-btn" type="button"><i data-lucide="rotate-cw" class="w-4 h-4"></i>Replay</button>
+                </div>
+                <!-- @MIRA:SIZE 3/10 -->
+                <div class="anim-stage" id="matriz-stage">
+                    <svg id="matriz-svg" viewBox="0 0 1280 720" preserveAspectRatio="xMidYMid meet"></svg>
+                </div>
+                <div class="border-t pt-1 mt-1 mb-1" style="border-color: var(--mira-card-border);">
+                    <p class="text-sm uppercase tracking-[3px] text-softer text-center font-bold mb-2">Os quatro quadrantes da matriz de melhorias</p>
+                    <div class="grid grid-cols-2 md:grid-cols-4 gap-2">
+                        <div class="attribute-pill text-center p-2 rounded-xl" id="matriz-pill-0">
+                            <i data-lucide="siren" class="w-4 h-4 primary-color mx-auto mb-1"></i>
+                            <p class="text-base font-bold tracking-wide">Urgência</p>
+                        </div>
+                        <div class="attribute-pill text-center p-2 rounded-xl" id="matriz-pill-1">
+                            <i data-lucide="settings-2" class="w-4 h-4 primary-color mx-auto mb-1"></i>
+                            <p class="text-base font-bold tracking-wide">Adequar</p>
+                        </div>
+                        <div class="attribute-pill text-center p-2 rounded-xl" id="matriz-pill-2">
+                            <i data-lucide="wrench" class="w-4 h-4 primary-color mx-auto mb-1"></i>
+                            <p class="text-base font-bold tracking-wide">Aprimorar</p>
+                        </div>
+                        <div class="attribute-pill text-center p-2 rounded-xl" id="matriz-pill-3">
+                            <i data-lucide="trending-up" class="w-4 h-4 primary-color mx-auto mb-1"></i>
+                            <p class="text-base font-bold tracking-wide">Melhorar</p>
+                        </div>
+                    </div>
+                    <p class="fonte-linha">Fonte: Morandi (2019), Sefaz-SP/DGEP, I Encontro de Benchmarking em Gestão de Processos, plano de melhorias, indicadores e matriz de melhorias (figura ilustrativa).</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ============ S11: fundamentação ============ -->
+    <section id="s11" class="min-h-screen flex flex-col items-center justify-center px-6 pt-4 pb-8">
+        <div class="w-full max-w-6xl" data-aos="fade-up" data-aos-delay="100">
+            <div class="text-center mb-4">
+                <h2 class="text-4xl md:text-5xl font-black mb-2">Implantar e <span class="primary-color italic">medir sempre</span></h2>
+                <p class="text-softer text-xl md:text-2xl font-medium">Implementação e monitoramento fecham o ciclo.</p>
+            </div>
+            <div class="glass-card rounded-2xl p-6 md:p-8 relative">
+                <div class="flex items-center justify-between mb-6 pb-4 border-b border-black/10">
+                    <div class="flex items-center gap-4">
+                        <div class="w-12 h-12 rounded-xl flex items-center justify-center" style="background: var(--mira-icon-bg);">
+                            <i data-lucide="rocket" class="w-6 h-6 primary-color"></i>
+                        </div>
+                        <div>
+                            <span class="nivel-chip">N2 · Metodologia<span class="nivel-dots"><i class="on"></i><i class="on"></i><i></i><i></i></span></span>
+                            <span class="tag-conceitual">Conceitos e práticas</span>
+                            <h3 class="font-bold text-xl md:text-2xl mt-1">O processo redesenhado só vale quando funciona e é medido</h3>
+                        </div>
+                    </div>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+                    <div class="p-5 rounded-2xl border flex flex-col justify-between" style="background: var(--mira-pill-bg); border-color: var(--mira-card-border);">
+                        <div>
+                            <div class="flex items-center gap-2 mb-3">
+                                <i data-lucide="shield-check" class="w-5 h-5 primary-color"></i>
+                                <h4 class="font-bold text-lg">Fatores críticos de sucesso</h4>
+                            </div>
+                            <ul class="text-base text-soft leading-relaxed space-y-1"><li class="flex gap-2"><span class="primary-color font-bold">·</span><span>Patrocínio da alta administração e do dono do processo</span></li><li class="flex gap-2"><span class="primary-color font-bold">·</span><span>Premissas e condicionantes atendidas</span></li><li class="flex gap-2"><span class="primary-color font-bold">·</span><span>Indicadores de desempenho mensuráveis</span></li><li class="flex gap-2"><span class="primary-color font-bold">·</span><span>Interfaces entre processos analisadas</span></li><li class="flex gap-2"><span class="primary-color font-bold">·</span><span>Colaboração de executores, clientes e fornecedores</span></li><li class="flex gap-2"><span class="primary-color font-bold">·</span><span>Riscos e problemas potenciais identificados</span></li><li class="flex gap-2"><span class="primary-color font-bold">·</span><span>Comunicação em linguagem acessível</span></li><li class="flex gap-2"><span class="primary-color font-bold">·</span><span>Treinamento antes do pleno funcionamento</span></li></ul>
+                        </div>
+                        <p class="text-xs font-semibold text-softer mt-4 pt-2 border-t border-black/5">Seger (2017), seção 2.6</p>
+                    </div>
+                    <div class="p-5 rounded-2xl border flex flex-col justify-between" style="background: var(--mira-pill-bg); border-color: var(--mira-card-border);">
+                        <div>
+                            <div class="flex items-center gap-2 mb-3">
+                                <i data-lucide="calendar-check" class="w-5 h-5 primary-color"></i>
+                                <h4 class="font-bold text-lg">Plano de implementação: 5W1H</h4>
+                            </div>
+                            <p class="text-base text-soft leading-relaxed">Cronograma das soluções e, para cada etapa:</p><ul class="text-base text-soft leading-relaxed space-y-1"><li class="flex gap-2"><span class="primary-color font-bold">·</span><span><strong>Who</strong>: quem é o responsável</span></li><li class="flex gap-2"><span class="primary-color font-bold">·</span><span><strong>Where</strong>: onde será feito</span></li><li class="flex gap-2"><span class="primary-color font-bold">·</span><span><strong>When</strong>: em que data</span></li><li class="flex gap-2"><span class="primary-color font-bold">·</span><span><strong>What</strong>: o que será feito</span></li><li class="flex gap-2"><span class="primary-color font-bold">·</span><span><strong>How</strong>: como será feito</span></li><li class="flex gap-2"><span class="primary-color font-bold">·</span><span><strong>Why</strong>: por que será feito</span></li></ul>
+                        </div>
+                        <p class="text-xs font-semibold text-softer mt-4 pt-2 border-t border-black/5">Seger (2017), seção 2.6</p>
+                    </div>
+                    <div class="p-5 rounded-2xl border flex flex-col justify-between" style="background: var(--mira-pill-bg); border-color: var(--mira-card-border);">
+                        <div>
+                            <div class="flex items-center gap-2 mb-3">
+                                <i data-lucide="activity" class="w-5 h-5 primary-color"></i>
+                                <h4 class="font-bold text-lg">Monitoramento contínuo</h4>
+                            </div>
+                            <ol class="text-base text-soft leading-relaxed space-y-1"><li class="flex gap-2"><span class="primary-color font-black w-4 shrink-0">1</span><span>Estabelecer pontos de controle</span></li><li class="flex gap-2"><span class="primary-color font-black w-4 shrink-0">2</span><span>Coletar e medir indicadores</span></li><li class="flex gap-2"><span class="primary-color font-black w-4 shrink-0">3</span><span>Verificar aderência ao mapeamento</span></li><li class="flex gap-2"><span class="primary-color font-black w-4 shrink-0">4</span><span>Avaliar resultados e ganhos</span></li><li class="flex gap-2"><span class="primary-color font-black w-4 shrink-0">5</span><span>Analisar justificativas</span></li><li class="flex gap-2"><span class="primary-color font-black w-4 shrink-0">6</span><span>Diagnosticar oportunidades de melhoria</span></li></ol>
+                        </div>
+                        <p class="text-xs font-semibold text-softer mt-4 pt-2 border-t border-black/5">Seger (2017), seção 2.7</p>
+                    </div>
+                </div>
+                <div class="p-4 rounded-xl border flex items-center gap-4" style="background: var(--mira-icon-bg); border-color: var(--mira-icon-border);">
+                    <i data-lucide="repeat" class="w-8 h-8 primary-color shrink-0"></i>
+                    <p class="text-base md:text-lg font-medium"><strong>Quem mede:</strong> o dono do processo monitora continuamente; o Escritório Local de Processos apoia a análise e reporta à alta gestão. É por aqui que a gestão devolve informação à governança.</p>
+                </div>
+                <p class="fonte-linha mt-4">Fonte: Seger (2017), Metodologia de Gestão Estratégica de Processos, v2.0, seções 2.6 e 2.7.</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- ============ S12: Avaliar, dirigir e monitorar sobre a gestão por processos ============ -->
+    <section id="s12" class="min-h-screen flex flex-col items-center justify-center px-6 pt-3 pb-6">
+        <div class="w-full max-w-6xl" data-aos="fade-up" data-aos-delay="100">
+            <div class="text-center mb-2">
+                <h2 class="text-4xl md:text-5xl font-bold mb-2">Governança dirige, <span class="primary-color italic">processos executam</span></h2>
+                <p class="text-softer italic text-xl md:text-2xl font-medium">Três camadas: quem decide, quem conecta e quem faz.</p>
+            </div>
+            <div class="glass-card rounded-2xl p-1 md:p-2 relative">
+                <div class="flex items-center justify-between mb-2 px-1">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-lg flex items-center justify-center" style="background: var(--mira-icon-bg);">
+                            <i data-lucide="landmark" class="w-5 h-5 primary-color"></i>
+                        </div>
+                        <div>
+                            <p class="mb-1"><span class="nivel-chip">N3 · Governança<span class="nivel-dots"><i class="on"></i><i class="on"></i><i class="on"></i><i></i></span></span> <span class="tag-conceitual">Leitura proposta</span></p>
+                            <p class="font-bold text-base md:text-lg">Avaliar, dirigir e monitorar sobre a gestão por processos</p>
+                            <p class="text-softer text-sm md:text-base italic font-medium">As etapas da metodologia respondem ao ciclo da governança.</p>
+                        </div>
+                    </div>
+                    <button id="pause-gov" class="pause-btn" type="button" aria-label="Pausar animação"></button>
+                    <button id="replay-gov" class="replay-btn" type="button"><i data-lucide="rotate-cw" class="w-4 h-4"></i>Replay</button>
+                </div>
+                <!-- @MIRA:SIZE 3/10 -->
+                <div class="anim-stage" id="gov-stage">
+                    <svg id="gov-svg" viewBox="0 0 1280 720" preserveAspectRatio="xMidYMid meet"></svg>
+                </div>
+                <div class="border-t pt-1 mt-1 mb-1" style="border-color: var(--mira-card-border);">
+                    <p class="text-sm uppercase tracking-[3px] text-softer text-center font-bold mb-2">Como a governança de TI se apoia nos processos</p>
+                    <div class="grid grid-cols-2 md:grid-cols-4 gap-2">
+                        <div class="attribute-pill text-center p-2 rounded-xl" id="gov-pill-0">
+                            <i data-lucide="scale" class="w-4 h-4 primary-color mx-auto mb-1"></i>
+                            <p class="text-base font-bold tracking-wide">Avaliar</p>
+                            <p class="text-xs text-softer mt-0.5">cadeia de valor, priorização, diagnóstico</p>
+                        </div>
+                        <div class="attribute-pill text-center p-2 rounded-xl" id="gov-pill-1">
+                            <i data-lucide="navigation" class="w-4 h-4 primary-color mx-auto mb-1"></i>
+                            <p class="text-base font-bold tracking-wide">Dirigir</p>
+                            <p class="text-xs text-softer mt-0.5">diretrizes para o redesenho e a implantação</p>
+                        </div>
+                        <div class="attribute-pill text-center p-2 rounded-xl" id="gov-pill-2">
+                            <i data-lucide="gauge" class="w-4 h-4 primary-color mx-auto mb-1"></i>
+                            <p class="text-base font-bold tracking-wide">Monitorar</p>
+                            <p class="text-xs text-softer mt-0.5">indicadores voltam à decisão</p>
+                        </div>
+                        <div class="attribute-pill text-center p-2 rounded-xl" id="gov-pill-3">
+                            <i data-lucide="link-2" class="w-4 h-4 primary-color mx-auto mb-1"></i>
+                            <p class="text-base font-bold tracking-wide">O elo</p>
+                            <p class="text-xs text-softer mt-0.5">escritório e donos de processo</p>
+                        </div>
+                    </div>
+                    <p class="fonte-linha">Fonte: e-book GOTI, Cap. 3 (ciclo avaliar-dirigir-monitorar, ISO/IEC 38500); Seger (2017), Metodologia de Gestão Estratégica de Processos, v2.0, cap. 2. Encaixe proposto pelo professor.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ============ S13: fundamentação ============ -->
+    <section id="s13" class="min-h-screen flex flex-col items-center justify-center px-6 pt-4 pb-8">
+        <div class="w-full max-w-6xl" data-aos="fade-up" data-aos-delay="100">
+            <div class="text-center mb-4">
+                <h2 class="text-4xl md:text-5xl font-black mb-2">Processo também se <span class="primary-color italic">governa</span></h2>
+                <p class="text-softer text-xl md:text-2xl font-medium">Por que a governança de TI se importa com processos.</p>
+            </div>
+            <div class="glass-card rounded-2xl p-6 md:p-8 relative">
+                <div class="flex items-center justify-between mb-6 pb-4 border-b border-black/10">
+                    <div class="flex items-center gap-4">
+                        <div class="w-12 h-12 rounded-xl flex items-center justify-center" style="background: var(--mira-icon-bg);">
+                            <i data-lucide="landmark" class="w-6 h-6 primary-color"></i>
+                        </div>
+                        <div>
+                            <span class="nivel-chip">N3 · Governança<span class="nivel-dots"><i class="on"></i><i class="on"></i><i class="on"></i><i></i></span></span>
+                            <span class="tag-conceitual">Conceitos e definições</span>
+                            <h3 class="font-bold text-xl md:text-2xl mt-1">Três razões para a governança olhar para os processos</h3>
+                        </div>
+                    </div>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+                    <div class="p-5 rounded-2xl border flex flex-col justify-between" style="background: var(--mira-pill-bg); border-color: var(--mira-card-border);">
+                        <div>
+                            <div class="flex items-center gap-2 mb-3">
+                                <i data-lucide="bug" class="w-5 h-5 primary-color"></i>
+                                <h4 class="font-bold text-lg">Sistema ruim, processo confuso</h4>
+                            </div>
+                            <p class="text-base text-soft leading-relaxed">Um sistema de TI mal projetado é, com frequência, <strong>sintoma de um processo mal compreendido</strong> ou mal desenhado antes mesmo de ser automatizado. Por isso, investir em TI sem olhar o processo é decidir no escuro.</p>
+                        </div>
+                        <p class="text-xs font-semibold text-softer mt-4 pt-2 border-t border-black/5">e-book, seção 4.1</p>
+                    </div>
+                    <div class="p-5 rounded-2xl border flex flex-col justify-between" style="background: var(--mira-pill-bg); border-color: var(--mira-card-border);">
+                        <div>
+                            <div class="flex items-center gap-2 mb-3">
+                                <i data-lucide="file-check" class="w-5 h-5 primary-color"></i>
+                                <h4 class="font-bold text-lg">Processo documentado é auditável</h4>
+                            </div>
+                            <p class="text-base text-soft leading-relaxed">A notação padronizada (BPMN) transforma conhecimento tácito em <strong>artefatos documentados, revisáveis e auditáveis</strong>, que servem para treinar pessoas e especificar sistemas, reduzindo o risco de mal-entendidos entre negócio e TI.</p>
+                        </div>
+                        <p class="text-xs font-semibold text-softer mt-4 pt-2 border-t border-black/5">e-book, seção 4.3</p>
+                    </div>
+                    <div class="p-5 rounded-2xl border flex flex-col justify-between" style="background: var(--mira-pill-bg); border-color: var(--mira-card-border);">
+                        <div>
+                            <div class="flex items-center gap-2 mb-3">
+                                <i data-lucide="user-check" class="w-5 h-5 primary-color"></i>
+                                <h4 class="font-bold text-lg">Dono de processo é governança</h4>
+                            </div>
+                            <p class="text-base text-soft leading-relaxed">O processo atravessa departamentos sem que nenhum tenha autoridade completa sobre ele. Resolver isso é <strong>um problema de governança</strong>: daí o dono de processo de ponta a ponta e o Escritório de Processos, análogo ao PMO.</p>
+                        </div>
+                        <p class="text-xs font-semibold text-softer mt-4 pt-2 border-t border-black/5">e-book, seção 6.3</p>
+                    </div>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div class="p-4 rounded-xl border flex items-center gap-4" style="background: var(--mira-icon-bg); border-color: var(--mira-icon-border);">
+                    <i data-lucide="target" class="w-8 h-8 primary-color shrink-0"></i>
+                    <p class="text-base md:text-lg font-medium"><strong>Decisão:</strong> um dos objetivos da gestão de processos na Sefaz-SP é subsidiar a liderança na tomada de decisão, por meio dos resultados apurados nos processos de trabalho.</p>
+                </div>
+                <div class="p-4 rounded-xl border flex items-center gap-4" style="background: var(--mira-icon-bg); border-color: var(--mira-icon-border);">
+                    <i data-lucide="shield-alert" class="w-8 h-8 primary-color shrink-0"></i>
+                    <p class="text-base md:text-lg font-medium"><strong>Risco:</strong> o controle interno da Sefaz-SP passou da auditoria de conformidade para a de risco e adotou o mapeamento de processos para avaliar riscos nas unidades.</p>
+                </div>
+                </div>
+                <p class="fonte-linha mt-4">Fonte: e-book GOTI, seções 4.1, 4.3 e 6.3; Morandi (2019), Sefaz-SP/DGEP, I Encontro de Benchmarking em Gestão de Processos, objetivos e casos.</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- ============ S14: Escritório de Processos e dono do processo ============ -->
+    <section id="s14" class="min-h-screen flex flex-col items-center justify-center px-6 pt-3 pb-6">
+        <div class="w-full max-w-6xl" data-aos="fade-up" data-aos-delay="100">
+            <div class="text-center mb-2">
+                <h2 class="text-4xl md:text-5xl font-bold mb-2">Dono de processo, <span class="primary-color italic">ponta a ponta</span></h2>
+                <p class="text-softer italic text-xl md:text-2xl font-medium">A autoridade é vertical; o processo corre na horizontal.</p>
+            </div>
+            <div class="glass-card rounded-2xl p-1 md:p-2 relative">
+                <div class="flex items-center justify-between mb-2 px-1">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-lg flex items-center justify-center" style="background: var(--mira-icon-bg);">
+                            <i data-lucide="user-check" class="w-5 h-5 primary-color"></i>
+                        </div>
+                        <div>
+                            <p class="mb-1"><span class="nivel-chip">N3 · Governança<span class="nivel-dots"><i class="on"></i><i class="on"></i><i class="on"></i><i></i></span></span> <span class="tag-ilustrativo">departamentos ilustrativos</span></p>
+                            <p class="font-bold text-base md:text-lg">Escritório de Processos e dono do processo</p>
+                            <p class="text-softer text-sm md:text-base italic font-medium">O escritório apoia, o dono responde pelo processo inteiro.</p>
+                        </div>
+                    </div>
+                    <button id="pause-dono" class="pause-btn" type="button" aria-label="Pausar animação"></button>
+                    <button id="replay-dono" class="replay-btn" type="button"><i data-lucide="rotate-cw" class="w-4 h-4"></i>Replay</button>
+                </div>
+                <!-- @MIRA:SIZE 3/10 -->
+                <div class="anim-stage" id="dono-stage">
+                    <svg id="dono-svg" viewBox="0 0 1280 720" preserveAspectRatio="xMidYMid meet"></svg>
+                </div>
+                <div class="border-t pt-1 mt-1 mb-1" style="border-color: var(--mira-card-border);">
+                    <p class="text-sm uppercase tracking-[3px] text-softer text-center font-bold mb-2">Quem governa um processo que cruza a organização</p>
+                    <div class="grid grid-cols-2 md:grid-cols-5 gap-2">
+                        <div class="attribute-pill text-center p-2 rounded-xl" id="dono-pill-0">
+                            <i data-lucide="arrow-down" class="w-4 h-4 primary-color mx-auto mb-1"></i>
+                            <p class="text-base font-bold tracking-wide">Autoridade vertical</p>
+                        </div>
+                        <div class="attribute-pill text-center p-2 rounded-xl" id="dono-pill-1">
+                            <i data-lucide="arrow-right" class="w-4 h-4 primary-color mx-auto mb-1"></i>
+                            <p class="text-base font-bold tracking-wide">Processo horizontal</p>
+                        </div>
+                        <div class="attribute-pill text-center p-2 rounded-xl" id="dono-pill-2">
+                            <i data-lucide="user-check" class="w-4 h-4 primary-color mx-auto mb-1"></i>
+                            <p class="text-base font-bold tracking-wide">Dono ponta a ponta</p>
+                        </div>
+                        <div class="attribute-pill text-center p-2 rounded-xl" id="dono-pill-3">
+                            <i data-lucide="life-buoy" class="w-4 h-4 primary-color mx-auto mb-1"></i>
+                            <p class="text-base font-bold tracking-wide">Escritório apoia</p>
+                        </div>
+                        <div class="attribute-pill text-center p-2 rounded-xl" id="dono-pill-4">
+                            <i data-lucide="send" class="w-4 h-4 primary-color mx-auto mb-1"></i>
+                            <p class="text-base font-bold tracking-wide">Reporte à alta gestão</p>
+                        </div>
+                    </div>
+                    <p class="fonte-linha">Fonte: e-book GOTI, seção 6.3; Seger (2017), Metodologia de Gestão Estratégica de Processos, v2.0, seção 1.2 e Anexo I (atribuições do escritório e do dono do processo).</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ============ S15: Roadmap do Escritório Local de Processos ============ -->
+    <section id="s15" class="min-h-screen flex flex-col items-center justify-center px-6 pt-3 pb-6">
+        <div class="w-full max-w-6xl" data-aos="fade-up" data-aos-delay="100">
+            <div class="text-center mb-2">
+                <h2 class="text-4xl md:text-5xl font-bold mb-2">Seis passos para <span class="primary-color italic">institucionalizar</span></h2>
+                <p class="text-softer italic text-xl md:text-2xl font-medium">Sem patrocínio, pessoas e portaria, o escritório não se sustenta.</p>
+            </div>
+            <div class="glass-card rounded-2xl p-1 md:p-2 relative">
+                <div class="flex items-center justify-between mb-2 px-1">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-lg flex items-center justify-center" style="background: var(--mira-icon-bg);">
+                            <i data-lucide="footprints" class="w-5 h-5 primary-color"></i>
+                        </div>
+                        <div>
+                            <p class="mb-1"><span class="nivel-chip">N3 · Governança<span class="nivel-dots"><i class="on"></i><i class="on"></i><i class="on"></i><i></i></span></span></p>
+                            <p class="font-bold text-base md:text-lg">Roadmap do Escritório Local de Processos</p>
+                            <p class="text-softer text-sm md:text-base italic font-medium">Vinculado ao nível estratégico e formalizado em portaria.</p>
+                        </div>
+                    </div>
+                    <button id="pause-roadmap" class="pause-btn" type="button" aria-label="Pausar animação"></button>
+                    <button id="replay-roadmap" class="replay-btn" type="button"><i data-lucide="rotate-cw" class="w-4 h-4"></i>Replay</button>
+                </div>
+                <!-- @MIRA:SIZE 3/10 -->
+                <div class="anim-stage" id="roadmap-stage">
+                    <svg id="roadmap-svg" viewBox="0 0 1280 720" preserveAspectRatio="xMidYMid meet"></svg>
+                </div>
+                <div class="border-t pt-1 mt-1 mb-1" style="border-color: var(--mira-card-border);">
+                    <p class="text-sm uppercase tracking-[3px] text-softer text-center font-bold mb-2">Os seis passos do roteiro</p>
+                    <div class="grid grid-cols-2 md:grid-cols-6 gap-2">
+                        <div class="attribute-pill text-center p-2 rounded-xl" id="roadmap-pill-0">
+                            <i data-lucide="megaphone" class="w-4 h-4 primary-color mx-auto mb-1"></i>
+                            <p class="text-base font-bold tracking-wide">Sensibilizar</p>
+                        </div>
+                        <div class="attribute-pill text-center p-2 rounded-xl" id="roadmap-pill-1">
+                            <i data-lucide="users" class="w-4 h-4 primary-color mx-auto mb-1"></i>
+                            <p class="text-base font-bold tracking-wide">Pessoas-chave</p>
+                        </div>
+                        <div class="attribute-pill text-center p-2 rounded-xl" id="roadmap-pill-2">
+                            <i data-lucide="map-pin" class="w-4 h-4 primary-color mx-auto mb-1"></i>
+                            <p class="text-base font-bold tracking-wide">Posicionar</p>
+                        </div>
+                        <div class="attribute-pill text-center p-2 rounded-xl" id="roadmap-pill-3">
+                            <i data-lucide="file-signature" class="w-4 h-4 primary-color mx-auto mb-1"></i>
+                            <p class="text-base font-bold tracking-wide">Formalizar</p>
+                        </div>
+                        <div class="attribute-pill text-center p-2 rounded-xl" id="roadmap-pill-4">
+                            <i data-lucide="git-merge" class="w-4 h-4 primary-color mx-auto mb-1"></i>
+                            <p class="text-base font-bold tracking-wide">Alinhar</p>
+                        </div>
+                        <div class="attribute-pill text-center p-2 rounded-xl" id="roadmap-pill-5">
+                            <i data-lucide="graduation-cap" class="w-4 h-4 primary-color mx-auto mb-1"></i>
+                            <p class="text-base font-bold tracking-wide">Capacitar</p>
+                        </div>
+                    </div>
+                    <p class="fonte-linha">Fonte: Seger (2017), Metodologia de Gestão Estratégica de Processos, v2.0, seção 1.2 e Anexo I (modelo de portaria).</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ============ S16: Lições aprendidas nos mapeamentos ============ -->
+    <section id="s16" class="min-h-screen flex flex-col items-center justify-center px-6 pt-3 pb-6">
+        <div class="w-full max-w-6xl" data-aos="fade-up" data-aos-delay="100">
+            <div class="text-center mb-2">
+                <h2 class="text-4xl md:text-5xl font-bold mb-2">A curva da <span class="primary-color italic">resistência à mudança</span></h2>
+                <p class="text-softer italic text-xl md:text-2xl font-medium">Redesenhar processo é mexer com pessoas: a moral cai antes de subir.</p>
+            </div>
+            <div class="glass-card rounded-2xl p-1 md:p-2 relative">
+                <div class="flex items-center justify-between mb-2 px-1">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-lg flex items-center justify-center" style="background: var(--mira-icon-bg);">
+                            <i data-lucide="trending-up" class="w-5 h-5 primary-color"></i>
+                        </div>
+                        <div>
+                            <p class="mb-1"><span class="nivel-chip">N4 · Na prática<span class="nivel-dots"><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i></span></span></p>
+                            <p class="font-bold text-base md:text-lg">Lições aprendidas nos mapeamentos</p>
+                            <p class="text-softer text-sm md:text-base italic font-medium">Sem apoio da liderança, a curva não sai do fundo.</p>
+                        </div>
+                    </div>
+                    <button id="pause-mudanca" class="pause-btn" type="button" aria-label="Pausar animação"></button>
+                    <button id="replay-mudanca" class="replay-btn" type="button"><i data-lucide="rotate-cw" class="w-4 h-4"></i>Replay</button>
+                </div>
+                <!-- @MIRA:SIZE 3/10 -->
+                <div class="anim-stage" id="mudanca-stage">
+                    <svg id="mudanca-svg" viewBox="0 0 1280 720" preserveAspectRatio="xMidYMid meet"></svg>
+                </div>
+                <div class="border-t pt-1 mt-1 mb-1" style="border-color: var(--mira-card-border);">
+                    <p class="text-sm uppercase tracking-[3px] text-softer text-center font-bold mb-2">Do presente ao futuro: cinco fases de consciência</p>
+                    <div class="grid grid-cols-2 md:grid-cols-5 gap-2">
+                        <div class="attribute-pill text-center p-2 rounded-xl" id="mudanca-pill-0">
+                            <i data-lucide="eye-off" class="w-4 h-4 primary-color mx-auto mb-1"></i>
+                            <p class="text-base font-bold tracking-wide">Sem consciência</p>
+                        </div>
+                        <div class="attribute-pill text-center p-2 rounded-xl" id="mudanca-pill-1">
+                            <i data-lucide="eye" class="w-4 h-4 primary-color mx-auto mb-1"></i>
+                            <p class="text-base font-bold tracking-wide">Consciente</p>
+                        </div>
+                        <div class="attribute-pill text-center p-2 rounded-xl" id="mudanca-pill-2">
+                            <i data-lucide="lightbulb" class="w-4 h-4 primary-color mx-auto mb-1"></i>
+                            <p class="text-base font-bold tracking-wide">Compreensão</p>
+                        </div>
+                        <div class="attribute-pill text-center p-2 rounded-xl" id="mudanca-pill-3">
+                            <i data-lucide="handshake" class="w-4 h-4 primary-color mx-auto mb-1"></i>
+                            <p class="text-base font-bold tracking-wide">Convencimento</p>
+                        </div>
+                        <div class="attribute-pill text-center p-2 rounded-xl" id="mudanca-pill-4">
+                            <i data-lucide="heart" class="w-4 h-4 primary-color mx-auto mb-1"></i>
+                            <p class="text-base font-bold tracking-wide">Internalização</p>
+                        </div>
+                    </div>
+                    <p class="fonte-linha">Fonte: Morandi (2019), Sefaz-SP/DGEP, I Encontro de Benchmarking em Gestão de Processos, resistência à mudança e falta de apoio da liderança.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ============ S17: Sucessos e ganhos da DGEP ============ -->
+    <section id="s17" class="min-h-screen flex flex-col items-center justify-center px-6 pt-3 pb-6">
+        <div class="w-full max-w-6xl" data-aos="fade-up" data-aos-delay="100">
+            <div class="text-center mb-2">
+                <h2 class="text-4xl md:text-5xl font-bold mb-2">Resultados que <span class="primary-color italic">se medem</span></h2>
+                <p class="text-softer italic text-xl md:text-2xl font-medium">Gestão por processos na Secretaria da Fazenda de São Paulo.</p>
+            </div>
+            <div class="glass-card rounded-2xl p-1 md:p-2 relative">
+                <div class="flex items-center justify-between mb-2 px-1">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-lg flex items-center justify-center" style="background: var(--mira-icon-bg);">
+                            <i data-lucide="bar-chart-3" class="w-5 h-5 primary-color"></i>
+                        </div>
+                        <div>
+                            <p class="mb-1"><span class="nivel-chip">N4 · Na prática<span class="nivel-dots"><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i></span></span></p>
+                            <p class="font-bold text-base md:text-lg">Sucessos e ganhos da DGEP</p>
+                            <p class="text-softer text-sm md:text-base italic font-medium">Departamento de Gestão Estratégica e de Projetos, Sefaz-SP.</p>
+                        </div>
+                    </div>
+                    <button id="pause-casos" class="pause-btn" type="button" aria-label="Pausar animação"></button>
+                    <button id="replay-casos" class="replay-btn" type="button"><i data-lucide="rotate-cw" class="w-4 h-4"></i>Replay</button>
+                </div>
+                <!-- @MIRA:SIZE 3/10 -->
+                <div class="anim-stage" id="casos-stage">
+                    <svg id="casos-svg" viewBox="0 0 1280 720" preserveAspectRatio="xMidYMid meet"></svg>
+                </div>
+                <div class="border-t pt-1 mt-1 mb-1" style="border-color: var(--mira-card-border);">
+                    <p class="text-sm uppercase tracking-[3px] text-softer text-center font-bold mb-2">Ganhos relatados pela Sefaz-SP</p>
+                    <div class="grid grid-cols-2 md:grid-cols-5 gap-2">
+                        <div class="attribute-pill text-center p-2 rounded-xl" id="casos-pill-0">
+                            <i data-lucide="receipt" class="w-4 h-4 primary-color mx-auto mb-1"></i>
+                            <p class="text-base font-bold tracking-wide">Restituição de taxas</p>
+                        </div>
+                        <div class="attribute-pill text-center p-2 rounded-xl" id="casos-pill-1">
+                            <i data-lucide="car" class="w-4 h-4 primary-color mx-auto mb-1"></i>
+                            <p class="text-base font-bold tracking-wide">IPVA eletrônico</p>
+                        </div>
+                        <div class="attribute-pill text-center p-2 rounded-xl" id="casos-pill-2">
+                            <i data-lucide="file-text" class="w-4 h-4 primary-color mx-auto mb-1"></i>
+                            <p class="text-base font-bold tracking-wide">ITCMD</p>
+                        </div>
+                        <div class="attribute-pill text-center p-2 rounded-xl" id="casos-pill-3">
+                            <i data-lucide="workflow" class="w-4 h-4 primary-color mx-auto mb-1"></i>
+                            <p class="text-base font-bold tracking-wide">228 fluxogramas</p>
+                        </div>
+                        <div class="attribute-pill text-center p-2 rounded-xl" id="casos-pill-4">
+                            <i data-lucide="sparkles" class="w-4 h-4 primary-color mx-auto mb-1"></i>
+                            <p class="text-base font-bold tracking-wide">165 melhorias</p>
+                        </div>
+                    </div>
+                    <p class="fonte-linha">Fonte: Morandi (2019), Sefaz-SP/DGEP, I Encontro de Benchmarking em Gestão de Processos, sucessos e ganhos; fluxogramas por coordenadoria (2016 a 2018).</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ============ S18: O mapa da aula ============ -->
+    <section id="s18" class="min-h-screen flex flex-col items-center justify-center px-6 pt-3 pb-6">
+        <div class="w-full max-w-6xl" data-aos="fade-up" data-aos-delay="100">
+            <div class="text-center mb-2">
+                <h2 class="text-4xl md:text-5xl font-bold mb-2">Síntese: processo <span class="primary-color italic">bem governado</span></h2>
+                <p class="text-softer italic text-xl md:text-2xl font-medium">Decidido, executado, medido e melhorado, em ciclo.</p>
+            </div>
+            <div class="glass-card rounded-2xl p-1 md:p-2 relative">
+                <div class="flex items-center justify-between mb-2 px-1">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-lg flex items-center justify-center" style="background: var(--mira-icon-bg);">
+                            <i data-lucide="orbit" class="w-5 h-5 primary-color"></i>
+                        </div>
+                        <div>
+                            <p class="mb-1"><span class="nivel-chip">N4 · Na prática<span class="nivel-dots"><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i></span></span></p>
+                            <p class="font-bold text-base md:text-lg">O mapa da aula</p>
+                            <p class="text-softer text-sm md:text-base italic font-medium">O escritório e os donos giram o ciclo; a governança fica no centro.</p>
+                        </div>
+                    </div>
+                    <button id="pause-sintese" class="pause-btn" type="button" aria-label="Pausar animação"></button>
+                    <button id="replay-sintese" class="replay-btn" type="button"><i data-lucide="rotate-cw" class="w-4 h-4"></i>Replay</button>
+                </div>
+                <!-- @MIRA:SIZE 3/10 -->
+                <div class="anim-stage" id="sintese-stage">
+                    <svg id="sintese-svg" viewBox="0 0 1280 720" preserveAspectRatio="xMidYMid meet"></svg>
+                </div>
+                <div class="border-t pt-1 mt-1 mb-1" style="border-color: var(--mira-card-border);">
+                    <p class="text-sm uppercase tracking-[3px] text-softer text-center font-bold mb-2">Quatro movimentos em torno da governança</p>
+                    <div class="grid grid-cols-2 md:grid-cols-4 gap-2">
+                        <div class="attribute-pill text-center p-2 rounded-xl" id="sintese-pill-0">
+                            <i data-lucide="network" class="w-4 h-4 primary-color mx-auto mb-1"></i>
+                            <p class="text-base font-bold tracking-wide">Cadeia de valor</p>
+                        </div>
+                        <div class="attribute-pill text-center p-2 rounded-xl" id="sintese-pill-1">
+                            <i data-lucide="list-ordered" class="w-4 h-4 primary-color mx-auto mb-1"></i>
+                            <p class="text-base font-bold tracking-wide">Priorização</p>
+                        </div>
+                        <div class="attribute-pill text-center p-2 rounded-xl" id="sintese-pill-2">
+                            <i data-lucide="pen-tool" class="w-4 h-4 primary-color mx-auto mb-1"></i>
+                            <p class="text-base font-bold tracking-wide">Redesenho</p>
+                        </div>
+                        <div class="attribute-pill text-center p-2 rounded-xl" id="sintese-pill-3">
+                            <i data-lucide="gauge" class="w-4 h-4 primary-color mx-auto mb-1"></i>
+                            <p class="text-base font-bold tracking-wide">Indicadores</p>
+                        </div>
+                    </div>
+                    <p class="fonte-linha">Fonte: Seger (2017), Metodologia de Gestão Estratégica de Processos, v2.0; Morandi (2019), Sefaz-SP/DGEP, I Encontro de Benchmarking em Gestão de Processos; e-book GOTI, Cap. 3, 4 e 6.3.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ============ S19: questões de fixação ============ -->
+    <section id="s19" class="min-h-screen flex flex-col items-center justify-center px-6 pt-4 pb-8">
+        <div class="w-full max-w-6xl" data-aos="fade-up" data-aos-delay="100">
+            <div class="text-center mb-4">
+                <h2 class="text-4xl md:text-5xl font-black mb-2">Questões de <span class="primary-color italic">fixação</span></h2>
+                <p class="text-softer text-xl md:text-2xl font-medium">Do lembrar ao avaliar: sete degraus da taxonomia de Bloom.</p>
+            </div>
+            <div class="glass-card rounded-2xl p-6 md:p-8 relative">
+                <div class="flex items-center justify-between mb-6 pb-4 border-b border-black/10">
+                    <div class="flex items-center gap-4">
+                        <div class="w-12 h-12 rounded-xl flex items-center justify-center" style="background: var(--mira-icon-bg);">
+                            <i data-lucide="clipboard-check" class="w-6 h-6 primary-color"></i>
+                        </div>
+                        <div>
+                            <span class="nivel-chip">N4 · Na prática<span class="nivel-dots"><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i></span></span>
+                            <span class="tag-conceitual">Atividade</span>
+                            <h3 class="font-bold text-xl md:text-2xl mt-1">Responda com um processo real em mente.</h3>
+                        </div>
+                    </div>
+                </div>
+                <ul class="mb-4">
+                    <li class="flex items-start gap-3 py-2 border-t" style="border-color: var(--mira-card-border);">
+                        <span class="font-black primary-color text-lg w-6 shrink-0">1</span>
+                        <span class="bloom shrink-0 mt-1">Lembrar</span>
+                        <span class="text-base text-soft">Cite as sete etapas da Metodologia de Gestão Estratégica de Processos.</span>
+                    </li>
+                    <li class="flex items-start gap-3 py-2 border-t" style="border-color: var(--mira-card-border);">
+                        <span class="font-black primary-color text-lg w-6 shrink-0">2</span>
+                        <span class="bloom shrink-0 mt-1">Lembrar</span>
+                        <span class="text-base text-soft">Diferencie macroprocessos finalísticos, estratégicos e de suporte na cadeia de valor.</span>
+                    </li>
+                    <li class="flex items-start gap-3 py-2 border-t" style="border-color: var(--mira-card-border);">
+                        <span class="font-black primary-color text-lg w-6 shrink-0">3</span>
+                        <span class="bloom shrink-0 mt-1">Entender</span>
+                        <span class="text-base text-soft">Explique por que um sistema de TI mal projetado costuma ser sintoma de um processo mal compreendido.</span>
+                    </li>
+                    <li class="flex items-start gap-3 py-2 border-t" style="border-color: var(--mira-card-border);">
+                        <span class="font-black primary-color text-lg w-6 shrink-0">4</span>
+                        <span class="bloom shrink-0 mt-1">Aplicar</span>
+                        <span class="text-base text-soft">Monte uma matriz de priorização com três processos do IFAL e quatro critérios ponderados de 1 a 5. Qual processo vem primeiro, e por quê?</span>
+                    </li>
+                    <li class="flex items-start gap-3 py-2 border-t" style="border-color: var(--mira-card-border);">
+                        <span class="font-black primary-color text-lg w-6 shrink-0">5</span>
+                        <span class="bloom shrink-0 mt-1">Analisar</span>
+                        <span class="text-base text-soft">Relacione as etapas da metodologia ao ciclo avaliar-dirigir-monitorar. Em que ponto a governança decide, e em que ponto ela é informada?</span>
+                    </li>
+                    <li class="flex items-start gap-3 py-2 border-t" style="border-color: var(--mira-card-border);">
+                        <span class="font-black primary-color text-lg w-6 shrink-0">6</span>
+                        <span class="bloom shrink-0 mt-1">Analisar</span>
+                        <span class="text-base text-soft">Por que o “dono do processo” é um problema de governança, e não apenas de modelagem?</span>
+                    </li>
+                    <li class="flex items-start gap-3 py-2 border-t" style="border-color: var(--mira-card-border);">
+                        <span class="font-black primary-color text-lg w-6 shrink-0">7</span>
+                        <span class="bloom shrink-0 mt-1">Avaliar</span>
+                        <span class="text-base text-soft">Um órgão criou um Escritório de Processos sem portaria e sem vínculo com a alta gestão. Avalie as chances de sucesso com base no roadmap e na curva de resistência à mudança.</span>
+                    </li>
+                </ul>
+                <div class="p-4 rounded-xl border text-sm text-soft" style="background: var(--mira-pill-bg); border-color: var(--mira-card-border);">
+                    <p class="font-bold uppercase tracking-wider text-xs text-softer mb-2">Referências desta aula (ABNT)</p>
+                    <p class="mb-1">ESPÍRITO SANTO (Estado). Secretaria de Estado de Gestão e Recursos Humanos. <em>Metodologia de gestão estratégica de processos</em>. Versão 2.0. Vitória: Seger, 2017.</p>
+                    <p class="mb-1">MORANDI, Vanessa de Angelis. Gestão de processos. In: I ENCONTRO DE BENCHMARKING EM GESTÃO DE PROCESSOS, 2019, São Paulo. <em>Apresentação</em>. São Paulo: Sefaz-SP, 19 fev. 2019.</p>
+                    <p>ASSOCIATION OF BUSINESS PROCESS MANAGEMENT PROFESSIONALS (ABPMP). <em>BPM CBOK</em>: Guide to the Business Process Management Common Body of Knowledge. Versão 4.0. [S.l.]: ABPMP International, 2019.</p>
+                </div>
+                <p class="fonte-linha mt-4">Fonte: questões elaboradas a partir de Seger (2017), Morandi (2019) e do e-book GOTI.</p>
+            </div>
+        </div>
+    </section>
+
+    <script>
+        AOS.init({ duration: 800, once: true });
+        lucide.createIcons();
+
+        const cssVar = v => getComputedStyle(document.documentElement).getPropertyValue(v).trim();
+        const PRIMARY = cssVar('--mira-primary');
+        const ACCENT = cssVar('--mira-accent-2');
+        const TEXT = cssVar('--mira-text');
+        const SOFT = cssVar('--mira-text-soft');
+        const SOFTER = cssVar('--mira-text-softer');
+        const CARD = cssVar('--mira-card-bg');
+        const BORDER = cssVar('--mira-card-border');
+        const PILLBG = cssVar('--mira-pill-bg');
+        const ICONBG = cssVar('--mira-icon-bg');
+        const ICONBORDER = cssVar('--mira-icon-border');
+
+        window.__gen = window.__gen || {};
+        window.__ctx = window.__ctx || {};
+        window.__paused = window.__paused || {};
+        window.MIRA_SLIDES = window.MIRA_SLIDES || [];
+
+        // ===== Contexto de animação com geração anti-vazamento =====
+        // Cada chamada invalida a geração anterior: o timer mestre antigo para,
+        // timeouts pendentes são cancelados e o SVG é limpo. O relógio (t) não
+        // avança enquanto a animação está pausada.
+        function makeCtx(name, stageId) {
+            const prev = window.__ctx[name];
+            if (prev) prev.stop();
+            window.__gen[name] = (window.__gen[name] || 0) + 1;
+            const gen = window.__gen[name];
+
+            const svg = d3.select('#' + stageId).select('svg');
+            svg.selectAll('*').interrupt().remove();
+
+            const frames = [];
+            const timeouts = [];
+            let t = (window.__T0 || 0), last = null, master = null;
+
+            const ctx = {
+                svg: svg, W: 1280, H: 720,
+                alive: () => gen === window.__gen[name],
+                frame: fn => { frames.push(fn); },
+                after: (ms, fn) => {
+                    const id = setTimeout(() => { if (ctx.alive()) fn(); }, ms);
+                    timeouts.push(id);
+                    return id;
+                },
+                stop: () => { if (master) master.stop(); timeouts.forEach(clearTimeout); }
+            };
+            master = d3.timer(now => {
+                if (!ctx.alive()) { master.stop(); return; }
+                if (last === null) last = now;
+                const dt = now - last; last = now;
+                if (window.__paused[name]) return;
+                t += dt;
+                for (let i = 0; i < frames.length; i++) frames[i](t, dt);
+            });
+            window.__ctx[name] = ctx;
+            return ctx;
+        }
+
+        // ===== Utilitários de matemática e tempo =====
+        const clamp01 = x => Math.max(0, Math.min(1, x));
+        const lerp = (a, b, u) => a + (b - a) * u;
+        const seg = (u, a, b) => clamp01((u - a) / (b - a));      // mapeia u em [a,b] para [0,1]
+        const cyc = (t, period) => (t % period) / period;          // fase 0..1
+        const tri = u => 1 - Math.abs(2 * u - 1);                  // 0→1→0
+        const eio = d3.easeCubicInOut;
+
+        // ===== Utilitários de desenho SVG =====
+        function txt(parent, x, y, str, o) {
+            o = o || {};
+            const el = parent.append('text')
+                .attr('x', x).attr('y', y)
+                .attr('text-anchor', o.anchor || 'middle')
+                .attr('fill', o.fill || TEXT)
+                .attr('font-size', o.size || 24)
+                .attr('font-weight', o.weight || 600);
+            const lines = String(str).split('\n');
+            const lh = (o.size || 24) * (o.lh || 1.18);
+            const y0 = y - (o.vmid ? (lines.length - 1) * lh / 2 : 0);
+            lines.forEach((ln, i) => {
+                el.append('tspan').attr('x', x).attr('y', y0 + i * lh).text(ln);
+            });
+            return el;
+        }
+
+        function rbox(parent, x, y, w, h, r, o) {
+            o = o || {};
+            return parent.append('rect')
+                .attr('x', x).attr('y', y).attr('width', w).attr('height', h).attr('rx', r)
+                .attr('fill', o.fill || CARD)
+                .attr('stroke', o.stroke || BORDER)
+                .attr('stroke-width', o.sw || 1.5);
+        }
+
+        // Entrada: sobe 24px com overshoot e surge. Retorna o grupo para encadear.
+        function enter(g, x, y, delay) {
+            return g.attr('transform', 'translate(' + x + ',' + (y + 24) + ')').attr('opacity', 0)
+                .transition().delay(delay || 0).duration(650).ease(d3.easeBackOut.overshoot(1.1))
+                .attr('transform', 'translate(' + x + ',' + y + ')').attr('opacity', 1);
+        }
+
+        function fadeIn(sel, delay, dur) {
+            return sel.attr('opacity', 0).transition().delay(delay || 0).duration(dur || 500).attr('opacity', 1);
+        }
+
+        // Seta simples entre dois pontos (linha + ponta)
+        function arrow(parent, x1, y1, x2, y2, o) {
+            o = o || {};
+            const g = parent.append('g');
+            g.append('line').attr('x1', x1).attr('y1', y1).attr('x2', x2).attr('y2', y2)
+                .attr('stroke', o.stroke || SOFTER).attr('stroke-width', o.sw || 2.5)
+                .attr('stroke-dasharray', o.dash || null);
+            const a = Math.atan2(y2 - y1, x2 - x1), s = o.head || 10;
+            g.append('path')
+                .attr('d', 'M' + x2 + ',' + y2 + ' L' + (x2 - s * Math.cos(a - 0.45)) + ',' + (y2 - s * Math.sin(a - 0.45)) +
+                    ' L' + (x2 - s * Math.cos(a + 0.45)) + ',' + (y2 - s * Math.sin(a + 0.45)) + ' Z')
+                .attr('fill', o.stroke || SOFTER);
+            return g;
+        }
+
+        // Ponto sobre um caminho SVG (fração 0..1)
+        function pointOn(pathEl, u) {
+            const L = pathEl.getTotalLength();
+            const p = pathEl.getPointAtLength(clamp01(u) * L);
+            return p;
+        }
+
+        const ebo = d3.easeBackOut.overshoot(1.1);
+
+        // ===== Utilitário: acende a pílula do rodapé sincronizada com o palco =====
+        function pillSync(name, n) {
+            let last = -2;
+            return function (idx) {
+                if (idx === last) return;
+                last = idx;
+                for (let i = 0; i < n; i++) {
+                    const el = document.getElementById(name + '-pill-' + i);
+                    if (el) el.classList.toggle('pill-on', i === idx || idx === 'all');
+                }
+            };
+        }
+
+        // ===== CAPA: governança orbitando, processo correndo na base =====
+        // Loop: anéis tracejados giram, três nós (avaliar, dirigir, monitorar) orbitam o anel do meio,
+        // diretrizes descem até a cadeia de processo e tokens percorrem os passos sem parar.
+        function animateCapa() {
+            const c = makeCtx('capa', 'capa-stage'), svg = c.svg;
+            const cx = 640, cy = 300;
+            const rings = [
+                { r: 210, dash: '6 10', sw: 1.6, v: 0.012, col: PRIMARY, op: 0.40 },
+                { r: 290, dash: '2 14', sw: 1.4, v: -0.008, col: PRIMARY, op: 0.28 },
+                { r: 380, dash: '14 22', sw: 1.2, v: 0.005, col: ACCENT, op: 0.18 }
+            ];
+            const rs = rings.map((a, i) => {
+                const e = svg.append('ellipse').attr('cx', cx).attr('cy', cy).attr('rx', 0).attr('ry', 0)
+                    .attr('fill', 'none').attr('stroke', a.col).attr('stroke-opacity', a.op)
+                    .attr('stroke-width', a.sw).attr('stroke-dasharray', a.dash);
+                e.transition().delay(200 + i * 160).duration(900).ease(ebo).attr('rx', a.r).attr('ry', a.r * 0.62);
+                return { e: e, a: a };
+            });
+            const gnodes = ['avaliar', 'dirigir', 'monitorar'].map(lb => {
+                const g = svg.append('g').attr('opacity', 0);
+                g.append('circle').attr('r', 9).attr('fill', CARD).attr('stroke', PRIMARY).attr('stroke-width', 2.5);
+                txt(g, 0, -18, lb, { size: 15, weight: 700, fill: SOFTER });
+                return g;
+            });
+
+            const LY = 655, xs = d3.range(7).map(i => 140 + i * 167);
+            const chain = svg.append('g').attr('opacity', 0);
+            chain.append('line').attr('x1', xs[0]).attr('y1', LY).attr('x2', xs[6]).attr('y2', LY)
+                .attr('stroke', SOFTER).attr('stroke-width', 2).attr('stroke-dasharray', '3 9');
+            const steps = xs.map(x => chain.append('rect').attr('x', x - 22).attr('y', LY - 14).attr('width', 44).attr('height', 28)
+                .attr('rx', 8).attr('fill', CARD).attr('stroke', PRIMARY).attr('stroke-opacity', 0.45).attr('stroke-width', 1.6));
+            fadeIn(chain, 900, 800);
+            const toks = d3.range(3).map(() => svg.append('circle').attr('r', 6).attr('fill', PRIMARY).attr('opacity', 0)
+                .style('filter', 'drop-shadow(0 0 8px ' + PRIMARY + ')'));
+            const drops = d3.range(2).map(() => svg.append('circle').attr('r', 4.5).attr('fill', ACCENT).attr('opacity', 0));
+
+            c.frame(t => {
+                rs.forEach(o => o.e.attr('stroke-dashoffset', -t * o.a.v));
+                const on = seg(t, 1000, 1600);
+                gnodes.forEach((g, i) => {
+                    const a = t * 0.0004 + i * 2 * Math.PI / 3;
+                    g.attr('transform', 'translate(' + (cx + Math.cos(a) * 290) + ',' + (cy + Math.sin(a) * 290 * 0.62) + ')')
+                        .attr('opacity', 0.5 * on);
+                });
+                const tOn = seg(t, 1600, 2200);
+                const px = toks.map((d, j) => {
+                    const u = ((t + j * 1500) % 4500) / 4500;
+                    const x = lerp(xs[0], xs[6], u);
+                    d.attr('cx', x).attr('cy', LY).attr('opacity', tOn * Math.sin(u * Math.PI) * 0.95);
+                    return x;
+                });
+                steps.forEach((s, i) => {
+                    const near = tOn > 0 && px.some(x => Math.abs(x - xs[i]) < 26);
+                    s.attr('stroke-opacity', near ? 1 : 0.45).attr('fill', near ? ICONBG : CARD);
+                });
+                drops.forEach((d, j) => {
+                    const tt = t + j * 1500, k = Math.floor(tt / 3000), u = (tt % 3000) / 3000;
+                    const x = xs[(k * 3 + j * 2 + 1) % 7];
+                    d.attr('cx', x).attr('cy', lerp(cy + 290 * 0.62, LY - 16, eio(u))).attr('opacity', tOn * Math.sin(u * Math.PI) * 0.8);
+                });
+            });
+        }
+        window.MIRA_SLIDES.push({ id: 'capa-stage', fn: animateCapa, name: 'capa' });
+
+        // ===== SUMÁRIO: quatro estações da trilha =====
+        // Loop: um token percorre o trilho parando em cada estação; a estação ativa ganha halo
+        // e a pílula correspondente do rodapé acende. Depois da quarta, volta ao começo.
+        function animateSumario() {
+            const c = makeCtx('sumario', 'sumario-stage'), svg = c.svg;
+            const pill = pillSync('sumario', 4);
+            const PERIOD = 12000, railY = 110;
+            const est = [
+                { tag: 'N1 · FUNDAMENTOS', tit: 'Fundamentos', cx: 170, cor: PRIMARY, slides: 'Slides 3 a 6',
+                  itens: [['Elementos do processo', 'entradas viram saídas'], ['Cadeia de valor', 'três categorias'], ['Hierarquia', 'do macro à tarefa']] },
+                { tag: 'N2 · METODOLOGIA', tit: 'Metodologia', cx: 490, cor: ACCENT, slides: 'Slides 7 a 11',
+                  itens: [['Sete etapas', 'um ciclo permanente'], ['Priorização', 'critérios e pesos'], ['AS IS e TO BE', 'redesenho e melhorias']] },
+                { tag: 'N3 · GOVERNANÇA', tit: 'Governança', cx: 810, cor: PRIMARY, slides: 'Slides 12 a 15',
+                  itens: [['Avaliar, dirigir, monitorar', 'o elo com a gestão'], ['Escritório e donos', 'processo ponta a ponta'], ['Institucionalizar', 'roteiro em seis passos']] },
+                { tag: 'N4 · NA PRÁTICA', tit: 'Na prática', cx: 1130, cor: ACCENT, slides: 'Slides 16 a 19',
+                  itens: [['Resistência à mudança', 'a curva da transição'], ['Casos da Sefaz-SP', 'ganhos medidos'], ['Síntese e questões', 'para fixar']] }
+            ];
+
+            svg.append('line').attr('x1', est[0].cx).attr('y1', railY).attr('x2', est[3].cx).attr('y2', railY)
+                .attr('stroke', SOFTER).attr('stroke-width', 3).attr('stroke-dasharray', '4 8').attr('opacity', 0.5);
+            const progLine = svg.append('line').attr('x1', est[0].cx).attr('y1', railY).attr('x2', est[0].cx).attr('y2', railY)
+                .attr('stroke', PRIMARY).attr('stroke-width', 4).attr('stroke-linecap', 'round');
+
+            const cards = est.map((e, i) => {
+                svg.append('line').attr('x1', e.cx).attr('y1', railY + 18).attr('x2', e.cx).attr('y2', 190)
+                    .attr('stroke', e.cor).attr('stroke-width', 2).attr('stroke-dasharray', '3 3').attr('opacity', 0.6);
+                const node = svg.append('circle').attr('cx', e.cx).attr('cy', railY).attr('r', 18)
+                    .attr('fill', CARD).attr('stroke', e.cor).attr('stroke-width', 3);
+                txt(svg, e.cx, railY + 6, String(i + 1), { size: 17, weight: 800, fill: e.cor });
+
+                const g = svg.append('g');
+                const halo = g.append('rect').attr('x', -152).attr('y', 182).attr('width', 304).attr('height', 476).attr('rx', 22)
+                    .attr('fill', 'none').attr('stroke', e.cor).attr('stroke-width', 3).attr('opacity', 0);
+                rbox(g, -145, 190, 290, 460, 18, { fill: CARD, stroke: BORDER, sw: 1.5 });
+                rbox(g, -95, 210, 190, 30, 15, { fill: ICONBG, stroke: e.cor, sw: 1.2 });
+                txt(g, 0, 231, e.tag, { size: 14, weight: 800, fill: e.cor });
+                txt(g, 0, 288, e.tit, { size: 28, weight: 800 });
+                g.append('line').attr('x1', -115).attr('y1', 312).attr('x2', 115).attr('y2', 312).attr('stroke', BORDER);
+                e.itens.forEach((it, k) => {
+                    const y = 360 + k * 82;
+                    g.append('circle').attr('cx', -116).attr('cy', y - 6).attr('r', 5).attr('fill', e.cor);
+                    txt(g, -102, y, it[0], { size: 18, weight: 700, anchor: 'start' });
+                    txt(g, -102, y + 26, it[1], { size: 16, weight: 500, fill: SOFTER, anchor: 'start' });
+                });
+                rbox(g, -75, 602, 150, 30, 15, { fill: PILLBG, stroke: BORDER, sw: 1 });
+                txt(g, 0, 623, e.slides, { size: 15, weight: 700, fill: SOFTER });
+                enter(g, e.cx, 0, 200 + i * 180);
+                return { halo: halo, node: node };
+            });
+
+            const token = svg.append('g').attr('opacity', 0);
+            token.append('circle').attr('r', 22).attr('fill', PRIMARY).attr('opacity', 0.22);
+            token.append('circle').attr('r', 10).attr('fill', PRIMARY);
+
+            c.frame(t => {
+                const tt = t - 1200;
+                if (tt < 0) return;
+                const p = (tt % PERIOD) / PERIOD * 4;
+                const i = Math.floor(p), f = p - i;
+                let x = est[i].cx, op = 1;
+                if (f > 0.6) {
+                    if (i < 3) x = lerp(est[i].cx, est[i + 1].cx, eio(seg(f, 0.6, 1)));
+                    else { op = 1 - seg(f, 0.6, 0.75) + seg(f, 0.85, 1); x = f < 0.8 ? est[3].cx : est[0].cx; }
+                }
+                token.attr('transform', 'translate(' + x + ',' + railY + ')').attr('opacity', op * seg(tt, 0, 400));
+                progLine.attr('x2', x);
+                cards.forEach((cg, k) => {
+                    const on = k === i && f <= 0.6;
+                    cg.halo.attr('opacity', on ? Math.sin(seg(f, 0, 0.6) * Math.PI) * 0.95 : 0);
+                    cg.node.attr('r', on ? 21 : 18);
+                });
+                pill(f <= 0.6 ? i : -1);
+            });
+        }
+        window.MIRA_SLIDES.push({ id: 'sumario-stage', fn: animateSumario, name: 'sumario' });
+
+        // ===== SLIDE 3: elementos do processo =====
+        // Loop: insumos (quadrados azuis) entram pela esquerda, a barra interna do processo enche,
+        // saídas (círculos laranja) partem pela direita; regras descem e recursos sobem, e um
+        // holofote passa por entradas, regras, recursos e saídas, acendendo a pílula do rodapé.
+        function animateElem() {
+            const c = makeCtx('elem', 'elem-stage'), svg = c.svg;
+            const pill = pillSync('elem', 4);
+            const BX = 460, BY = 255, BW = 360, BH = 210, CY = 360;
+
+            const arrIn = arrow(svg, 80, CY, BX - 8, CY, { stroke: ACCENT, sw: 3, head: 14 });
+            const arrTop = arrow(svg, 640, 110, 640, BY - 8, { stroke: SOFT, sw: 3, head: 14 });
+            const arrBot = arrow(svg, 640, 650, 640, BY + BH + 8, { stroke: SOFT, sw: 3, head: 14 });
+            const arrOut = arrow(svg, BX + BW + 8, CY, 1200, CY, { stroke: PRIMARY, sw: 3, head: 14 });
+            const arrs = [arrIn, arrTop, arrBot, arrOut];
+            arrs.forEach((a, i) => fadeIn(a, 500 + i * 150, 500));
+
+            const labs = svg.append('g');
+            const lIn = txt(labs, 80, 315, 'Entradas', { size: 24, weight: 800, anchor: 'start' });
+            txt(labs, 80, 405, 'insumo: informação,\nproduto ou serviço', { size: 16, weight: 600, fill: SOFTER, anchor: 'start' });
+            const lTop = txt(labs, 660, 140, 'Regras', { size: 24, weight: 800, anchor: 'start' });
+            txt(labs, 660, 168, 'políticas · procedimentos · manuais', { size: 16, weight: 600, fill: SOFTER, anchor: 'start' });
+            const lBot = txt(labs, 660, 598, 'Recursos', { size: 24, weight: 800, anchor: 'start' });
+            const rec = labs.append('text').attr('x', 660).attr('y', 626).attr('font-size', 16).attr('font-weight', 600).attr('fill', SOFTER);
+            rec.append('tspan').text('humanos · financeiros · ');
+            rec.append('tspan').attr('fill', PRIMARY).attr('font-weight', 800).text('infraestrutura (ex. TI)');
+            const lOut = txt(labs, 1200, 315, 'Saídas', { size: 24, weight: 800, anchor: 'end' });
+            txt(labs, 1200, 405, 'resultado da\ntransformação', { size: 16, weight: 600, fill: SOFTER, anchor: 'end' });
+            fadeIn(labs, 900, 600);
+            const labels = [lIn, lTop, lBot, lOut];
+
+            const ins = d3.range(3).map(() => svg.append('rect').attr('width', 16).attr('height', 16).attr('rx', 3).attr('fill', ACCENT).attr('opacity', 0));
+            const outs = d3.range(3).map(() => svg.append('circle').attr('r', 9).attr('fill', PRIMARY).attr('opacity', 0)
+                .style('filter', 'drop-shadow(0 0 6px ' + PRIMARY + ')'));
+            const rules = d3.range(2).map(() => svg.append('rect').attr('width', 22).attr('height', 5).attr('rx', 2).attr('fill', SOFT).attr('opacity', 0));
+            const ress = d3.range(2).map(() => svg.append('circle').attr('r', 6).attr('fill', SOFT).attr('opacity', 0));
+
+            const box = svg.append('g');
+            const boxR = rbox(box, -BW / 2, -BH / 2, BW, BH, 22, { fill: CARD, stroke: SOFT, sw: 2.5 });
+            txt(box, 0, -32, 'Processo', { size: 32, weight: 900 });
+            txt(box, 0, 0, 'início e fim bem determinados', { size: 16, weight: 600, fill: SOFTER });
+            rbox(box, -130, 36, 260, 12, 6, { fill: PILLBG, stroke: BORDER, sw: 1 });
+            const prog = box.append('rect').attr('x', -130).attr('y', 36).attr('height', 12).attr('rx', 6).attr('fill', PRIMARY);
+            txt(box, 0, 78, 'atividades que transformam', { size: 15, weight: 600, fill: SOFTER });
+            enter(box, 640, CY, 300);
+
+            c.frame(t => {
+                if (t < 1200) return;
+                const tt = t - 1200;
+                ins.forEach((d, j) => {
+                    const u = ((tt + j * 1000) % 3000) / 3000;
+                    d.attr('x', lerp(80, BX - 16, u) - 8).attr('y', CY - 8).attr('opacity', Math.min(1, u * 6) * (1 - seg(u, 0.9, 1)));
+                });
+                outs.forEach((d, j) => {
+                    const u = ((tt + j * 1000 + 500) % 3000) / 3000;
+                    d.attr('cx', lerp(BX + BW + 12, 1185, u)).attr('cy', CY).attr('opacity', Math.min(1, u * 6) * (1 - seg(u, 0.88, 1)));
+                });
+                rules.forEach((d, j) => {
+                    const u = ((tt + j * 1250) % 2500) / 2500;
+                    d.attr('x', 629).attr('y', lerp(120, BY - 14, u)).attr('opacity', Math.sin(u * Math.PI) * 0.8);
+                });
+                ress.forEach((d, j) => {
+                    const u = ((tt + j * 1250 + 600) % 2500) / 2500;
+                    d.attr('cx', 640).attr('cy', lerp(640, BY + BH + 14, u)).attr('opacity', Math.sin(u * Math.PI) * 0.8);
+                });
+                prog.attr('width', 260 * ((tt % 1000) / 1000));
+                const k = Math.floor(tt / 2500) % 4;
+                arrs.forEach((a, i) => a.select('line').attr('stroke-width', i === k ? 6 : 3));
+                labels.forEach((l, i) => l.attr('fill', i === k ? PRIMARY : TEXT));
+                boxR.attr('stroke', PRIMARY).attr('stroke-width', 2.5 + 1.5 * tri(cyc(tt, 1000)));
+                pill(k);
+            });
+        }
+        window.MIRA_SLIDES.push({ id: 'elem-stage', fn: animateElem, name: 'elem' });
+
+        // ===== SLIDE 5: cadeia de valor =====
+        // Loop: valor flui pelos macroprocessos finalísticos até o cidadão, que pulsa a cada chegada;
+        // diretrizes descem da faixa estratégica e condições operacionais sobem do suporte.
+        // Um holofote alterna entre as três categorias.
+        function animateCadeia() {
+            const c = makeCtx('cadeia', 'cadeia-stage'), svg = c.svg;
+            const pill = pillSync('cadeia', 3);
+
+            const top = svg.append('g');
+            const topBox = rbox(top, 0, 0, 900, 92, 18, { fill: CARD, stroke: SOFT, sw: 2 });
+            txt(top, 450, 40, 'Macroprocessos estratégicos', { size: 24, weight: 800 });
+            txt(top, 450, 70, 'fornecem diretrizes, estruturam, avaliam e melhoram a organização', { size: 16, weight: 600, fill: SOFTER });
+            enter(top, 90, 36, 200);
+
+            const bot = svg.append('g');
+            const botBox = rbox(bot, 0, 0, 900, 92, 18, { fill: CARD, stroke: SOFT, sw: 2 });
+            txt(bot, 450, 40, 'Macroprocessos de suporte', { size: 24, weight: 800 });
+            txt(bot, 450, 70, 'proveem as condições operacionais para todos os demais', { size: 16, weight: 600, fill: SOFTER });
+            enter(bot, 90, 560, 500);
+
+            const chev = [['Finalísticos', 'razão de existir'], ['agregam valor', 'direto ao cidadão'], ['ligados à', 'missão e à visão']];
+            const chevs = chev.map((lb, i) => {
+                const x0 = i * 300;
+                const d = i === 0
+                    ? 'M0,0 L280,0 L320,85 L280,170 L0,170 Z'
+                    : 'M' + x0 + ',0 L' + (x0 + 280) + ',0 L' + (x0 + 320) + ',85 L' + (x0 + 280) + ',170 L' + x0 + ',170 L' + (x0 + 40) + ',85 Z';
+                const g = svg.append('g');
+                const p = g.append('path').attr('d', d).attr('fill', ICONBG).attr('stroke', PRIMARY).attr('stroke-width', 2);
+                txt(g, x0 + (i === 0 ? 145 : 170), 80, lb[0], { size: i === 0 ? 26 : 22, weight: 800, fill: i === 0 ? PRIMARY : TEXT });
+                txt(g, x0 + (i === 0 ? 145 : 170), 108, lb[1], { size: 16, weight: 600, fill: SOFT });
+                enter(g, 90, 230, 300 + i * 150);
+                return p;
+            });
+
+            const cli = svg.append('g');
+            const halo = cli.append('circle').attr('r', 72).attr('fill', 'none').attr('stroke', PRIMARY).attr('stroke-width', 2).attr('opacity', 0);
+            cli.append('circle').attr('r', 72).attr('fill', CARD).attr('stroke', PRIMARY).attr('stroke-width', 3);
+            txt(cli, 0, -2, 'Cidadão', { size: 22, weight: 800 });
+            txt(cli, 0, 22, 'cliente, usuário', { size: 14, weight: 600, fill: SOFTER });
+            enter(cli, 1150, 315, 800);
+
+            const cols = [240, 540, 840];
+            const links = svg.append('g').attr('opacity', 0);
+            cols.forEach(x => {
+                links.append('line').attr('x1', x).attr('y1', 132).attr('x2', x).attr('y2', 226).attr('stroke', ACCENT).attr('stroke-width', 2).attr('stroke-dasharray', '4 5');
+                links.append('line').attr('x1', x + 40).attr('y1', 556).attr('x2', x + 40).attr('y2', 404).attr('stroke', SOFT).attr('stroke-width', 2).attr('stroke-dasharray', '4 5');
+            });
+            txt(links, 1000, 182, 'diretrizes', { size: 15, weight: 700, fill: ACCENT, anchor: 'start' });
+            txt(links, 1000, 492, 'condições', { size: 15, weight: 700, fill: SOFT, anchor: 'start' });
+            fadeIn(links, 1100, 600);
+
+            const vals = d3.range(3).map(() => svg.append('circle').attr('r', 9).attr('fill', PRIMARY).attr('opacity', 0)
+                .style('filter', 'drop-shadow(0 0 8px ' + PRIMARY + ')'));
+            const downs = cols.map(() => svg.append('circle').attr('r', 5).attr('fill', ACCENT).attr('opacity', 0));
+            const ups = cols.map(() => svg.append('circle').attr('r', 5).attr('fill', SOFT).attr('opacity', 0));
+
+            c.frame(t => {
+                if (t < 1500) return;
+                const tt = t - 1500;
+                vals.forEach((d, j) => {
+                    const u = ((tt + j * 1200) % 3600) / 3600;
+                    d.attr('cx', lerp(110, 1072, u)).attr('cy', 315).attr('opacity', seg(u, 0, 0.05) * (1 - seg(u, 0.95, 1)));
+                });
+                const pu = cyc(tt + 1200 * 0.05, 1200);
+                halo.attr('r', 72 + 26 * pu).attr('opacity', 0.6 * (1 - pu));
+                downs.forEach((d, j) => {
+                    const u = ((tt + j * 700) % 2100) / 2100;
+                    d.attr('cx', cols[j]).attr('cy', lerp(136, 222, u)).attr('opacity', Math.sin(u * Math.PI));
+                });
+                ups.forEach((d, j) => {
+                    const u = ((tt + j * 700 + 350) % 2100) / 2100;
+                    d.attr('cx', cols[j] + 40).attr('cy', lerp(552, 408, u)).attr('opacity', Math.sin(u * Math.PI));
+                });
+                const k = Math.floor(tt / 3000) % 3;
+                chevs.forEach(p => p.attr('stroke-width', k === 0 ? 4 : 2));
+                topBox.attr('stroke', k === 1 ? PRIMARY : SOFT).attr('stroke-width', k === 1 ? 4 : 2);
+                botBox.attr('stroke', k === 2 ? PRIMARY : SOFT).attr('stroke-width', k === 2 ? 4 : 2);
+                pill(k);
+            });
+        }
+        window.MIRA_SLIDES.push({ id: 'cadeia-stage', fn: animateCadeia, name: 'cadeia' });
+
+        // ===== SLIDE 6: hierarquia de processos =====
+        // Loop: um orbe desce a escada nível a nível (da cadeia de valor à tarefa); o degrau ativo acende,
+        // a definição no rodapé do palco troca e a pílula correspondente brilha. No fim, o orbe volta ao topo.
+        function animateHier() {
+            const c = makeCtx('hier', 'hier-stage'), svg = c.svg;
+            const pill = pillSync('hier', 6);
+            const lv = [
+                { n: 'Cadeia de valor', ex: 'Política e administração\ntributária', d: 'Visão sistêmica dos macroprocessos: o encadeamento que gera valor ao usuário.' },
+                { n: 'Macroprocesso', ex: 'IPVA', d: 'Conjunto de processos pelo qual a organização cumpre a sua missão.' },
+                { n: 'Processo', ex: 'Impugnação ao\nlançamento de IPVA', d: 'Atividades executadas por humanos ou máquinas para alcançar resultados.' },
+                { n: 'Subprocesso', ex: 'Pedido de baixa', d: 'Detalha fluxos e atividades sequenciais e interdependentes do processo.' },
+                { n: 'Atividade', ex: 'Efetuar o lançamento\ndo AIIM no sistema', d: 'Operações de média complexidade, feitas por uma unidade, com resultado específico.' },
+                { n: 'Tarefa', ex: 'rotina com prazo\ndeterminado', d: 'Nível mais detalhado: trabalho de rotina, imediatamente abaixo da atividade.' }
+            ];
+            const X = i => 60 + i * 195, Y = i => 40 + i * 78, W = 185, H = 76;
+
+            const axis = svg.append('g').attr('opacity', 0);
+            axis.append('line').attr('x1', 110).attr('y1', 160).attr('x2', 110).attr('y2', 500).attr('stroke', SOFTER).attr('stroke-width', 2).attr('stroke-dasharray', '4 6');
+            axis.append('path').attr('d', 'M110,512 l-8,-14 l16,0 Z').attr('fill', SOFTER);
+            txt(axis, 130, 190, 'estratégia', { size: 16, weight: 700, fill: SOFTER, anchor: 'start' });
+            txt(axis, 130, 500, 'operação', { size: 16, weight: 700, fill: SOFTER, anchor: 'start' });
+            fadeIn(axis, 1200, 600);
+
+            const boxes = lv.map((l, i) => {
+                const g = svg.append('g');
+                const r = rbox(g, 0, 0, W, H, 14, { fill: CARD, stroke: SOFT, sw: 2 });
+                txt(g, W / 2, 28, l.n, { size: 19, weight: 800 });
+                txt(g, W / 2, 50, l.ex, { size: 14, weight: 600, fill: SOFTER, lh: 1.15 });
+                enter(g, X(i), Y(i), 200 + i * 130);
+                return r;
+            });
+
+            const def = svg.append('g');
+            rbox(def, 0, 0, 1160, 110, 16, { fill: PILLBG, stroke: BORDER, sw: 1.5 });
+            const dN = txt(def, 30, 44, lv[0].n, { size: 21, weight: 800, fill: PRIMARY, anchor: 'start' });
+            const dD = txt(def, 30, 80, lv[0].d, { size: 18, weight: 600, fill: SOFT, anchor: 'start' });
+            enter(def, 60, 560, 1000);
+
+            const orb = svg.append('g').attr('opacity', 0);
+            const ring = orb.append('circle').attr('r', 14).attr('fill', 'none').attr('stroke', PRIMARY).attr('stroke-width', 2);
+            orb.append('circle').attr('r', 9).attr('fill', PRIMARY).style('filter', 'drop-shadow(0 0 8px ' + PRIMARY + ')');
+
+            const STEP = 1700, CYCLE = 6 * STEP + 1400, T0 = 1600;
+            let lastIdx = -1;
+            const pos = i => ({ x: X(i) + W / 2, y: Y(i) - 14 });
+            c.frame(t => {
+                if (t < T0) return;
+                const lt = (t - T0) % CYCLE;
+                let p, idx;
+                if (lt < 6 * STEP) {
+                    idx = Math.floor(lt / STEP);
+                    const f = (lt % STEP) / STEP;
+                    const a = pos(idx);
+                    if (f < 0.72 || idx === 5) p = a;
+                    else {
+                        const b = pos(idx + 1), u = eio(seg(f, 0.72, 1));
+                        p = { x: lerp(a.x, b.x, u), y: lerp(a.y, b.y, u) - Math.sin(u * Math.PI) * 40 };
+                    }
+                    orb.attr('opacity', 1);
+                } else {
+                    idx = -1;
+                    const u = eio(seg(lt - 6 * STEP, 0, 1400));
+                    const a = pos(5), b = pos(0);
+                    p = { x: lerp(a.x, b.x, u), y: lerp(a.y, b.y, u) - Math.sin(u * Math.PI) * 60 };
+                    orb.attr('opacity', 0.35);
+                }
+                orb.attr('transform', 'translate(' + p.x + ',' + p.y + ')');
+                ring.attr('r', 14 + 8 * cyc(t, 900)).attr('opacity', 1 - cyc(t, 900));
+                boxes.forEach((b, i) => b.attr('stroke', i === idx ? PRIMARY : SOFT).attr('stroke-width', i === idx ? 3.5 : 2)
+                    .attr('fill', i === idx ? ICONBG : CARD));
+                if (idx !== lastIdx && idx >= 0) {
+                    lastIdx = idx;
+                    dN.select('tspan').text(lv[idx].n);
+                    dD.select('tspan').text(lv[idx].d);
+                }
+                pill(idx);
+            });
+        }
+        window.MIRA_SLIDES.push({ id: 'hier-stage', fn: animateHier, name: 'hier' });
+
+        // ===== SLIDE 7: metodologia em sete etapas =====
+        // Loop: um token percorre a elipse sem parar; cada etapa acende quando o token passa,
+        // a pílula correspondente brilha e o contador central soma uma volta a cada ciclo.
+        function animateMetodo() {
+            const c = makeCtx('metodo', 'metodo-stage'), svg = c.svg;
+            const pill = pillSync('metodo', 7);
+            const cx = 640, cy = 365, rx = 450, ry = 232;
+            const st = [
+                ['Ponto de partida', 'cadeia de valor ou demandas'],
+                ['Priorização', 'processos mais relevantes'],
+                ['Modelagem AS IS', 'registro da situação atual'],
+                ['Análise e diagnóstico', 'restrições e rupturas'],
+                ['Redesenho TO BE', 'situação futura otimizada'],
+                ['Implementação', 'pôr em prática o novo'],
+                ['Monitoramento', 'medição contínua']
+            ];
+            const track = svg.append('path')
+                .attr('d', 'M' + cx + ',' + (cy - ry) + ' A' + rx + ',' + ry + ' 0 1,1 ' + cx + ',' + (cy + ry) + ' A' + rx + ',' + ry + ' 0 1,1 ' + cx + ',' + (cy - ry))
+                .attr('fill', 'none').attr('stroke', ICONBORDER).attr('stroke-width', 3).attr('stroke-dasharray', '6 8');
+            fadeIn(track, 100, 800);
+            const tn = track.node();
+
+            const ctr = svg.append('g');
+            txt(ctr, 0, -34, 'Contínua e', { size: 30, weight: 900 });
+            txt(ctr, 0, 2, 'permanente', { size: 30, weight: 900, fill: PRIMARY });
+            txt(ctr, 0, 40, 'use todas as etapas ou parte delas,', { size: 16, weight: 600, fill: SOFTER });
+            txt(ctr, 0, 62, 'conforme a maturidade da organização', { size: 16, weight: 600, fill: SOFTER });
+            const lap = txt(ctr, 0, 104, 'volta 1', { size: 16, weight: 800, fill: PRIMARY });
+            enter(ctr, cx, cy, 300);
+
+            const nodes = st.map((s, i) => {
+                const p = pointOn(tn, i / 7);
+                const g = svg.append('g');
+                const r = rbox(g, -120, -37, 240, 74, 16, { fill: CARD, stroke: SOFT, sw: 2 });
+                const nc = g.append('circle').attr('cx', -88).attr('cy', 0).attr('r', 18).attr('fill', ICONBG).attr('stroke', PRIMARY).attr('stroke-width', 2);
+                txt(g, -88, 6, '0' + (i + 1), { size: 15, weight: 900, fill: PRIMARY });
+                txt(g, -62, -4, s[0], { size: 16, weight: 800, anchor: 'start' });
+                txt(g, -62, 18, s[1], { size: 13, weight: 600, fill: SOFTER, anchor: 'start' });
+                enter(g, p.x, p.y, 400 + i * 140);
+                return { r: r, nc: nc };
+            });
+
+            const trail = d3.range(8).map(i => svg.append('circle').attr('r', 8 - i * 0.8).attr('fill', PRIMARY).attr('opacity', 0));
+            const token = svg.append('circle').attr('r', 12).attr('fill', PRIMARY).attr('opacity', 0)
+                .style('filter', 'drop-shadow(0 0 12px ' + PRIMARY + ')');
+            const PERIOD = 15400, T0 = 1600;
+            c.frame(t => {
+                if (t < T0) return;
+                const tt = t - T0, u = (tt % PERIOD) / PERIOD;
+                const p = pointOn(tn, u);
+                token.attr('cx', p.x).attr('cy', p.y).attr('opacity', seg(tt, 0, 400));
+                trail.forEach((d, i) => {
+                    const q = pointOn(tn, (u - (i + 1) * 0.004 + 1) % 1);
+                    d.attr('cx', q.x).attr('cy', q.y).attr('opacity', (0.4 - i * 0.045) * seg(tt, 0, 400));
+                });
+                let idx = -1;
+                nodes.forEach((n, i) => {
+                    let d = Math.abs(u - i / 7); d = Math.min(d, 1 - d);
+                    const on = d < 0.045;
+                    if (on) idx = i;
+                    n.r.attr('stroke', on ? PRIMARY : SOFT).attr('stroke-width', on ? 3.5 : 2).attr('fill', on ? ICONBG : CARD);
+                    n.nc.attr('r', on ? 21 : 18);
+                });
+                lap.select('tspan').text('volta ' + (Math.floor(tt / PERIOD) + 1));
+                pill(idx);
+            });
+        }
+        window.MIRA_SLIDES.push({ id: 'metodo-stage', fn: animateMetodo, name: 'metodo' });
+
+        // ===== SLIDE 8: matriz de priorização =====
+        // Loop em rodadas: as notas (1 a 5) preenchem a matriz célula a célula, os pesos pulsam,
+        // as barras da média ponderada crescem e se reordenam, e os dois primeiros vão ao portfólio.
+        // Cada rodada traz um novo cenário (valores ilustrativos), sem parar.
+        function animatePrior() {
+            const c = makeCtx('prior', 'prior-stage'), svg = c.svg;
+            const pill = pillSync('prior', 4);
+            const crit = ['Alinhamento\nestratégico', 'Impacto no\ncliente', 'Abrangência\ndo processo', 'Custo'];
+            const W = [5, 4, 3, 2], CX = [255, 365, 475, 585], RY = r => 230 + r * 80;
+            const names = ['A', 'B', 'C', 'D', 'E'];
+            const rounds = [
+                [[5, 4, 3, 2], [2, 3, 4, 5], [4, 5, 5, 3], [1, 2, 2, 4], [3, 3, 2, 1]],
+                [[2, 2, 3, 1], [5, 4, 4, 3], [3, 3, 2, 2], [4, 5, 3, 4], [1, 2, 5, 5]],
+                [[4, 3, 4, 4], [1, 1, 2, 3], [2, 4, 3, 1], [3, 2, 4, 2], [5, 5, 4, 3]]
+            ];
+            const score = row => row.reduce((s, v, i) => s + v * W[i], 0) / W.reduce((a, b) => a + b, 0);
+
+            const head = svg.append('g');
+            crit.forEach((cr, i) => txt(head, CX[i], 92, cr, { size: 15, weight: 700, lh: 1.15 }));
+            const wts = W.map((w, i) => {
+                const g = head.append('g').attr('transform', 'translate(' + CX[i] + ',152)');
+                const r = rbox(g, -38, -15, 76, 30, 15, { fill: ICONBG, stroke: ICONBORDER, sw: 1.2 });
+                txt(g, 0, 6, 'peso ' + w, { size: 14, weight: 800, fill: PRIMARY });
+                return r;
+            });
+            txt(head, 60, 158, 'Ponderação', { size: 15, weight: 700, fill: SOFTER, anchor: 'start' });
+            fadeIn(head, 200, 600);
+
+            const rowLab = names.map((n, r) => {
+                const l = txt(svg, 60, RY(r) + 7, 'Processo ' + n, { size: 18, weight: 800, anchor: 'start' });
+                fadeIn(l, 300 + r * 90, 400);
+                return l;
+            });
+            const cells = names.map((n, r) => CX.map((x, ci) => {
+                const g = svg.append('g').attr('transform', 'translate(' + x + ',' + RY(r) + ')');
+                const bg = rbox(g, -48, -28, 96, 56, 10, { fill: PILLBG, stroke: BORDER, sw: 1.2 });
+                const v = txt(g, 0, 8, '', { size: 22, weight: 800 });
+                fadeIn(g, 400 + r * 90, 400);
+                return { bg: bg, v: v };
+            }));
+
+            const right = svg.append('g');
+            txt(right, 720, 92, 'Média ponderada', { size: 20, weight: 800, anchor: 'start' });
+            txt(right, 720, 118, 'soma de (nota × peso) ÷ soma dos pesos', { size: 14, weight: 600, fill: SOFTER, anchor: 'start' });
+            right.append('line').attr('x1', 760).attr('y1', 190).attr('x2', 760).attr('y2', 570).attr('stroke', BORDER).attr('stroke-width', 2);
+            fadeIn(right, 500, 600);
+            const bars = names.map((n, r) => {
+                const g = svg.append('g').attr('opacity', 0);
+                const lb = txt(g, 735, 7, n, { size: 20, weight: 900, fill: SOFT });
+                const b = g.append('rect').attr('x', 760).attr('y', -20).attr('height', 40).attr('rx', 8).attr('width', 0).attr('fill', SOFTER);
+                const v = txt(g, 770, 7, '', { size: 17, weight: 800, anchor: 'start' });
+                return { g: g, b: b, v: v, lb: lb };
+            });
+            const port = svg.append('g').attr('opacity', 0);
+            rbox(port, 720, 598, 500, 56, 14, { fill: ICONBG, stroke: PRIMARY, sw: 2 });
+            const portT = txt(port, 970, 633, '', { size: 18, weight: 800, fill: PRIMARY });
+            txt(svg, 60, 690, 'valores ilustrativos', { size: 14, weight: 700, fill: ACCENT, anchor: 'start' });
+
+            const T0 = 1200, ROUND = 10000;
+            let lastK = -1;
+            c.frame(t => {
+                if (t < T0) return;
+                const tt = t - T0, k = Math.floor(tt / ROUND), lt = tt % ROUND;
+                const data = rounds[k % rounds.length];
+                const sc = data.map(score);
+                const order = d3.range(5).sort((a, b) => sc[b] - sc[a]);
+                const rank = []; order.forEach((r, i) => { rank[r] = i; });
+                if (k !== lastK) {
+                    lastK = k;
+                    portT.select('tspan').text('Portfólio priorizado: Processos ' + names[order[0]] + ' e ' + names[order[1]]);
+                }
+                const reset = seg(lt, 9300, 9900);
+                cells.forEach((row, r) => row.forEach((cl, ci) => {
+                    const n = r * 4 + ci, on = lt >= 600 + n * 110 && lt < 9300;
+                    cl.v.select('tspan').text(on ? data[r][ci] : '');
+                    cl.bg.attr('fill', on ? PRIMARY : PILLBG).attr('fill-opacity', on ? 0.05 + data[r][ci] * 0.05 : 1);
+                }));
+                const wp = tri(seg(lt, 2900, 3500));
+                wts.forEach(w => w.attr('stroke-width', 1.2 + 2.5 * wp));
+                rowLab.forEach(l => l.attr('fill', lt < 600 ? PRIMARY : TEXT));
+                const grow = eio(seg(lt, 3500, 4700)), sorting = eio(seg(lt, 4700, 5700)), top = lt >= 5700 && lt < 9300;
+                bars.forEach((o, r) => {
+                    const y = lerp(RY(r), RY(rank[r]), sorting);
+                    o.g.attr('transform', 'translate(0,' + y + ')').attr('opacity', seg(lt, 3400, 3600) * (1 - reset));
+                    const w = sc[r] * 76 * grow;
+                    o.b.attr('width', w).attr('fill', top && rank[r] < 2 ? PRIMARY : SOFTER).attr('opacity', top && rank[r] >= 2 ? 0.45 : 0.85);
+                    o.v.attr('x', 770 + w).select('tspan').text(grow > 0 ? sc[r].toFixed(2).replace('.', ',') : '');
+                    o.lb.attr('fill', top && rank[r] < 2 ? PRIMARY : SOFT);
+                });
+                port.attr('opacity', seg(lt, 5700, 6200) * (1 - reset));
+                pill(lt < 600 ? 0 : lt < 2900 ? 1 : lt < 3500 ? 2 : lt < 9300 ? 3 : -1);
+            });
+        }
+        window.MIRA_SLIDES.push({ id: 'prior-stage', fn: animatePrior, name: 'prior' });
+
+        // ===== SLIDE 9: do AS IS ao TO BE =====
+        // Loop: o token atravessa o AS IS, trava no gargalo e volta no reprocesso; as atividades
+        // repetida, sem valor e burocrática são riscadas; as que ficam descem e formam o TO BE,
+        // que o token percorre em linha reta. Depois tudo volta e o ciclo recomeça.
+        function animateRedes() {
+            const c = makeCtx('redes', 'redes-stage'), svg = c.svg;
+            const pill = pillSync('redes', 5);
+            const AY = 230, TY = 545, N = 10;
+            const ax = i => 95 + i * 121;
+            const kept = [0, 1, 3, 4, 6, 8, 9], tx = j => 160 + j * 160;
+            const issue = { 2: 'repetida', 3: 'gargalo', 5: 'sem valor', 7: 'burocracia' };
+            const cut = [2, 5, 7];
+
+            const heads = svg.append('g');
+            txt(heads, 60, 150, 'AS IS · como está', { size: 21, weight: 800, anchor: 'start' });
+            txt(heads, 1220, 150, '10 atividades', { size: 17, weight: 700, fill: SOFT, anchor: 'end' });
+            txt(heads, 60, 462, 'TO BE · como deveria ser', { size: 21, weight: 800, anchor: 'start', fill: PRIMARY });
+            const toCount = txt(heads, 1220, 462, '7 atividades · 30% a menos', { size: 17, weight: 800, fill: PRIMARY, anchor: 'end' });
+            heads.append('line').attr('x1', 40).attr('y1', 395).attr('x2', 1240).attr('y2', 395).attr('stroke', BORDER).attr('stroke-width', 2).attr('stroke-dasharray', '6 6');
+            fadeIn(heads, 100, 600);
+
+            svg.append('line').attr('x1', ax(0)).attr('y1', AY).attr('x2', ax(9)).attr('y2', AY).attr('stroke', SOFTER).attr('stroke-width', 2.5);
+            const rework = svg.append('g');
+            rework.append('path').attr('d', 'M' + ax(6) + ',' + (AY - 26) + ' C' + ax(6) + ',' + (AY - 105) + ' ' + ax(4) + ',' + (AY - 105) + ' ' + ax(4) + ',' + (AY - 30))
+                .attr('fill', 'none').attr('stroke', PRIMARY).attr('stroke-width', 2.5).attr('stroke-dasharray', '6 5');
+            rework.append('path').attr('d', 'M' + ax(4) + ',' + (AY - 27) + ' l-7,-13 l14,0 Z').attr('fill', PRIMARY);
+            const rwLab = txt(rework, (ax(4) + ax(6)) / 2, AY - 92, 'reprocesso', { size: 15, weight: 800, fill: PRIMARY });
+            fadeIn(rework, 1200, 500);
+
+            const asis = d3.range(N).map(i => {
+                const g = svg.append('g');
+                const r = rbox(g, -46, -26, 92, 52, 10, { fill: CARD, stroke: SOFT, sw: 2 });
+                txt(g, 0, 7, 'A' + (i + 1), { size: 18, weight: 800 });
+                const x = g.append('path').attr('d', 'M-30,-20 L30,20 M30,-20 L-30,20').attr('stroke', PRIMARY).attr('stroke-width', 4).attr('opacity', 0);
+                const lab = issue[i] ? txt(g, 0, 50, issue[i], { size: 14, weight: 800, fill: PRIMARY }) : null;
+                enter(g, ax(i), AY, 200 + i * 70);
+                return { g: g, r: r, x: x, lab: lab };
+            });
+            const queue = d3.range(3).map(k => svg.append('circle').attr('cx', ax(3) - 18 + k * 18).attr('cy', AY - 44).attr('r', 6).attr('fill', ACCENT).attr('opacity', 0));
+
+            svg.append('line').attr('x1', tx(0)).attr('y1', TY).attr('x2', tx(6)).attr('y2', TY).attr('stroke', ICONBORDER).attr('stroke-width', 2.5);
+            const tobe = kept.map((i, j) => {
+                const g = svg.append('g').attr('opacity', 0);
+                const r = rbox(g, -46, -26, 92, 52, 10, { fill: ICONBG, stroke: PRIMARY, sw: 2.5 });
+                txt(g, 0, 7, 'A' + (i + 1), { size: 18, weight: 800, fill: PRIMARY });
+                return { g: g, r: r, i: i, j: j };
+            });
+
+            const path = svg.append('path').attr('fill', 'none').attr('stroke', 'none')
+                .attr('d', 'M' + ax(0) + ',' + AY + ' L' + ax(6) + ',' + AY + ' C' + ax(6) + ',' + (AY - 105) + ' ' + ax(4) + ',' + (AY - 105) + ' ' + ax(4) + ',' + AY + ' L' + ax(9) + ',' + AY).node();
+            const L = path.getTotalLength(), L3 = (ax(3) - ax(0)) / L;
+            const token = svg.append('circle').attr('r', 11).attr('fill', PRIMARY).attr('opacity', 0)
+                .style('filter', 'drop-shadow(0 0 10px ' + PRIMARY + ')');
+
+            const T0 = 1800, CYCLE = 13000;
+            c.frame(t => {
+                if (t < T0) return;
+                const lt = (t - T0) % CYCLE;
+                let px = 0, py = 0, op = 0, pIdx = -1;
+                if (lt < 5200) {
+                    let f;
+                    if (lt < 1400) f = lerp(0, L3, lt / 1400);
+                    else if (lt < 2400) f = L3;
+                    else f = lerp(L3, 1, (lt - 2400) / 2800);
+                    const p = pointOn(path, f);
+                    px = p.x; py = p.y; op = seg(lt, 0, 200) * (1 - seg(lt, 5000, 5200));
+                    if (py < AY - 8) pIdx = 1;
+                    else {
+                        const i = Math.round((px - ax(0)) / 121);
+                        if (Math.abs(px - ax(i)) < 34) pIdx = i === 3 ? 0 : i === 2 ? 2 : i === 5 ? 3 : i === 7 ? 4 : -1;
+                    }
+                } else if (lt >= 7600 && lt < 10000) {
+                    const u = eio(seg(lt, 7600, 9800));
+                    px = lerp(tx(0), tx(6), u); py = TY; op = seg(lt, 7600, 7800) * (1 - seg(lt, 9800, 10000));
+                }
+                token.attr('cx', px).attr('cy', py).attr('opacity', op);
+                const dwell = lt >= 1400 && lt < 2400;
+                queue.forEach((q, k) => q.attr('opacity', dwell ? 0.35 + 0.65 * tri(cyc(lt + k * 200, 600)) : 0));
+                const xOn = seg(lt, 5200, 5800) * (1 - seg(lt, 12400, 13000));
+                asis.forEach((a, i) => {
+                    const isCut = cut.indexOf(i) >= 0;
+                    a.x.attr('opacity', isCut ? xOn : 0);
+                    a.g.attr('opacity', isCut ? 1 - 0.6 * xOn : 1);
+                    const near = op > 0 && lt < 5200 && py >= AY - 8 && Math.abs(px - ax(i)) < 34;
+                    a.r.attr('stroke', near ? PRIMARY : SOFT).attr('stroke-width', near ? 3.5 : 2);
+                });
+                const fly = eio(seg(lt, 6200, 7600)), vis = seg(lt, 6200, 6500) * (1 - seg(lt, 12400, 13000));
+                tobe.forEach(o => {
+                    const x = lerp(ax(o.i), tx(o.j), fly), y = lerp(AY, TY, fly);
+                    o.g.attr('transform', 'translate(' + x + ',' + y + ')').attr('opacity', vis);
+                    const near = lt >= 7600 && lt < 10000 && Math.abs(px - tx(o.j)) < 34;
+                    o.r.attr('stroke-width', near ? 4.5 : 2.5);
+                });
+                toCount.attr('opacity', seg(lt, 7400, 7800) * (1 - seg(lt, 12400, 13000)));
+                rwLab.attr('font-size', pIdx === 1 ? 17 : 15);
+                pill(pIdx);
+            });
+        }
+        window.MIRA_SLIDES.push({ id: 'redes-stage', fn: animateRedes, name: 'redes' });
+
+        // ===== SLIDE 10: matriz de melhorias =====
+        // Loop: seis processos caem na matriz impacto x desempenho; o quadrante que recebe cada um pulsa
+        // e acende a pílula. Depois, os processos em "urgência" migram para a direita (efeito do redesenho),
+        // os indicadores do painel piscam em sequência e a rodada recomeça.
+        function animateMatriz() {
+            const c = makeCtx('matriz', 'matriz-stage'), svg = c.svg;
+            const pill = pillSync('matriz', 4);
+            const X0 = 170, X1 = 870, Y0 = 80, Y1 = 620, XM = 520, YM = 350;
+
+            const ax = svg.append('g');
+            ax.append('line').attr('x1', X0).attr('y1', Y1).attr('x2', X1 + 10).attr('y2', Y1).attr('stroke', SOFT).attr('stroke-width', 2);
+            ax.append('line').attr('x1', X0).attr('y1', Y1).attr('x2', X0).attr('y2', Y0 - 10).attr('stroke', SOFT).attr('stroke-width', 2);
+            ['Crítico', 'Ruim', 'Bom', 'Ótimo'].forEach((l, i) => txt(ax, X0 + 87 + i * 175, Y1 + 26, l, { size: 15, weight: 700, fill: SOFTER }));
+            [1, 2, 3, 4].forEach((l, i) => txt(ax, X0 - 18, Y1 - 67 - i * 135 + 6, String(l), { size: 16, weight: 800, fill: SOFTER }));
+            txt(ax, (X0 + X1) / 2, Y1 + 56, 'Desempenho do processo', { size: 16, weight: 800, fill: SOFT });
+            txt(ax, 0, 0, 'Impacto sobre a estratégia', { size: 16, weight: 800, fill: SOFT }).attr('transform', 'translate(118,' + ((Y0 + Y1) / 2) + ') rotate(-90)');
+            fadeIn(ax, 100, 500);
+
+            const Q = [
+                { n: 'Urgência', x: X0, y: Y0, col: PRIMARY, op: 0.22 },
+                { n: 'Adequar', x: XM, y: Y0, col: ACCENT, op: 0.14 },
+                { n: 'Aprimorar', x: X0, y: YM, col: PRIMARY, op: 0.09 },
+                { n: 'Melhorar', x: XM, y: YM, col: ACCENT, op: 0.07 }
+            ];
+            const quads = Q.map((q, i) => {
+                const g = svg.append('g');
+                const r = g.append('rect').attr('x', q.x + 8).attr('y', q.y + 8).attr('width', 334).attr('height', 254).attr('rx', 20)
+                    .attr('fill', q.col).attr('fill-opacity', q.op).attr('stroke', q.col).attr('stroke-opacity', 0.5).attr('stroke-width', 1.5);
+                txt(g, q.x + 175, q.y + 48, q.n, { size: 24, weight: 900, fill: q.col }).attr('opacity', 0.85);
+                fadeIn(g, 300 + i * 150, 500);
+                return r;
+            });
+
+            const pan = svg.append('g');
+            txt(pan, 920, 100, 'Plano de melhorias', { size: 20, weight: 800, anchor: 'start' });
+            ['identificação da melhoria', 'impacto de resultado', 'esforço de implantação'].forEach((s, i) => {
+                pan.append('circle').attr('cx', 928).attr('cy', 128 + i * 28).attr('r', 4).attr('fill', PRIMARY);
+                txt(pan, 942, 133 + i * 28, s, { size: 16, weight: 600, fill: SOFT, anchor: 'start' });
+            });
+            txt(pan, 920, 250, 'Indicadores sugeridos', { size: 20, weight: 800, anchor: 'start' });
+            const dims = ['Tempo', 'Capacidade', 'Custo', 'Qualidade'].map((d, i) => {
+                const g = pan.append('g').attr('transform', 'translate(' + (920 + (i % 2) * 160) + ',' + (272 + Math.floor(i / 2) * 66) + ')');
+                const r = rbox(g, 0, 0, 148, 52, 12, { fill: PILLBG, stroke: BORDER, sw: 1.5 });
+                txt(g, 74, 33, d, { size: 17, weight: 800 });
+                return r;
+            });
+            txt(pan, 920, 440, 'cada indicador traz fórmula,', { size: 15, weight: 600, fill: SOFTER, anchor: 'start' });
+            txt(pan, 920, 462, 'periodicidade, fonte de dados', { size: 15, weight: 600, fill: SOFTER, anchor: 'start' });
+            txt(pan, 920, 484, 'e histórico', { size: 15, weight: 600, fill: SOFTER, anchor: 'start' });
+            fadeIn(pan, 700, 600);
+
+            const P = [[300, 175], [720, 235], [380, 500], [780, 560], [440, 300], [640, 455]];
+            const dots = P.map((p, k) => {
+                const g = svg.append('g').attr('opacity', 0);
+                g.append('circle').attr('r', 20).attr('fill', CARD).attr('stroke', TEXT).attr('stroke-width', 2.5);
+                txt(g, 0, 6, 'P' + (k + 1), { size: 14, weight: 900 });
+                return g;
+            });
+            const after = txt(svg, 470, 216, 'após o redesenho →', { size: 15, weight: 800, fill: PRIMARY }).attr('opacity', 0);
+            const qOf = (x, y) => x < XM ? (y < YM ? 0 : 2) : (y < YM ? 1 : 3);
+
+            const T0 = 1500, CYCLE = 12500;
+            c.frame(t => {
+                if (t < T0) return;
+                const lt = (t - T0) % CYCLE;
+                let lastQ = -1;
+                const mv = eio(seg(lt, 7000, 9200));
+                const out = 1 - seg(lt, 11600, 12400);
+                dots.forEach((g, k) => {
+                    const land = 400 + k * 800, u = seg(lt, land, land + 650);
+                    let x = P[k][0], y = lerp(-30, P[k][1], d3.easeBounceOut(u));
+                    if (qOf(P[k][0], P[k][1]) === 0) x = lerp(P[k][0], P[k][0] + 330, mv);
+                    g.attr('transform', 'translate(' + x + ',' + y + ')').attr('opacity', (lt >= land ? 1 : 0) * out);
+                    if (lt >= land + 650 && lt < land + 1400) lastQ = qOf(P[k][0], P[k][1]);
+                });
+                if (lt >= 7000 && lt < 9800) lastQ = 1;
+                after.attr('opacity', seg(lt, 7000, 7400) * (1 - seg(lt, 9800, 10200)));
+                quads.forEach((r, i) => r.attr('stroke-width', i === lastQ ? 4.5 : 1.5).attr('stroke-opacity', i === lastQ ? 1 : 0.5));
+                const dk = Math.floor(t / 1100) % 4;
+                dims.forEach((r, i) => r.attr('stroke', i === dk ? PRIMARY : BORDER).attr('fill', i === dk ? ICONBG : PILLBG));
+                pill(lastQ);
+            });
+        }
+        window.MIRA_SLIDES.push({ id: 'matriz-stage', fn: animateMatriz, name: 'matriz' });
+
+        // ===== SLIDE 12: governança dirige, processos executam =====
+        // Loop: três camadas (governança, escritório e donos, processos). Diretrizes descem como partículas
+        // azuis, indicadores sobem como partículas laranja e voltam pelo arco até "avaliar".
+        // Um holofote passa por avaliar, dirigir, monitorar e pelo elo do meio, acendendo as etapas ligadas.
+        function animateGov() {
+            const c = makeCtx('gov', 'gov-stage'), svg = c.svg;
+            const pill = pillSync('gov', 4);
+            svg.append('defs').append('marker').attr('id', 'gv-arr').attr('viewBox', '0 0 10 10')
+                .attr('refX', 8).attr('refY', 5).attr('markerWidth', 7).attr('markerHeight', 7).attr('orient', 'auto')
+                .append('path').attr('d', 'M0,0 L10,5 L0,10 Z').attr('fill', PRIMARY);
+            const sx = j => 110 + j * 160, SY = 545;
+            const G = [
+                { n: 'Avaliar', s: 'cadeia de valor, prioridades,\nriscos', x: 350, st: [0, 1, 2, 3], lab: 'prioridades', dir: 1 },
+                { n: 'Dirigir', s: 'diretrizes, redesenho,\npatrocínio', x: 830, st: [4, 5], lab: 'diretrizes', dir: 1 },
+                { n: 'Monitorar', s: 'indicadores, desempenho,\nreporte', x: 1070, st: [6], lab: 'indicadores', dir: -1 }
+            ];
+            txt(svg, 40, 44, 'Governança de TI', { size: 15, weight: 800, fill: SOFTER, anchor: 'start' });
+            const arc = svg.append('path').attr('d', 'M1070,72 C1010,10 410,10 350,70').attr('fill', 'none')
+                .attr('stroke', ICONBORDER).attr('stroke-width', 2.5).attr('stroke-dasharray', '6 6').attr('marker-end', 'url(#gv-arr)');
+            txt(svg, 710, 38, 'ciclo contínuo', { size: 14, weight: 700, fill: SOFTER });
+            fadeIn(arc, 1200, 600);
+
+            const tops = G.map((g, i) => {
+                const gg = svg.append('g');
+                const r = rbox(gg, -115, -50, 230, 100, 16, { fill: CARD, stroke: SOFT, sw: 2 });
+                txt(gg, 0, -12, g.n, { size: 26, weight: 900 });
+                txt(gg, 0, 14, g.s, { size: 14, weight: 600, fill: SOFTER, lh: 1.2 });
+                enter(gg, g.x, 125, 200 + i * 150);
+                return r;
+            });
+
+            const mid = svg.append('g');
+            const midR = rbox(mid, 0, 0, 1100, 70, 35, { fill: ICONBG, stroke: ICONBORDER, sw: 2 });
+            txt(mid, 550, 34, 'Escritório de Processos · donos de processo', { size: 22, weight: 800 });
+            txt(mid, 550, 58, 'o elo entre a decisão e a execução', { size: 15, weight: 600, fill: SOFT });
+            enter(mid, 90, 290, 700);
+
+            const links = svg.append('g').attr('opacity', 0);
+            G.forEach(g => {
+                const col = g.dir > 0 ? ACCENT : PRIMARY;
+                links.append('line').attr('x1', g.x).attr('y1', 177).attr('x2', g.x).attr('y2', 288).attr('stroke', col).attr('stroke-width', 2).attr('stroke-dasharray', '4 5');
+                links.append('line').attr('x1', g.x).attr('y1', 362).attr('x2', g.x).attr('y2', 486).attr('stroke', col).attr('stroke-width', 2).attr('stroke-dasharray', '4 5');
+                txt(links, g.x + 10, 238, g.lab, { size: 14, weight: 700, fill: col, anchor: 'start' });
+            });
+            fadeIn(links, 1000, 600);
+
+            const brs = G.map(g => {
+                const x0 = sx(g.st[0]) - 66, x1 = sx(g.st[g.st.length - 1]) + 66;
+                return svg.append('path').attr('d', 'M' + x0 + ',' + 498 + ' L' + x0 + ',488 L' + x1 + ',488 L' + x1 + ',498')
+                    .attr('fill', 'none').attr('stroke', SOFTER).attr('stroke-width', 2);
+            });
+            const stN = ['Partida', 'Priorização', 'AS IS', 'Análise', 'TO BE', 'Implementação', 'Monitoramento'];
+            const stages = stN.map((n, j) => {
+                const g = svg.append('g');
+                const r = rbox(g, -70, -35, 140, 70, 14, { fill: CARD, stroke: SOFT, sw: 2 });
+                txt(g, 0, -6, '0' + (j + 1), { size: 14, weight: 900, fill: PRIMARY });
+                txt(g, 0, 16, n, { size: 15, weight: 700 });
+                enter(g, sx(j), SY, 900 + j * 90);
+                return r;
+            });
+            txt(svg, 40, 640, 'Gestão por processos (Seger, 2017)', { size: 15, weight: 800, fill: SOFTER, anchor: 'start' });
+
+            const parts = G.map(() => d3.range(2).map(() => svg.append('circle').attr('r', 5.5).attr('opacity', 0)));
+            const arcDot = svg.append('circle').attr('r', 7).attr('fill', PRIMARY).attr('opacity', 0)
+                .style('filter', 'drop-shadow(0 0 8px ' + PRIMARY + ')');
+            const midDots = d3.range(3).map(() => svg.append('circle').attr('r', 5).attr('fill', PRIMARY).attr('opacity', 0));
+
+            const T0 = 1800, PH = 3000;
+            c.frame(t => {
+                if (t < T0) return;
+                const tt = t - T0;
+                G.forEach((g, i) => parts[i].forEach((d, k) => {
+                    let u = ((tt + k * 1100 + i * 300) % 2200) / 2200;
+                    if (g.dir < 0) u = 1 - u;
+                    const y = u < 0.45 ? lerp(180, 286, u / 0.45) : u < 0.55 ? lerp(286, 364, (u - 0.45) / 0.1) : lerp(364, 484, (u - 0.55) / 0.45);
+                    d.attr('cx', g.x).attr('cy', y).attr('fill', g.dir > 0 ? ACCENT : PRIMARY).attr('opacity', Math.sin(u * Math.PI));
+                }));
+                const ua = (tt % 4000) / 4000;
+                const pa = pointOn(arc.node(), ua);
+                arcDot.attr('cx', pa.x).attr('cy', pa.y).attr('opacity', Math.sin(ua * Math.PI));
+                const k = Math.floor(tt / PH) % 4;
+                midDots.forEach((d, j) => {
+                    const u = ((tt + j * 800) % 2400) / 2400;
+                    d.attr('cx', lerp(140, 1140, u)).attr('cy', 325 + 30 * 0).attr('opacity', k === 3 ? Math.sin(u * Math.PI) : 0);
+                });
+                tops.forEach((r, i) => r.attr('stroke', i === k ? PRIMARY : SOFT).attr('stroke-width', i === k ? 3.5 : 2).attr('fill', i === k ? ICONBG : CARD));
+                brs.forEach((b, i) => b.attr('stroke', i === k ? PRIMARY : SOFTER).attr('stroke-width', i === k ? 3.5 : 2));
+                stages.forEach((r, j) => {
+                    const on = k < 3 && G[k].st.indexOf(j) >= 0;
+                    r.attr('stroke', on ? PRIMARY : SOFT).attr('stroke-width', on ? 3 : 2).attr('fill', on ? ICONBG : CARD);
+                });
+                midR.attr('stroke', k === 3 ? PRIMARY : ICONBORDER).attr('stroke-width', k === 3 ? 4 : 2);
+                pill(k);
+            });
+        }
+        window.MIRA_SLIDES.push({ id: 'gov-stage', fn: animateGov, name: 'gov' });
+
+        // ===== SLIDE 14: dono do processo, ponta a ponta =====
+        // Loop: o dono do processo atravessa os quatro departamentos pela raia horizontal e, a cada
+        // fronteira, a barreira funcional pisca e se rompe; depois o escritório reporta à alta gestão
+        // e envia apoio metodológico à raia. As barreiras se refazem e o ciclo recomeça.
+        function animateDono() {
+            const c = makeCtx('dono', 'dono-stage'), svg = c.svg;
+            const pill = pillSync('dono', 5);
+            const DX = [270, 520, 770, 1020], LY0 = 420, LY1 = 500, LYC = 460;
+
+            const alta = svg.append('g');
+            const altaR = rbox(alta, -120, -32, 240, 64, 16, { fill: CARD, stroke: SOFT, sw: 2 });
+            txt(alta, 0, 8, 'Alta gestão', { size: 21, weight: 800 });
+            enter(alta, 300, 62, 100);
+            const esc = svg.append('g');
+            const escR = rbox(esc, -160, -32, 320, 64, 16, { fill: ICONBG, stroke: PRIMARY, sw: 2.5 });
+            txt(esc, 0, 8, 'Escritório de Processos', { size: 21, weight: 800, fill: PRIMARY });
+            enter(esc, 900, 62, 250);
+            const rep = arrow(svg, 738, 62, 424, 62, { stroke: SOFT, sw: 2.5, head: 11 });
+            const repL = txt(svg, 580, 46, 'reporte de indicadores', { size: 14, weight: 700, fill: SOFTER });
+            fadeIn(rep, 900, 500); fadeIn(repL, 900, 500);
+
+            const cols = ['Vendas', 'Logística', 'Financeiro', 'Suporte técnico'].map((n, i) => {
+                const g = svg.append('g');
+                const r = rbox(g, -105, 0, 210, 520, 18, { fill: PILLBG, stroke: BORDER, sw: 1.5 });
+                txt(g, 0, 36, n, { size: 19, weight: 800 });
+                g.append('circle').attr('cx', 0).attr('cy', 70).attr('r', 9).attr('fill', 'none').attr('stroke', SOFT).attr('stroke-width', 2);
+                txt(g, 0, 98, 'chefia', { size: 13, weight: 700, fill: SOFTER });
+                g.append('line').attr('x1', 0).attr('y1', 112).attr('x2', 0).attr('y2', 270).attr('stroke', SOFTER).attr('stroke-width', 2).attr('stroke-dasharray', '3 6');
+                g.append('path').attr('d', 'M0,278 l-6,-11 l12,0 Z').attr('fill', SOFTER);
+                g.append('line').attr('x1', 0).attr('y1', 370).attr('x2', 0).attr('y2', 500).attr('stroke', SOFTER).attr('stroke-width', 2).attr('stroke-dasharray', '3 6');
+                enter(g, DX[i], 140, 300 + i * 120);
+                return r;
+            });
+
+            const lane = svg.append('g');
+            const laneR = lane.append('rect').attr('x', 150).attr('y', LY0).attr('width', 990).attr('height', LY1 - LY0).attr('rx', 16)
+                .attr('fill', ICONBG).attr('stroke', PRIMARY).attr('stroke-width', 2);
+            txt(lane, 160, LY0 - 12, 'Processo de atendimento ao cliente', { size: 16, weight: 800, fill: PRIMARY, anchor: 'start' });
+            ['Venda', 'Entrega', 'Cobrança', 'Suporte'].forEach((s, i) => {
+                rbox(lane, DX[i] - 70, LYC - 21, 140, 42, 10, { fill: CARD, stroke: ICONBORDER, sw: 1.5 });
+                txt(lane, DX[i], LYC + 6, s, { size: 16, weight: 700 });
+            });
+            fadeIn(lane, 900, 600);
+
+            const BX = [395, 645, 895];
+            const bars = BX.map(x => svg.append('line').attr('x1', x).attr('y1', LY0 - 6).attr('x2', x).attr('y2', LY1 + 6)
+                .attr('stroke', TEXT).attr('stroke-width', 5).attr('stroke-dasharray', '8 5').attr('opacity', 0));
+
+            const sup = svg.append('g').attr('opacity', 0);
+            sup.append('line').attr('x1', 1085).attr('y1', 94).attr('x2', 1085).attr('y2', LY0 - 4).attr('stroke', PRIMARY).attr('stroke-width', 2).attr('stroke-dasharray', '4 6');
+            txt(sup, 1097, 300, 'apoio', { size: 14, weight: 800, fill: PRIMARY, anchor: 'start' });
+            txt(sup, 1097, 318, 'metodológico', { size: 14, weight: 800, fill: PRIMARY, anchor: 'start' });
+            fadeIn(sup, 1100, 500);
+
+            const dono = svg.append('g').attr('opacity', 0);
+            const dHalo = dono.append('circle').attr('r', 16).attr('fill', 'none').attr('stroke', PRIMARY).attr('stroke-width', 2);
+            dono.append('circle').attr('r', 12).attr('fill', PRIMARY).style('filter', 'drop-shadow(0 0 8px ' + PRIMARY + ')');
+            txt(dono, 0, 38, 'dono do processo', { size: 14, weight: 800, fill: PRIMARY });
+            const repDot = svg.append('circle').attr('r', 7).attr('fill', PRIMARY).attr('opacity', 0);
+            const supDots = d3.range(2).map(() => svg.append('circle').attr('r', 6).attr('fill', PRIMARY).attr('opacity', 0));
+
+            const T0 = 1600, CYCLE = 10000;
+            c.frame(t => {
+                if (t < T0) return;
+                const lt = (t - T0) % CYCLE;
+                let k = -1;
+                const u = eio(seg(lt, 0, 6000));
+                const x = lerp(170, 1120, u);
+                dono.attr('transform', 'translate(' + x + ',' + (LY1 + 16) + ')').attr('opacity', seg(lt, 0, 300) * (1 - seg(lt, 9600, 10000)));
+                dHalo.attr('r', 16 + 10 * cyc(t, 900)).attr('opacity', 1 - cyc(t, 900));
+                let atBar = false;
+                bars.forEach((b, i) => {
+                    const passed = x > BX[i] + 25, near = Math.abs(x - BX[i]) < 25;
+                    if (near) atBar = true;
+                    const reset = seg(lt, 9400, 9900);
+                    b.attr('opacity', (passed ? 0.12 : near ? 0.5 + 0.5 * tri(cyc(t, 300)) : 0.6) * (1 - reset) + 0.6 * reset * (lt > 9400 ? 1 : 0));
+                });
+                cols.forEach((r, i) => r.attr('stroke', atBar && Math.abs(x - DX[i]) < 140 ? TEXT : BORDER).attr('stroke-width', atBar && Math.abs(x - DX[i]) < 140 ? 2.5 : 1.5));
+                if (lt < 800) k = 1; else if (lt < 6000) k = atBar ? 0 : 2;
+                const ur = seg(lt, 6000, 7600);
+                repDot.attr('cx', lerp(735, 425, eio(ur))).attr('cy', 62).attr('opacity', lt >= 6000 && lt < 7800 ? Math.sin(ur * Math.PI) + 0.2 : 0);
+                if (lt >= 6000 && lt < 8000) k = 4;
+                altaR.attr('stroke', k === 4 ? PRIMARY : SOFT).attr('stroke-width', k === 4 ? 3.5 : 2);
+                supDots.forEach((d, j) => {
+                    const us = seg(lt, 8000 + j * 500, 9300 + j * 500);
+                    d.attr('cx', 1085).attr('cy', lerp(96, LY0 - 6, us)).attr('opacity', lt >= 8000 ? Math.sin(us * Math.PI) : 0);
+                });
+                if (lt >= 8000) k = 3;
+                escR.attr('stroke-width', k === 3 ? 4.5 : 2.5);
+                laneR.attr('stroke-width', k === 1 ? 4.5 : 2);
+                pill(k);
+            });
+        }
+        window.MIRA_SLIDES.push({ id: 'dono-stage', fn: animateDono, name: 'dono' });
+
+        // ===== SLIDE 15: roadmap do Escritório Local de Processos =====
+        // Loop: um orbe sobe a escada de seis passos, cada degrau acende ao ser alcançado e a pílula
+        // correspondente brilha; no topo a bandeira se ergue e tremula, depois o orbe desliza de volta.
+        function animateRoadmap() {
+            const c = makeCtx('roadmap', 'roadmap-stage'), svg = c.svg;
+            const pill = pillSync('roadmap', 6);
+            const S = [
+                ['Sensibilizar\na alta gestão', 'importância e benefícios'],
+                ['Identificar\npessoas-chave', 'conhecimento e dedicação'],
+                ['Definir\nposicionamento', 'perto do nível estratégico'],
+                ['Publicar\nformalização', 'portaria dá autonomia'],
+                ['Alinhar\nações', 'primeiras ações planejadas'],
+                ['Capacitar\nservidores', 'disseminar a gestão']
+            ];
+            const X = i => 60 + i * 185, TOP = i => 590 - i * 82, W = 175, BOT = 668;
+
+            const hd = svg.append('g');
+            txt(hd, 60, 70, 'Roteiro do Escritório Local de Processos', { size: 22, weight: 800, anchor: 'start' });
+            txt(hd, 60, 98, 'antes do primeiro mapeamento, a estrutura que o sustenta', { size: 16, weight: 600, fill: SOFTER, anchor: 'start' });
+            const cnt = txt(hd, 60, 140, '', { size: 18, weight: 800, fill: PRIMARY, anchor: 'start' });
+            fadeIn(hd, 100, 600);
+
+            const steps = S.map((s, i) => {
+                const g = svg.append('g');
+                const face = g.append('rect').attr('x', 0).attr('y', 0).attr('width', W).attr('height', BOT - TOP(i)).attr('rx', 10)
+                    .attr('fill', CARD).attr('stroke', BORDER).attr('stroke-width', 1.5);
+                const edge = g.append('rect').attr('x', 0).attr('y', 0).attr('width', W).attr('height', 6).attr('rx', 3).attr('fill', SOFTER);
+                txt(g, W / 2, 46, '0' + (i + 1), { size: 30, weight: 900, fill: PRIMARY }).attr('opacity', 0.8);
+                txt(g, W / 2, -84, s[0], { size: 17, weight: 800, lh: 1.15 });
+                txt(g, W / 2, -36, s[1], { size: 13, weight: 600, fill: SOFTER });
+                enter(g, X(i), TOP(i), 200 + i * 130);
+                return { face: face, edge: edge };
+            });
+
+            const fx = X(5) + W + 22, fTop = TOP(5);
+            svg.append('line').attr('x1', fx).attr('y1', fTop).attr('x2', fx).attr('y2', fTop - 80).attr('stroke', SOFT).attr('stroke-width', 3);
+            const flag = svg.append('path').attr('fill', PRIMARY);
+
+            const orb = svg.append('g').attr('opacity', 0);
+            const halo = orb.append('circle').attr('r', 14).attr('fill', 'none').attr('stroke', PRIMARY).attr('stroke-width', 2);
+            orb.append('circle').attr('r', 11).attr('fill', PRIMARY).style('filter', 'drop-shadow(0 0 10px ' + PRIMARY + ')');
+
+            const STEP = 1500, T0 = 1700, CYCLE = 6 * STEP + 1600 + 1100;
+            const pos = i => ({ x: X(i) + W / 2, y: TOP(i) - 16 });
+            let lastIdx = -2;
+            c.frame(t => {
+                const wave = Math.sin(t * 0.008) * 5;
+                if (t < T0) { flag.attr('d', 'M' + fx + ',' + (fTop - 80) + ' l0,0 Z'); return; }
+                const lt = (t - T0) % CYCLE;
+                let p, idx, raise = 0;
+                if (lt < 6 * STEP) {
+                    idx = Math.floor(lt / STEP);
+                    const f = (lt % STEP) / STEP, a = pos(idx);
+                    if (f < 0.66 || idx === 5) p = a;
+                    else {
+                        const b = pos(idx + 1), u = eio(seg(f, 0.66, 1));
+                        p = { x: lerp(a.x, b.x, u), y: lerp(a.y, b.y, u) - Math.sin(u * Math.PI) * 50 };
+                    }
+                    if (idx === 5) raise = seg(lt % STEP, 300, 900);
+                } else if (lt < 6 * STEP + 1600) {
+                    idx = 5; p = pos(5); raise = 1;
+                } else {
+                    idx = -1;
+                    const u = eio(seg(lt, 6 * STEP + 1600, CYCLE)), a = pos(5), b = pos(0);
+                    p = { x: lerp(a.x, b.x, u), y: lerp(a.y, b.y, u) };
+                    raise = 1 - u;
+                }
+                orb.attr('transform', 'translate(' + p.x + ',' + p.y + ')').attr('opacity', idx < 0 ? 0.4 : 1);
+                halo.attr('r', 14 + 10 * cyc(t, 900)).attr('opacity', 1 - cyc(t, 900));
+                const fh = 34 * raise;
+                flag.attr('d', 'M' + fx + ',' + (fTop - 80) + ' q' + (22 * raise) + ',' + wave + ' ' + (44 * raise) + ',' + (fh / 2 - 0)
+                    + ' q' + (-22 * raise) + ',' + (-wave) + ' ' + (-44 * raise) + ',' + (fh / 2) + ' Z');
+                steps.forEach((s, i) => {
+                    const reached = idx >= 0 && i <= idx;
+                    s.edge.attr('fill', reached ? PRIMARY : SOFTER);
+                    s.face.attr('fill', i === idx ? ICONBG : CARD).attr('stroke', i === idx ? PRIMARY : BORDER).attr('stroke-width', i === idx ? 2.5 : 1.5);
+                });
+                if (idx !== lastIdx) {
+                    lastIdx = idx;
+                    cnt.select('tspan').text(idx >= 0 ? 'passo ' + (idx + 1) + ' de 6' : 'recomeçando');
+                }
+                pill(idx);
+            });
+        }
+        window.MIRA_SLIDES.push({ id: 'roadmap-stage', fn: animateRoadmap, name: 'roadmap' });
+
+        // ===== SLIDE 16: curva da resistência à mudança =====
+        // Loop: a curva da moral se desenha; depois um ponto a percorre continuamente do presente ao futuro,
+        // acendendo a etapa da mudança (faixa de cima), a fase de consciência e cada marco por onde passa.
+        function animateMudanca() {
+            const c = makeCtx('mudanca', 'mudanca-stage'), svg = c.svg;
+            const pill = pillSync('mudanca', 5);
+            const X0 = 100, SW = 224;
+            const chev = ['Cria uma\nvisão', 'Avalia o\nestado atual', 'Desenvolve o\n“deveria ser”', 'Implementa\no modelo', 'Mede o\nimpacto'];
+            const fases = ['Sem consciência', 'Consciente', 'Compreensão', 'Convencimento', 'Internalização'];
+
+            const chevs = chev.map((ch, i) => {
+                const x = X0 + i * SW, g = svg.append('g');
+                const p = g.append('path').attr('d', 'M' + x + ',26 L' + (x + SW - 18) + ',26 L' + (x + SW + 6) + ',62 L' + (x + SW - 18) + ',98 L' + x + ',98 L' + (x + (i ? 24 : 0)) + ',62 Z')
+                    .attr('fill', PILLBG).attr('stroke', SOFT).attr('stroke-width', 1.8);
+                txt(g, x + SW / 2 + 4, 56, ch, { size: 15, weight: 700, lh: 1.15 });
+                fadeIn(g, 100 + i * 120, 500);
+                return p;
+            });
+            const fl = fases.map((f, i) => {
+                const l = txt(svg, X0 + SW * i + SW / 2, 134, f, { size: 16, weight: 800, fill: SOFT });
+                fadeIn(l, 500 + i * 100, 400);
+                return l;
+            });
+            const grid = svg.append('g');
+            [1, 2, 3, 4].forEach(i => grid.append('line').attr('x1', X0 + SW * i).attr('y1', 150).attr('x2', X0 + SW * i).attr('y2', 660)
+                .attr('stroke', SOFTER).attr('stroke-width', 1.5).attr('stroke-dasharray', '2 6'));
+            grid.append('line').attr('x1', 95).attr('y1', 160).attr('x2', 95).attr('y2', 662).attr('stroke', SOFT).attr('stroke-width', 2);
+            grid.append('line').attr('x1', 95).attr('y1', 662).attr('x2', 1225).attr('y2', 662).attr('stroke', SOFT).attr('stroke-width', 2);
+            txt(grid, 0, 0, 'Moral', { size: 16, weight: 800, fill: SOFT }).attr('transform', 'translate(76,410) rotate(-90)');
+            txt(grid, 1222, 690, 'Tempo →', { size: 16, weight: 800, fill: SOFT, anchor: 'end' });
+            fadeIn(grid, 300, 500);
+
+            const pts = [[105, 300], [200, 268], [330, 330], [410, 440], [450, 500], [490, 560], [575, 610], [730, 528], [940, 400], [1130, 275], [1215, 250]];
+            const marks = [
+                [1, 'Imobilização', 0, 30], [2, 'Negação', 14, -10, 'start'], [3, 'Raiva', 16, 4, 'start'], [4, 'Barganha', 16, 4, 'start'],
+                [5, 'Depressão', 16, 8, 'start'], [6, 'Aceitação da realidade', 0, 32], [7, 'Teste', -14, -12, 'end'],
+                [8, 'Fusão do passado com o futuro', -14, -14, 'end'], [9, 'Compromisso', 0, 32]
+            ];
+            const curve = svg.append('path').attr('d', d3.line().curve(d3.curveCatmullRom.alpha(0.5))(pts))
+                .attr('fill', 'none').attr('stroke', TEXT).attr('stroke-width', 3);
+            const cn = curve.node(), CL = cn.getTotalLength();
+            curve.attr('stroke-dasharray', CL + ' ' + CL);
+            const mk = marks.map(m => {
+                const [x, y] = pts[m[0]], g = svg.append('g').attr('opacity', 0);
+                const xx = g.append('path').attr('d', 'M' + (x - 7) + ',' + (y - 7) + ' L' + (x + 7) + ',' + (y + 7) + ' M' + (x + 7) + ',' + (y - 7) + ' L' + (x - 7) + ',' + (y + 7))
+                    .attr('stroke', SOFT).attr('stroke-width', 3);
+                const l = txt(g, x + m[2], y + m[3], m[1], { size: 15, weight: 700, fill: SOFT, anchor: m[4] || 'middle' });
+                return { g: g, xx: xx, l: l, x: x };
+            });
+
+            const lead = svg.append('g');
+            rbox(lead, 0, 0, 390, 100, 14, { fill: ICONBG, stroke: ICONBORDER, sw: 1.5 });
+            txt(lead, 18, 28, 'Patrocínio da liderança', { size: 17, weight: 800, fill: PRIMARY, anchor: 'start' });
+            ['empoderar o gestor de processos', 'quebrar as barreiras funcionais', 'participar dos ciclos de acompanhamento'].forEach((s, i) =>
+                txt(lead, 18, 52 + i * 20, '· ' + s, { size: 14, weight: 600, fill: SOFT, anchor: 'start' }));
+            enter(lead, 830, 548, 1800);
+
+            const dot = svg.append('g').attr('opacity', 0);
+            const dh = dot.append('circle').attr('r', 14).attr('fill', 'none').attr('stroke', PRIMARY).attr('stroke-width', 2);
+            dot.append('circle').attr('r', 10).attr('fill', PRIMARY).style('filter', 'drop-shadow(0 0 10px ' + PRIMARY + ')');
+
+            const T0 = 3000, PERIOD = 10000;
+            c.frame(t => {
+                curve.attr('stroke-dashoffset', CL * (1 - eio(seg(t, 700, 2700))));
+                mk.forEach((m, i) => m.g.attr('opacity', seg(t, 900 + i * 200, 1200 + i * 200)));
+                if (t < T0) return;
+                const u = ((t - T0) % PERIOD) / PERIOD;
+                const p = pointOn(cn, u);
+                dot.attr('transform', 'translate(' + p.x + ',' + p.y + ')').attr('opacity', seg(u, 0, 0.02) * (1 - seg(u, 0.98, 1)));
+                dh.attr('r', 14 + 9 * cyc(t, 800)).attr('opacity', 1 - cyc(t, 800));
+                const k = Math.max(0, Math.min(4, Math.floor((p.x - X0) / SW)));
+                chevs.forEach((c2, i) => c2.attr('fill', i === k ? ICONBG : PILLBG).attr('stroke', i === k ? PRIMARY : SOFT).attr('stroke-width', i === k ? 3 : 1.8));
+                fl.forEach((l, i) => l.attr('fill', i === k ? PRIMARY : SOFT));
+                mk.forEach(m => {
+                    const on = Math.abs(p.x - m.x) < 30;
+                    m.xx.attr('stroke', on ? PRIMARY : SOFT);
+                    m.l.attr('fill', on ? PRIMARY : SOFT);
+                });
+                pill(k);
+            });
+        }
+        window.MIRA_SLIDES.push({ id: 'mudanca-stage', fn: animateMudanca, name: 'mudanca' });
+
+        // ===== SLIDE 17: resultados da Sefaz-SP =====
+        // Loop: em cada caso, a barra "depois" encolhe a partir da barra "antes" e o ganho aparece;
+        // os contadores giram seus anéis sem parar e pulsam na vez deles. Depois as barras voltam e repete.
+        function animateCasos() {
+            const c = makeCtx('casos', 'casos-stage'), svg = c.svg;
+            const pill = pillSync('casos', 5);
+            const R = [
+                { t: 'Sistema de restituição de taxas', s: 'processo automatizado e simplificado', a: 'antes: 8 meses', d: 'depois: 3 meses (estimado)', f: 3 / 8, g: '8 → 3 meses' },
+                { t: 'Processo eletrônico do IPVA', s: 'gestão documental eletrônica', a: 'tramitação física: 100%', d: 'depois: 65%', f: 0.65, g: '−35%' },
+                { t: 'Parcelamento do ITCMD', s: 'mapeamento + sistema da Conta Fiscal', a: 'atividades: 100%', d: 'depois: 70%', f: 0.70, g: '−30%' }
+            ];
+            const BW = 560, YC = i => 150 + i * 175;
+            const rows = R.map((r, i) => {
+                const g = svg.append('g');
+                txt(g, 60, YC(i) - 52, r.t, { size: 21, weight: 800, anchor: 'start' });
+                txt(g, 60, YC(i) - 28, r.s, { size: 15, weight: 600, fill: SOFTER, anchor: 'start' });
+                g.append('rect').attr('x', 60).attr('y', YC(i) - 12).attr('width', BW).attr('height', 26).attr('rx', 8).attr('fill', SOFTER).attr('opacity', 0.35);
+                txt(g, 70, YC(i) + 7, r.a, { size: 14, weight: 700, fill: TEXT, anchor: 'start' });
+                const bar = g.append('rect').attr('x', 60).attr('y', YC(i) + 22).attr('height', 26).attr('rx', 8).attr('width', BW).attr('fill', PRIMARY).attr('opacity', 0.85);
+                const dl = txt(g, 70, YC(i) + 41, r.d, { size: 14, weight: 800, fill: CARD, anchor: 'start' });
+                const gain = txt(g, 860, YC(i) + 30, r.g, { size: 34, weight: 900, fill: PRIMARY, anchor: 'end' });
+                enter(g, 0, 0, 200 + i * 160);
+                return { bar: bar, gain: gain, dl: dl, r: r };
+            });
+
+            const K = [{ n: 228, l: 'fluxogramas', s: '2016 a 2018', y: 205 }, { n: 165, l: 'melhorias', s: 'CGP, CAF e CSTC', y: 495 }];
+            const ctrs = K.map((k, i) => {
+                const g = svg.append('g');
+                g.append('circle').attr('r', 100).attr('fill', PILLBG);
+                const ring = g.append('circle').attr('r', 100).attr('fill', 'none').attr('stroke', i ? ACCENT : PRIMARY).attr('stroke-width', 4).attr('stroke-dasharray', '14 10');
+                const num = txt(g, 0, 8, '0', { size: 52, weight: 900, fill: i ? ACCENT : PRIMARY });
+                txt(g, 0, 40, k.l, { size: 18, weight: 800 });
+                txt(g, 0, 62, k.s, { size: 14, weight: 600, fill: SOFTER });
+                enter(g, 1060, k.y, 500 + i * 200);
+                return { g: g, ring: ring, num: num, k: k };
+            });
+
+            const T0 = 900, CYCLE = 9000;
+            c.frame(t => {
+                ctrs.forEach((o, i) => {
+                    o.ring.attr('stroke-dashoffset', -t * 0.03 * (i ? -1 : 1));
+                    o.num.select('tspan').text(Math.round(o.k.n * eio(seg(t, 700 + i * 300, 2500 + i * 300))));
+                });
+                if (t < T0) return;
+                const lt = (t - T0) % CYCLE;
+                const back = seg(lt, 8300, 8900);
+                let k = -1;
+                rows.forEach((o, i) => {
+                    const s0 = 300 + i * 1500, u = eio(seg(lt, s0, s0 + 1100));
+                    const f = lerp(1, o.r.f, u * (1 - back));
+                    o.bar.attr('width', BW * f);
+                    o.gain.attr('opacity', seg(lt, s0 + 900, s0 + 1300) * (1 - back));
+                    o.dl.attr('opacity', u > 0.3 ? 1 : 0.4);
+                    if (lt >= s0 && lt < s0 + 1500) k = i;
+                });
+                if (lt >= 4800 && lt < 6300) k = 3;
+                if (lt >= 6300 && lt < 7800) k = 4;
+                ctrs.forEach((o, i) => {
+                    const on = k === 3 + i;
+                    o.g.select('circle').attr('fill', on ? ICONBG : PILLBG);
+                    o.ring.attr('stroke-width', on ? 7 : 4);
+                });
+                pill(k);
+            });
+        }
+        window.MIRA_SLIDES.push({ id: 'casos-stage', fn: animateCasos, name: 'casos' });
+
+        // ===== SLIDE 18: síntese =====
+        // Loop: o anel do escritório gira em torno da governança; um cometa percorre os quatro nós
+        // (cadeia de valor, priorização, redesenho, indicadores), acendendo cada um; pulsos de diretriz
+        // saem do centro e o indicador volta ao centro, sem parar.
+        function animateSintese() {
+            const c = makeCtx('sintese', 'sintese-stage'), svg = c.svg;
+            const pill = pillSync('sintese', 4);
+            const cx = 640, cy = 360, rx = 420, ry = 230;
+            const orbit = svg.append('ellipse').attr('cx', cx).attr('cy', cy).attr('rx', rx).attr('ry', ry)
+                .attr('fill', 'none').attr('stroke', ICONBORDER).attr('stroke-width', 3).attr('stroke-dasharray', '10 9');
+            fadeIn(orbit, 100, 700);
+            txt(svg, cx - rx * 0.707 - 30, cy - ry * 0.707 - 10, 'Escritório de Processos', { size: 15, weight: 800, fill: SOFTER });
+            txt(svg, cx + rx * 0.707 + 40, cy + ry * 0.707 + 22, 'donos de processo', { size: 15, weight: 800, fill: SOFTER });
+
+            const N = [
+                { n: 'Cadeia de valor', s: 'o que gera valor', a: -Math.PI / 2 },
+                { n: 'Priorização', s: 'onde investir', a: 0 },
+                { n: 'Redesenho e implantação', s: 'mudar o processo', a: Math.PI / 2 },
+                { n: 'Indicadores', s: 'medir e reportar', a: Math.PI }
+            ].map(o => Object.assign(o, { x: cx + Math.cos(o.a) * rx, y: cy + Math.sin(o.a) * ry }));
+            const spokes = N.map(o => svg.append('line').attr('x1', cx).attr('y1', cy).attr('x2', o.x).attr('y2', o.y)
+                .attr('stroke', BORDER).attr('stroke-width', 2).attr('stroke-dasharray', '4 6'));
+
+            const ctr = svg.append('g');
+            const ch = ctr.append('circle').attr('r', 100).attr('fill', 'none').attr('stroke', PRIMARY).attr('stroke-width', 2);
+            ctr.append('circle').attr('r', 100).attr('fill', CARD).attr('stroke', PRIMARY).attr('stroke-width', 3);
+            txt(ctr, 0, -8, 'Governança', { size: 24, weight: 900 });
+            txt(ctr, 0, 18, 'de TI', { size: 24, weight: 900, fill: PRIMARY });
+            txt(ctr, 0, 46, 'avalia · dirige · monitora', { size: 13, weight: 700, fill: SOFTER });
+            enter(ctr, cx, cy, 200);
+
+            const nodes = N.map((o, i) => {
+                const g = svg.append('g');
+                const r = rbox(g, -135, -38, 270, 76, 18, { fill: CARD, stroke: SOFT, sw: 2 });
+                txt(g, 0, -4, o.n, { size: 19, weight: 800 });
+                txt(g, 0, 20, o.s, { size: 15, weight: 600, fill: SOFTER });
+                enter(g, o.x, o.y, 400 + i * 150);
+                return r;
+            });
+            const comet = svg.append('circle').attr('r', 11).attr('fill', PRIMARY).attr('opacity', 0)
+                .style('filter', 'drop-shadow(0 0 12px ' + PRIMARY + ')');
+            const trail = d3.range(8).map(i => svg.append('circle').attr('r', 7 - i * 0.7).attr('fill', PRIMARY).attr('opacity', 0));
+            const outD = svg.append('circle').attr('r', 6).attr('fill', ACCENT).attr('opacity', 0);
+            const inD = svg.append('circle').attr('r', 6).attr('fill', PRIMARY).attr('opacity', 0);
+
+            const T0 = 1400, PERIOD = 12000;
+            c.frame(t => {
+                orbit.attr('stroke-dashoffset', -t * 0.02);
+                ch.attr('r', 100 + 22 * cyc(t, 2000)).attr('opacity', 0.6 * (1 - cyc(t, 2000)));
+                if (t < T0) return;
+                const tt = t - T0, u = (tt % PERIOD) / PERIOD;
+                const ang = -Math.PI / 2 + u * 2 * Math.PI;
+                comet.attr('cx', cx + Math.cos(ang) * rx).attr('cy', cy + Math.sin(ang) * ry).attr('opacity', seg(tt, 0, 400));
+                trail.forEach((d, i) => {
+                    const b = ang - (i + 1) * 0.04;
+                    d.attr('cx', cx + Math.cos(b) * rx).attr('cy', cy + Math.sin(b) * ry).attr('opacity', (0.4 - i * 0.045) * seg(tt, 0, 400));
+                });
+                let k = -1;
+                nodes.forEach((r, i) => {
+                    let d = Math.abs(u - i / 4); d = Math.min(d, 1 - d);
+                    const on = d < 0.06;
+                    if (on) k = i;
+                    r.attr('stroke', on ? PRIMARY : SOFT).attr('stroke-width', on ? 3.5 : 2).attr('fill', on ? ICONBG : CARD);
+                });
+                spokes.forEach((s, i) => s.attr('stroke', i === k ? PRIMARY : BORDER));
+                const uo = (tt % 3000) / 3000, tgt = N[Math.floor(tt / 3000) % 3];
+                outD.attr('cx', lerp(cx, tgt.x, uo)).attr('cy', lerp(cy, tgt.y, uo)).attr('opacity', Math.sin(uo * Math.PI));
+                const ui = ((tt + 1500) % 3000) / 3000;
+                inD.attr('cx', lerp(N[3].x, cx, ui)).attr('cy', lerp(N[3].y, cy, ui)).attr('opacity', Math.sin(ui * Math.PI));
+                pill(k);
+            });
+        }
+        window.MIRA_SLIDES.push({ id: 'sintese-stage', fn: animateSintese, name: 'sintese' });
+
+        // === Gatilhos: dispara ao entrar no viewport, rearma ao sair ===
+        function setPauseBtn(name, paused) {
+            const b = document.getElementById('pause-' + name);
+            if (!b) return;
+            b.classList.toggle('paused', paused);
+            b.innerHTML = paused
+                ? '<i data-lucide="play" class="w-4 h-4"></i>Continuar'
+                : '<i data-lucide="pause" class="w-4 h-4"></i>Pausar';
+            lucide.createIcons();
+        }
+
+        function setupAnimationTriggers() {
+            const stages = window.MIRA_SLIDES.map(function (s) {
+                return Object.assign({}, s, { stage: document.getElementById(s.id) });
+            }).filter(function (s) { return s.stage; });
+
+            const obs = new IntersectionObserver(function (entries) {
+                entries.forEach(function (entry) {
+                    const item = stages.find(function (s) { return s.stage === entry.target; });
+                    if (!item) { return; }
+                    if (entry.isIntersecting && !item.rodando) {
+                        item.rodando = true;
+                        window.__paused[item.name] = false;
+                        setPauseBtn(item.name, false);
+                        item.fn();
+                    } else if (!entry.isIntersecting && item.rodando) {
+                        item.rodando = false;
+                        window.__gen[item.name] = (window.__gen[item.name] || 0) + 1;
+                    }
+                });
+            }, { threshold: 0.3 });
+
+            stages.forEach(function (item) {
+                obs.observe(item.stage);
+                setPauseBtn(item.name, false);
+                const rb = document.getElementById('replay-' + item.name);
+                if (rb) {
+                    rb.addEventListener('click', function () {
+                        window.__paused[item.name] = false;
+                        setPauseBtn(item.name, false);
+                        item.fn();
+                    });
+                }
+                const pb = document.getElementById('pause-' + item.name);
+                if (pb) {
+                    pb.addEventListener('click', function () {
+                        window.__paused[item.name] = !window.__paused[item.name];
+                        setPauseBtn(item.name, window.__paused[item.name]);
+                    });
+                }
+            });
+        }
+
+        setupAnimationTriggers();
+        lucide.createIcons();
+
+        // === CONTROLES DE SLIDE: navegação card-a-card (progresso + botão + teclado) ===
+        (function () {
+            const cardSections = Array.from(document.querySelectorAll('body > section'));
+            if (cardSections.length === 0) return;
+
+            const progress = document.getElementById('mira-progress');
+            const nextBtn = document.getElementById('mira-next');
+            const nextIcon = document.getElementById('mira-next-icon');
+
+            const atBottom = () =>
+                (window.scrollY + window.innerHeight) >= (document.documentElement.scrollHeight - 100);
+
+            function currentIndex() {
+                const y = window.scrollY + window.innerHeight * 0.3;
+                let idx = -1;
+                for (let i = 0; i < cardSections.length; i++) {
+                    if (cardSections[i].offsetTop <= y) idx = i;
+                }
+                return idx;
+            }
+
+            function goTo(i) {
+                const idx = Math.max(0, Math.min(cardSections.length - 1, i));
+                cardSections[idx].scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }
+
+            window.addEventListener('scroll', () => {
+                const docH = document.documentElement.scrollHeight - window.innerHeight;
+                progress.style.width = (docH > 0 ? (window.scrollY / docH) * 100 : 0) + '%';
+                nextBtn.classList.toggle('visible', window.scrollY > 300);
+                nextIcon.setAttribute('data-lucide', atBottom() ? 'chevron-up' : 'chevron-down');
+                lucide.createIcons();
+            });
+
+            nextBtn.addEventListener('click', () => {
+                if (atBottom()) { window.scrollTo({ top: 0, behavior: 'smooth' }); return; }
+                goTo(currentIndex() + 1);
+            });
+
+            document.addEventListener('keydown', (e) => {
+                if (['ArrowRight', 'ArrowDown', 'PageDown'].includes(e.key)) {
+                    e.preventDefault();
+                    goTo(currentIndex() + 1);
+                } else if (['ArrowLeft', 'ArrowUp', 'PageUp'].includes(e.key)) {
+                    e.preventDefault();
+                    const idx = currentIndex();
+                    if (idx <= 0) window.scrollTo({ top: 0, behavior: 'smooth' });
+                    else goTo(idx - 1);
+                } else if (e.key === 'Home') {
+                    e.preventDefault();
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                } else if (e.key === 'End') {
+                    e.preventDefault();
+                    goTo(cardSections.length - 1);
+                } else if (e.key.toLowerCase() === 'f') {
+                    if (!document.fullscreenElement) document.documentElement.requestFullscreen();
+                    else document.exitFullscreen();
+                }
+            });
+        })();
+    </script>
+</body>
+
+</html>
