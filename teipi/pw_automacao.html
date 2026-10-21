@@ -1505,7 +1505,7 @@ body {
         <div class="w-full max-w-6xl" data-aos="fade-up" data-aos-delay="100">
             <div class="text-center mb-2">
                 <h2 class="text-4xl md:text-5xl font-bold mb-2">O roteiro da <span class="primary-color italic">aula prática</span></h2>
-                <p class="text-softer italic text-xl md:text-2xl font-medium">Onze blocos, com dois intervalos. Pode ser dividido em dois encontros.</p>
+                <p class="text-softer italic text-xl md:text-2xl font-medium">Dois encontros de prática, com 2 horas cada.</p>
             </div>
             <div class="glass-card rounded-2xl p-1 md:p-2 relative">
                 <div class="flex items-center justify-between mb-2 px-1">
@@ -1516,7 +1516,7 @@ body {
                         <div>
                             <p class="mb-1"><span class="nivel-chip">Nível 4 · Prática<span class="nivel-dots"><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i></span></span></p>
                             <p class="font-bold text-base md:text-lg">Cronograma da prática</p>
-                            <p class="text-softer text-sm md:text-base italic font-medium">Cor de cada bloco indica o formato.</p>
+                            <p class="text-softer text-sm md:text-base italic font-medium">Cada encontro tem 120 minutos; acompanhe as etapas e seus tempos.</p>
                         </div>
                     </div>
                     <div class="anim-ctl" data-ctl="roteiro"><button type="button" class="ctl-speed" title="Velocidade da animação"><i data-lucide="gauge" class="w-4 h-4"></i><span class="ctl-val">1x</span></button><span class="ctl-sep"></span><button type="button" class="ctl-minus" title="Diminuir o palco"><i data-lucide="minus" class="w-3 h-3"></i></button><span class="ctl-val ctl-size">100%</span><button type="button" class="ctl-plus" title="Aumentar o palco"><i data-lucide="plus" class="w-3 h-3"></i></button></div>
@@ -1556,8 +1556,120 @@ body {
             </div>
         </div>
     </section>
-    <!-- ============ S24: De onde veio esta aula ============ -->
+    <!-- ============ S24: Tabela de locators ============ -->
     <section id="s24" class="min-h-screen flex flex-col items-center justify-center px-6 pt-3 pb-6">
+        <div class="w-full max-w-6xl" data-aos="fade-up" data-aos-delay="100">
+            <div class="text-center mb-2">
+                <h2 class="text-4xl md:text-5xl font-bold mb-2">Tabela de <span class="primary-color italic">locators</span></h2>
+                <p class="text-softer italic text-xl md:text-2xl font-medium">Escolha o localizador que descreve melhor o elemento.</p>
+            </div>
+            <div class="glass-card rounded-2xl p-1 md:p-2 relative">
+                <div class="flex items-center justify-between mb-2 px-1">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-lg flex items-center justify-center" style="background: var(--mira-icon-bg);">
+                            <i data-lucide="map-pin" class="w-5 h-5 primary-color"></i>
+                        </div>
+                        <div>
+                            <p class="mb-1"><span class="nivel-chip">Nível 4 · Prática<span class="nivel-dots"><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i></span></span></p>
+                            <p class="font-bold text-base md:text-lg">Como encontrar elementos</p>
+                            <p class="text-softer text-sm md:text-base italic font-medium">Prefira locators semânticos; use CSS quando necessário.</p>
+                        </div>
+                    </div>
+                    <div class="anim-ctl" data-ctl="locators-tabela"><button type="button" class="ctl-speed" title="Velocidade da animação"><i data-lucide="gauge" class="w-4 h-4"></i><span class="ctl-val">1x</span></button><span class="ctl-sep"></span><button type="button" class="ctl-minus" title="Diminuir o palco"><i data-lucide="minus" class="w-3 h-3"></i></button><span class="ctl-val ctl-size">100%</span><button type="button" class="ctl-plus" title="Aumentar o palco"><i data-lucide="plus" class="w-3 h-3"></i></button></div>
+                    <button id="pause-locators-tabela" class="pause-btn" type="button" aria-label="Pausar animação"></button>
+                    <button id="replay-locators-tabela" class="replay-btn" type="button"><i data-lucide="rotate-cw" class="w-4 h-4"></i>Replay</button>
+                </div>
+                <!-- @MIRA:SIZE 3/10 -->
+                <div class="anim-stage" id="locators-tabela-stage">
+                    <svg id="locators-tabela-svg" viewBox="0 0 1280 720" preserveAspectRatio="xMidYMid meet"></svg>
+                </div>
+                <div class="border-t pt-1 mt-1 mb-1" style="border-color: var(--mira-card-border);">
+                    <p class="text-sm uppercase tracking-[3px] text-softer text-center font-bold mb-2">Boas escolhas de locator</p>
+                    <div class="grid grid-cols-2 md:grid-cols-4 gap-2">
+                        <div class="attribute-pill text-center p-2 rounded-xl" id="locators-tabela-pill-0">
+                            <i data-lucide="accessibility" class="w-4 h-4 primary-color mx-auto mb-1"></i>
+                            <p class="text-base font-bold tracking-wide">Semânticos</p>
+                            <p class="text-xs text-softer mt-0.5">role e texto acessível</p>
+                        </div>
+                        <div class="attribute-pill text-center p-2 rounded-xl" id="locators-tabela-pill-1">
+                            <i data-lucide="tag" class="w-4 h-4 primary-color mx-auto mb-1"></i>
+                            <p class="text-base font-bold tracking-wide">Formulários</p>
+                            <p class="text-xs text-softer mt-0.5">label e placeholder</p>
+                        </div>
+                        <div class="attribute-pill text-center p-2 rounded-xl" id="locators-tabela-pill-2">
+                            <i data-lucide="fingerprint" class="w-4 h-4 primary-color mx-auto mb-1"></i>
+                            <p class="text-base font-bold tracking-wide">Testes</p>
+                            <p class="text-xs text-softer mt-0.5">data-testid estável</p>
+                        </div>
+                        <div class="attribute-pill text-center p-2 rounded-xl" id="locators-tabela-pill-3">
+                            <i data-lucide="code" class="w-4 h-4 primary-color mx-auto mb-1"></i>
+                            <p class="text-base font-bold tracking-wide">CSS</p>
+                            <p class="text-xs text-softer mt-0.5">alternativa quando necessário</p>
+                        </div>
+                    </div>
+                    <p class="fonte-linha">Fonte: playwright.dev/python/docs/locators.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+    <!-- ============ S25: Tabela de interações ============ -->
+    <section id="s25" class="min-h-screen flex flex-col items-center justify-center px-6 pt-3 pb-6">
+        <div class="w-full max-w-6xl" data-aos="fade-up" data-aos-delay="100">
+            <div class="text-center mb-2">
+                <h2 class="text-4xl md:text-5xl font-bold mb-2">Tabela de <span class="primary-color italic">interações</span></h2>
+                <p class="text-softer italic text-xl md:text-2xl font-medium">Ações comuns para navegar, preencher e conferir páginas.</p>
+            </div>
+            <div class="glass-card rounded-2xl p-1 md:p-2 relative">
+                <div class="flex items-center justify-between mb-2 px-1">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-lg flex items-center justify-center" style="background: var(--mira-icon-bg);">
+                            <i data-lucide="mouse-pointer-click" class="w-5 h-5 primary-color"></i>
+                        </div>
+                        <div>
+                            <p class="mb-1"><span class="nivel-chip">Nível 4 · Prática<span class="nivel-dots"><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i></span></span></p>
+                            <p class="font-bold text-base md:text-lg">O que fazer com os elementos</p>
+                            <p class="text-softer text-sm md:text-base italic font-medium">Use locators claros e deixe o Playwright aguardar as ações.</p>
+                        </div>
+                    </div>
+                    <div class="anim-ctl" data-ctl="interacoes-tabela"><button type="button" class="ctl-speed" title="Velocidade da animação"><i data-lucide="gauge" class="w-4 h-4"></i><span class="ctl-val">1x</span></button><span class="ctl-sep"></span><button type="button" class="ctl-minus" title="Diminuir o palco"><i data-lucide="minus" class="w-3 h-3"></i></button><span class="ctl-val ctl-size">100%</span><button type="button" class="ctl-plus" title="Aumentar o palco"><i data-lucide="plus" class="w-3 h-3"></i></button></div>
+                    <button id="pause-interacoes-tabela" class="pause-btn" type="button" aria-label="Pausar animação"></button>
+                    <button id="replay-interacoes-tabela" class="replay-btn" type="button"><i data-lucide="rotate-cw" class="w-4 h-4"></i>Replay</button>
+                </div>
+                <!-- @MIRA:SIZE 3/10 -->
+                <div class="anim-stage" id="interacoes-tabela-stage">
+                    <svg id="interacoes-tabela-svg" viewBox="0 0 1280 720" preserveAspectRatio="xMidYMid meet"></svg>
+                </div>
+                <div class="border-t pt-1 mt-1 mb-1" style="border-color: var(--mira-card-border);">
+                    <p class="text-sm uppercase tracking-[3px] text-softer text-center font-bold mb-2">Ações essenciais da API</p>
+                    <div class="grid grid-cols-2 md:grid-cols-4 gap-2">
+                        <div class="attribute-pill text-center p-2 rounded-xl" id="interacoes-tabela-pill-0">
+                            <i data-lucide="navigation" class="w-4 h-4 primary-color mx-auto mb-1"></i>
+                            <p class="text-base font-bold tracking-wide">Navegar</p>
+                            <p class="text-xs text-softer mt-0.5">goto e URL</p>
+                        </div>
+                        <div class="attribute-pill text-center p-2 rounded-xl" id="interacoes-tabela-pill-1">
+                            <i data-lucide="keyboard" class="w-4 h-4 primary-color mx-auto mb-1"></i>
+                            <p class="text-base font-bold tracking-wide">Interagir</p>
+                            <p class="text-xs text-softer mt-0.5">click, fill e press</p>
+                        </div>
+                        <div class="attribute-pill text-center p-2 rounded-xl" id="interacoes-tabela-pill-2">
+                            <i data-lucide="list-checks" class="w-4 h-4 primary-color mx-auto mb-1"></i>
+                            <p class="text-base font-bold tracking-wide">Formulários</p>
+                            <p class="text-xs text-softer mt-0.5">check e select_option</p>
+                        </div>
+                        <div class="attribute-pill text-center p-2 rounded-xl" id="interacoes-tabela-pill-3">
+                            <i data-lucide="scan-eye" class="w-4 h-4 primary-color mx-auto mb-1"></i>
+                            <p class="text-base font-bold tracking-wide">Conferir</p>
+                            <p class="text-xs text-softer mt-0.5">ler texto e capturar</p>
+                        </div>
+                    </div>
+                    <p class="fonte-linha">Fonte: playwright.dev/python/docs/library e roteiro da aula prática, seção 6.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+    <!-- ============ S26: De onde veio esta aula ============ -->
+    <section id="s26" class="min-h-screen flex flex-col items-center justify-center px-6 pt-3 pb-6">
         <div class="w-full max-w-6xl" data-aos="fade-up" data-aos-delay="100">
             <div class="text-center mb-2">
                 <h2 class="text-4xl md:text-5xl font-bold mb-2">De onde veio esta <span class="primary-color italic">aula</span></h2>
@@ -3356,56 +3468,140 @@ body {
         }
         window.MIRA_SLIDES.push({ id: 'instalar-stage', fn: animateInstalar, name: 'instalar' });
 
+        function animateTabela(name, rows) {
+            const c = makeCtx(name, name + '-stage'), svg = c.svg;
+            const pill = pillSync(name, 4);
+            const x0 = 38, x1 = 1242, top = 12, col1 = 245, col2 = 770;
+            const rowH = rows.length > 10 ? 28 : (rows.length > 7 ? 31 : 35);
+            rbox(svg, x0, top, x1 - x0, 30, 8, { fill: ICONBG, stroke: PRIMARY, sw: 1.5 });
+            txt(svg, x0 + 18, top + 20, 'RECURSO', { size: 12, weight: 900, fill: PRIMARY, anchor: 'start' });
+            txt(svg, col1 + 18, top + 20, 'EXEMPLO', { size: 12, weight: 900, fill: PRIMARY, anchor: 'start' });
+            txt(svg, col2 + 18, top + 20, 'QUANDO USAR', { size: 12, weight: 900, fill: PRIMARY, anchor: 'start' });
+            const tableRows = rows.map((row, i) => {
+                const y = top + 34 + i * rowH;
+                const bg = rbox(svg, x0, y, x1 - x0, rowH - 2, 7, { fill: CARD, stroke: BORDER, sw: 1 });
+                txt(svg, x0 + 18, y + rowH / 2 + 5, row[0], { size: rows.length > 10 ? 12.5 : 14, weight: 800, anchor: 'start' });
+                code(svg, col1 + 18, y + rowH / 2 + 5, row[1], { size: rows.length > 10 ? 11.5 : 13, weight: 700, fill: PRIMARY });
+                txt(svg, col2 + 18, y + rowH / 2 + 5, row[2], { size: rows.length > 10 ? 12 : 13.5, weight: 700, fill: SOFT, anchor: 'start' });
+                return bg;
+            });
+            const cuts = [col1, col2];
+            cuts.forEach(x => svg.append('line').attr('x1', x).attr('x2', x)
+                .attr('y1', top).attr('y2', top + 34 + rows.length * rowH - 2)
+                .attr('stroke', BORDER).attr('stroke-width', 1));
+            c.frame(t => {
+                if (t < 700) return;
+                const k = Math.floor(((t - 700) % (rows.length * 900)) / 900);
+                tableRows.forEach((r, i) => r.attr('stroke', i === k ? PRIMARY : BORDER)
+                    .attr('stroke-width', i === k ? 2.5 : 1));
+                pill(k % 4);
+            });
+        }
+
+        // ===== SLIDE 24: TABELA DE LOCATORS =====
+        function animateLocatorsTabela() {
+            animateTabela('locators-tabela', [
+                ['Papel', 'page.get_by_role("button", name="Login")', 'Botões e links por função e nome'],
+                ['Papel', 'page.get_by_role("link", name="Próxima")', 'Links identificados pelo nome acessível'],
+                ['Cabeçalho', 'page.get_by_role("heading", name="Catálogo")', 'Títulos e subtítulos da página'],
+                ['Rótulo', 'page.get_by_label("E-mail")', 'Campos de formulário com label'],
+                ['Texto', 'page.get_by_text("Continuar")', 'Texto visível da página'],
+                ['Placeholder', 'page.get_by_placeholder("Buscar")', 'Campo identificado pela dica'],
+                ['Texto alternativo', 'page.get_by_alt_text("Logo da escola")', 'Imagens com descrição acessível'],
+                ['Test ID', 'page.get_by_test_id("salvar")', 'Atributo de teste estável'],
+                ['Filtro', 'page.locator(".quote").filter(has_text="Einstein")', 'Refinar uma lista pelo texto'],
+                ['CSS', 'page.locator(".quote")', 'Classes e atributos do HTML'],
+                ['CSS', 'page.locator("li.next a")', 'Combinação curta de elementos']
+            ]);
+        }
+        window.MIRA_SLIDES.push({ id: 'locators-tabela-stage', fn: animateLocatorsTabela, name: 'locators-tabela' });
+
+        // ===== SLIDE 25: TABELA DE INTERAÇÕES =====
+        function animateInteracoesTabela() {
+            animateTabela('interacoes-tabela', [
+                ['Navegar', 'page.goto("https://exemplo.com")', 'Abrir uma URL'],
+                ['Clicar', 'page.get_by_role("button", name="Login").click()', 'Ativar botão, link ou controle'],
+                ['Preencher', 'page.get_by_label("E-mail").fill("aluno@exemplo.com")', 'Substituir o valor de um campo'],
+                ['Limpar', 'page.locator("#busca").clear()', 'Apagar o conteúdo de um campo'],
+                ['Pressionar', 'page.locator("#buscar").press("Enter")', 'Enviar ou acionar uma tecla'],
+                ['Marcar', 'page.locator("#termos").check()', 'Marcar um checkbox'],
+                ['Desmarcar', 'page.locator("#termos").uncheck()', 'Desmarcar um checkbox'],
+                ['Selecionar', 'page.locator("#estado").select_option("PE")', 'Escolher item de um select'],
+                ['Passar o mouse', 'page.get_by_text("Ajuda").hover()', 'Exibir dica ou menu suspenso'],
+                ['Ler texto', 'page.locator(".resultado").inner_text()', 'Obter o texto visível'],
+                ['Contar', 'page.locator(".produto").count()', 'Saber quantos elementos existem'],
+                ['Screenshot', 'page.screenshot(path="tela.png")', 'Registrar evidência da página']
+            ]);
+        }
+        window.MIRA_SLIDES.push({ id: 'interacoes-tabela-stage', fn: animateInteracoesTabela, name: 'interacoes-tabela' });
+
         // ===== SLIDE 23: ROTEIRO DA AULA PRÁTICA =====
-        // Loop: a agulha percorre os onze blocos do cronograma; o bloco da vez sobe, o cartão de baixo
-        // mostra tempo e conteúdo, e a pílula do formato acende.
+        // Loop: a agulha percorre os dois encontros separadamente; o cartão mostra a etapa ativa.
         function animateRoteiro() {
             const c = makeCtx('roteiro', 'roteiro-stage'), svg = c.svg;
             const pill = pillSync('roteiro', 4);
-            const B = [
-                [20, 'O que é Playwright e para que serve', 0], [25, 'Instalação e primeiro script', 1], [25, 'Browser, Context, Page, Locator, auto-waiting', 0],
-                [10, 'Intervalo', 3], [35, 'Comandos essenciais', 1], [45, 'Tutorial 1: coletar dados e exportar CSV', 1], [10, 'Intervalo', 3],
-                [35, 'Tutorial 2: login, sessão, formulário e download', 1], [20, 'Depuração: Codegen, Inspector e Trace Viewer', 2],
-                [15, 'Introdução ao Pytest com Playwright', 2], [10, 'Fechamento e avaliação', 0]
+            const encontros = [
+                [
+                    [5, 'Desafio de abertura', 0], [15, 'Preparar o ambiente', 1],
+                    [15, 'Primeiro controle do navegador', 2], [15, 'Encontrar e interagir', 1],
+                    [10, 'Pausa', 3], [15, 'Coletar uma página', 1],
+                    [20, 'Percorrer as páginas', 1], [20, 'Exportar CSV', 1],
+                    [5, 'Fechamento rápido', 0]
+                ],
+                [
+                    [5, 'Retomada', 0], [25, 'Automatizar login válido e inválido', 1],
+                    [10, 'Pausa', 3], [25, 'Explorar checkboxes, dropdown e download', 1],
+                    [25, 'Criar e executar testes com Pytest', 1],
+                    [20, 'Desafio de depuração', 2], [10, 'Apresentação e avaliação', 0]
+                ]
             ];
             const fmt = ['Exposição', 'Hands-on', 'Demonstração', 'Intervalo'];
             const col = [SOFTER, PRIMARY, ACCENT, BORDER];
-            const total = B.reduce((a, b) => a + b[0], 0);
-            const X0 = 40, X1 = 1240, Y = 250, H = 90;
-            let acc = 0;
-            const R = B.map((b, i) => {
-                const x = X0 + (X1 - X0) * acc / total, w = (X1 - X0) * b[0] / total;
-                acc += b[0];
-                const g = svg.append('g');
-                const r = rbox(g, x + 2, Y, w - 4, H, 10, { fill: col[b[2]], stroke: 'none', sw: 0 }).attr('fill-opacity', b[2] === 3 ? 0.6 : 0.3);
-                txt(g, x + w / 2, Y + 40, String(i + 1), { size: 22, weight: 900, fill: b[2] === 3 ? SOFT : TEXT });
-                txt(g, x + w / 2, Y + 68, b[0] + 'min', { size: 13, weight: 700, fill: SOFT });
-                g.attr('opacity', 0).transition().delay(100 + i * 90).duration(350).attr('opacity', 1);
-                return { g: g, r: r, x: x, w: w, b: b };
+            const X0 = 180, X1 = 1240, H = 76, Ys = [182, 296];
+            const R = [];
+            encontros.forEach((B, ei) => {
+                const total = B.reduce((a, b) => a + b[0], 0);
+                let acc = 0;
+                txt(svg, 94, Ys[ei] + 34, 'ENCONTRO ' + (ei + 1), { size: 15, weight: 900, fill: PRIMARY });
+                txt(svg, 94, Ys[ei] + 56, '2 horas', { size: 13, weight: 700, fill: SOFT });
+                B.forEach((b, i) => {
+                    const x = X0 + (X1 - X0) * acc / total, w = (X1 - X0) * b[0] / total;
+                    acc += b[0];
+                    const g = svg.append('g');
+                    const r = rbox(g, x + 2, Ys[ei], w - 4, H, 8, { fill: col[b[2]], stroke: 'none', sw: 0 }).attr('fill-opacity', b[2] === 3 ? 0.6 : 0.3);
+                    txt(g, x + w / 2, Ys[ei] + 32, String(i + 1), { size: 18, weight: 900, fill: b[2] === 3 ? SOFT : TEXT });
+                    txt(g, x + w / 2, Ys[ei] + 56, b[0] + 'm', { size: 12, weight: 700, fill: SOFT });
+                    g.attr('opacity', 0).transition().delay(100 + (ei * 9 + i) * 70).duration(350).attr('opacity', 1);
+                    R.push({ g: g, r: r, x: x, w: w, y: Ys[ei], b: b, ei: ei, i: i });
+                });
             });
-            txt(svg, 640, 70, 'Cronograma da aula prática', { size: 26, weight: 900 });
-            txt(svg, 640, 104, 'cerca de 4 horas, com dois intervalos', { size: 17, weight: 700, fill: SOFT });
+            txt(svg, 640, 62, 'Dois encontros práticos · 2 horas cada', { size: 26, weight: 900 });
+            txt(svg, 640, 96, '120 minutos por encontro · etapas e duração', { size: 17, weight: 700, fill: SOFT });
             const needle = svg.append('g');
-            needle.append('line').attr('y1', Y - 30).attr('y2', Y + H + 20).attr('stroke', TEXT).attr('stroke-width', 3);
-            needle.append('path').attr('d', 'M-9,' + (Y - 40) + ' L9,' + (Y - 40) + ' L0,' + (Y - 26) + ' Z').attr('fill', TEXT);
-            const clock = txt(svg, 640, 180, '', { size: 20, weight: 900, fill: PRIMARY }).attr('font-family', MONO);
+            needle.append('line').attr('y1', -28).attr('y2', H + 12).attr('stroke', TEXT).attr('stroke-width', 3);
+            needle.append('path').attr('d', 'M-9,-38 L9,-38 L0,-24 Z').attr('fill', TEXT);
+            const clock = txt(svg, 640, 402, '', { size: 17, weight: 900, fill: PRIMARY }).attr('font-family', MONO);
             const card = svg.append('g'); fadeIn(card, 1200, 500);
-            const cb = rbox(card, 190, 420, 900, 200, 20, { fill: CARD, stroke: PRIMARY, sw: 3 });
+            const cb = rbox(card, 190, 430, 900, 190, 20, { fill: CARD, stroke: PRIMARY, sw: 3 });
             const cN = txt(card, 640, 478, '', { size: 20, weight: 900, fill: PRIMARY });
-            const cT = txt(card, 640, 530, '', { size: 28, weight: 900 });
-            const cF = txt(card, 640, 580, '', { size: 19, weight: 700, fill: SOFT });
+            const cT = txt(card, 640, 535, '', { size: 27, weight: 900 });
+            const cF = txt(card, 640, 582, '', { size: 19, weight: 700, fill: SOFT });
             c.frame(t => {
                 if (t < 1500) return;
-                const T = t - 1500, P = 22000, u = cyc(T, P);
-                const x = lerp(X0, X1, u);
-                mv(needle, x, 0);
-                const k = R.findIndex(r => x >= r.x && x < r.x + r.w);
-                const ki = k < 0 ? R.length - 1 : k;
-                R.forEach((r, i) => mv(r.g, 0, i === ki ? -14 : 0).select('rect').attr('fill-opacity', i === ki ? 0.5 : (r.b[2] === 3 ? 0.6 : 0.3)));
-                const min = Math.round(u * total);
-                setT(clock, String(Math.floor(min / 60)) + 'h' + String(min % 60).padStart(2, '0'));
-                const b = R[ki].b;
-                setT(cN, 'Bloco ' + (ki + 1) + ' · ' + b[0] + ' min');
+                const T = t - 1500, P = 24000, u = cyc(T, P);
+                const ei = u < 0.5 ? 0 : 1, localU = (u * 2) % 1;
+                const x = lerp(X0, X1, localU), y = Ys[ei];
+                mv(needle, x, y);
+                const active = R.find(r => r.ei === ei && x >= r.x && x < r.x + r.w);
+                const current = active || R.filter(r => r.ei === ei).slice(-1)[0];
+                R.forEach(r => {
+                    const isActive = r === current;
+                    mv(r.g, 0, isActive ? -8 : 0).select('rect').attr('fill-opacity', isActive ? 0.55 : (r.b[2] === 3 ? 0.6 : 0.3));
+                });
+                const min = Math.round(localU * 120);
+                setT(clock, 'Encontro ' + (ei + 1) + ' · ' + String(Math.floor(min / 60)) + 'h' + String(min % 60).padStart(2, '0'));
+                const b = current.b;
+                setT(cN, 'Etapa ' + (current.i + 1) + ' · ' + b[0] + ' min');
                 setT(cT, b[1]);
                 setT(cF, fmt[b[2]]);
                 cb.attr('stroke', col[b[2]] === BORDER ? SOFT : col[b[2]]);
@@ -3452,7 +3648,6 @@ body {
             });
         }
         window.MIRA_SLIDES.push({ id: 'refs-stage', fn: animateRefs, name: 'refs' });
-
 
         function setPauseBtn(name, paused) {
             const b = document.getElementById('pause-' + name);
