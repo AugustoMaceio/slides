@@ -12,5 +12,7 @@
 ### TEIPI - Tópicos Especiais de Informática e Projeto Integrador (Técnico em Desenvolvimento):
 * [Python base para IA](https://augustomaceio.github.io/slides/teipi/py-base-ia.html)
 * [Webscrapping, Automação e Testes com Playwright (versão Python)](https://augustomaceio.github.io/slides/teipi/pw_automacao.html)
+* [Manipular Arquivos e Extrair Texto de PDF e com OCR (versão Python)](https://augustomaceio.github.io/slides/teipi/py-arquivos-pdf-ocr.html)
+* [LLM em Máquina local ou colab (versão Python)](https://augustomaceio.github.io/slides/teipi/llm-local-colab.html)
 
 Desenvolvido com o MIRA do Prof. Sanderson - https://sandeco.github.io/mira-animator/pt/
