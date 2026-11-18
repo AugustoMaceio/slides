@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#f5f6fa">
+    <title>Slides de Aulas · IFAL Campus Maceió</title>
+    <style>
+        :root {
+            color-scheme: light;
+            --ink: #172033;
+            --muted: #64708a;
+            --surface: #ffffff;
+            --line: #e3e7ef;
+            --accent: #5b55d9;
+            --accent-soft: #eeedff;
+            --bg: #f5f6fa;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            min-height: 100vh;
+            margin: 0;
+            background:
+                radial-gradient(ellipse at 12% 0%, #e8eaff 0, transparent 34rem),
+                var(--bg);
+            color: var(--ink);
+            font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+            line-height: 1.6;
+        }
+
+        main {
+            width: min(100% - 2rem, 1024px);
+            margin: 0 auto;
+            padding: 4.5rem 0 2rem;
+        }
+
+        .eyebrow {
+            margin: 0 0 .75rem;
+            color: var(--accent);
+            font-size: .78rem;
+            font-weight: 800;
+            letter-spacing: .14em;
+            text-transform: uppercase;
+        }
+
+        h1 {
+            max-width: 700px;
+            margin: 0;
+            font-size: clamp(2.35rem, 6vw, 4rem);
+            letter-spacing: -.055em;
+            line-height: 1.08;
+        }
+
+        .intro {
+            max-width: 600px;
+            margin: 1rem 0 3rem;
+            color: var(--muted);
+            font-size: 1.08rem;
+        }
+
+        .course + .course {
+            margin-top: 2.5rem;
+        }
+
+        .course-heading {
+            display: flex;
+            align-items: baseline;
+            justify-content: space-between;
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        h2 {
+            margin: 0;
+            font-size: 1.45rem;
+            letter-spacing: -.025em;
+        }
+
+        .count {
+            color: var(--muted);
+            font-size: .88rem;
+            white-space: nowrap;
+        }
+
+        .slides {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(min(100%, 290px), 1fr));
+            gap: .85rem;
+            margin: 0;
+            padding: 0;
+            list-style: none;
+        }
+
+        .slides a {
+            display: flex;
+            min-height: 82px;
+            align-items: center;
+            justify-content: space-between;
+            gap: 1rem;
+            padding: 1.1rem 1.2rem;
+            border: 1px solid var(--line);
+            border-radius: 14px;
+            background: var(--surface);
+            color: var(--ink);
+            font-weight: 650;
+            text-decoration: none;
+            transition: border-color .18s ease, box-shadow .18s ease, transform .18s ease;
+        }
+
+        .slides a:hover {
+            transform: translateY(-2px);
+            border-color: #b9b6f5;
+            box-shadow: 0 10px 24px #242b4812;
+        }
+
+        .slides a:focus-visible {
+            outline: 3px solid var(--accent);
+            outline-offset: 3px;
+        }
+
+        .arrow {
+            display: grid;
+            width: 30px;
+            height: 30px;
+            flex: 0 0 auto;
+            place-items: center;
+            border-radius: 50%;
+            background: var(--accent-soft);
+            color: var(--accent);
+            font-size: 1.1rem;
+        }
+
+        footer {
+            margin-top: 3.5rem;
+            padding-top: 1.25rem;
+            border-top: 1px solid var(--line);
+            color: var(--muted);
+            font-size: .9rem;
+        }
+
+        footer a {
+            color: var(--accent);
+            text-underline-offset: 3px;
+        }
+
+        @media (max-width: 540px) {
+            main {
+                padding-top: 3rem;
+            }
+
+            .intro {
+                margin-bottom: 2.25rem;
+            }
+
+            .course-heading {
+                align-items: flex-start;
+                flex-direction: column;
+                gap: .15rem;
+            }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            *, *::before, *::after {
+                scroll-behavior: auto !important;
+                transition-duration: .01ms !important;
+            }
+        }
+    </style>
+</head>
+<body>
+    <main>
+        <header>
+            <p class="eyebrow">IFAL · Campus Maceió</p>
+            <h1>Slides de aulas</h1>
+            <p class="intro">Materiais de Governança de TI e de Tópicos Especiais de Informática e Projeto Integrador.</p>
+        </header>
+
+        <section class="course" aria-labelledby="goti-title">
+            <div class="course-heading">
+                <h2 id="goti-title">GOTI — Governança de TI</h2>
+                <span class="count">9 apresentações</span>
+            </div>
+            <ul class="slides">
+                <li><a href="goti/index.html"><span>Cap. 3 — Modelo de Governança de TI</span><span class="arrow" aria-hidden="true">↗</span></a></li>
+                <li><a href="goti/resumo-govti-cap1-3.html"><span>Revisão — Capítulos 1 a 3</span><span class="arrow" aria-hidden="true">↗</span></a></li>
+                <li><a href="goti/cap4.html"><span>Cap. 4 — Gestão de Processos e Projetos</span><span class="arrow" aria-hidden="true">↗</span></a></li>
+                <li><a href="goti/goti-bpm.html"><span>BPM e Governança de TI</span><span class="arrow" aria-hidden="true">↗</span></a></li>
+                <li><a href="goti/goti_bpm.html"><span>Governança de TI e BPM</span><span class="arrow" aria-hidden="true">↗</span></a></li>
+                <li><a href="goti/bpmn.html"><span>BPM e BPMN — Exercícios resolvidos</span><span class="arrow" aria-hidden="true">↗</span></a></li>
+                <li><a href="goti/itil4-p1.html"><span>ITIL 4 — Aula 1: Valor, serviços e SVS</span><span class="arrow" aria-hidden="true">↗</span></a></li>
+                <li><a href="goti/itil4-p2.html"><span>ITIL 4 — Aula 2: Cadeia de valor e práticas</span><span class="arrow" aria-hidden="true">↗</span></a></li>
+                <li><a href="goti/pmbok.html"><span>PMBOK 7 e Governança de TI</span><span class="arrow" aria-hidden="true">↗</span></a></li>
+            </ul>
+        </section>
+
+        <section class="course" aria-labelledby="teipi-title">
+            <div class="course-heading">
+                <h2 id="teipi-title">TEIPI — Tópicos Especiais de Informática e Projeto Integrador</h2>
+                <span class="count">4 apresentações</span>
+            </div>
+            <ul class="slides">
+                <li><a href="teipi/py-base-ia.html"><span>Python: base para IA</span><span class="arrow" aria-hidden="true">↗</span></a></li>
+                <li><a href="teipi/pw_automacao.html"><span>Playwright — Automação, scraping e testes</span><span class="arrow" aria-hidden="true">↗</span></a></li>
+                <li><a href="teipi/py-arquivos-pdf-ocr.html"><span>Arquivos, PDFs e OCR com Python</span><span class="arrow" aria-hidden="true">↗</span></a></li>
+                <li><a href="teipi/llm-local-colab.html"><span>LLM em máquina local ou no Colab</span><span class="arrow" aria-hidden="true">↗</span></a></li>
+            </ul>
+        </section>
+
+        <footer>
+            Desenvolvido com o <a href="https://sandeco.github.io/mira-animator/pt/">MIRA</a> do Prof. Sanderson.
+        </footer>
+    </main>
+</body>
+</html>
